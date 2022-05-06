@@ -2,8 +2,6 @@
 A simple and customizable chat box that can format text, display images and emojis.
 [Visit the workshop page here.](https://steamcommunity.com/sharedfiles/filedetails/?id=2799307109)
 
-![Preview](https://i.imgur.com/Wuguc4H.gif)
-
 ### Features
 
 * Customizable
