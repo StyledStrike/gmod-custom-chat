@@ -1,0 +1,10 @@
+{
+	"title": "Custom Chat",
+	"type": "ServerContent",
+	"tags":	["fun", "realism"],
+	"ignore": [
+		"glualint.json",
+		"README.md",
+		"LICENSE"
+	]
+}
