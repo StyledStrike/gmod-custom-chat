@@ -330,7 +330,8 @@ function SChat:GenerateMessageFromTable(contents)
 		end
 	end
 
-	jsLines[#jsLines + 1] = 'appendMessageBlock(' .. JSBuilder.rootMessageElement .. ');'
+	local showTemporary = (GetConVar('cl_drawhud'):GetInt() == 0) and 'false' or 'true'
+	jsLines[#jsLines + 1] = 'appendMessageBlock(' .. JSBuilder.rootMessageElement .. ',' .. showTemporary .. ');'
 
 	return table.concat(jsLines, '\n')
 end

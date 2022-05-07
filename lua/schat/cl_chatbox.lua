@@ -59,13 +59,16 @@ function toggleEmojiPanel() {
 	setEmojiPanelVisible(elmEmojiPanel.style['display'] != 'block');
 }
 
-function appendMessageBlock(block) {
+function appendMessageBlock(block, showTemporary) {
 	var wasAtBottom = isScrollAtBottom();
-	var blockCopy = block.cloneNode(true);
+	var blockCopy;
 
-	elmTemp.appendChild(blockCopy);
+	if (showTemporary) {
+		blockCopy = block.cloneNode(true);
+		elmTemp.appendChild(blockCopy);
+	}
+
 	elmMain.appendChild(block);
-
 	appendCount++;
 
 	if (appendCount > 256) {
@@ -74,6 +77,7 @@ function appendMessageBlock(block) {
 	}
 
 	if (wasAtBottom) scrollToBottom();
+	if (!showTemporary) return;
 
 	if (elmTemp.childElementCount > 10)
 		elmTemp.removeChild(elmTemp.firstChild);
@@ -464,6 +468,10 @@ end
 
 function SChatBox:ClearSelection()
 	self:QueueJavascript('clearSelection();')
+end
+
+function SChatBox:ClearTempMessages()
+	self:QueueJavascript('elmTemp.textContent = "";')
 end
 
 function SChatBox:ClearEverything()

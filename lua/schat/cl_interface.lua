@@ -514,6 +514,15 @@ hook.Add('Think', 'schat_Think', function()
 	SChat:Think()
 end)
 
+-- remove existing temporary messages when cl_drawhud is 0
+cvars.RemoveChangeCallback('schat_cl_drawhud_changed')
+
+cvars.AddChangeCallback('cl_drawhud', function(_, _, newValue)
+	if SChat.chatBox and newValue == '0' then
+		SChat.chatBox:ClearTempMessages()
+	end
+end, 'schat_cl_drawhud_changed')
+
 -- Custom 'IsTyping' behavior
 local PLY = FindMetaTable('Player')
 
