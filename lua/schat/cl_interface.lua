@@ -12,7 +12,6 @@ if IsValid(SChat.frame) then
 end
 
 SChat.isOpened = false
-SChat.isGamePaused = false
 SChat.usingServerTheme = false
 SChat.serverTheme = ''
 
@@ -397,6 +396,27 @@ function SChat:AppendMessage(contents)
 	self.chatBox:AppendContents(contents)
 end
 
+function SChat:Think()
+	if not self.chatBox then return end
+
+	-- Hide the chat box if the game is paused
+	if gui.IsGameUIVisible() then
+		if self.isOpened then
+			chat.Close()
+		end
+
+		if not self.isGamePaused then
+			self.isGamePaused = true
+			self.chatBox:SetVisible(false)
+		end
+	else
+		if self.isGamePaused then
+			self.isGamePaused = false
+			self.chatBox:SetVisible(true)
+		end
+	end
+end
+
 chat.AddText = function(...)
 	SChat:AppendMessage({...})
 	chat.DefaultAddText(...)
@@ -491,24 +511,7 @@ hook.Add('HUDShouldDraw', 'schat_HUDShouldDraw', function(name)
 end)
 
 hook.Add('Think', 'schat_Think', function()
-	if not SChat.chatBox then return end
-
-	-- Hide the chat box if the game is paused
-	if gui.IsGameUIVisible() then
-		if SChat.isOpened then
-			chat.Close()
-		end
-
-		if SChat.isGamePaused == false then
-			SChat.isGamePaused = true
-			SChat.chatBox:SetVisible(false)
-		end
-	else
-		if SChat.isGamePaused == true then
-			SChat.isGamePaused = false
-			SChat.chatBox:SetVisible(true)
-		end
-	end
+	SChat:Think()
 end)
 
 -- Custom 'IsTyping' behavior
