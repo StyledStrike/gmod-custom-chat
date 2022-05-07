@@ -3,8 +3,10 @@
 	"type": "ServerContent",
 	"tags":	["fun", "realism"],
 	"ignore": [
+		".git*",
+		"*.txt",
+		"*.md",
 		"glualint.json",
-		"README.md",
 		"LICENSE"
 	]
 }
