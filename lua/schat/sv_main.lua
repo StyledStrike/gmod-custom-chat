@@ -26,28 +26,40 @@ local Settings = {
 	themeFilePath = 'schat_server_theme.json',
 	emojiFilePath = 'schat_server_emojis.json',
 
-	themeData = '',
-	emojiData = ''
+	themeData = {},
+	emojiData = {}
 }
+
+function Settings:Serialize(tbl)
+	return util.TableToJSON(tbl)
+end
+
+function Settings:Unserialize(str)
+	if not str or str == '' then
+		return {}
+	end
+
+	return util.JSONToTable(str) or {}
+end
 
 function Settings:Load()
 	-- load an existing server theme
-	self.themeData = file.Read(self.themeFilePath, 'DATA') or ''
+	self.themeData = self:Unserialize( file.Read(self.themeFilePath, 'DATA') )
 
 	-- load existing server emojis
-	self.emojiData = file.Read(self.emojiFilePath, 'DATA') or ''
+	self.emojiData = self:Unserialize( file.Read(self.emojiFilePath, 'DATA') )
 end
 
 function Settings:Save()
-	file.Write(self.themeFilePath, self.themeData)
-	file.Write(self.emojiFilePath, self.emojiData)
+	file.Write(self.themeFilePath, self:Serialize(self.themeData))
+	file.Write(self.emojiFilePath, self:Serialize(self.emojiData))
 end
 
 function Settings:ShareTheme(ply)
 	if game.SinglePlayer() then return end
 
 	net.Start('schat.set_theme', false)
-	net.WriteString(self.themeData)
+	net.WriteString( self:Serialize(self.themeData) )
 
 	if IsValid(ply) then
 		net.Send(ply)
@@ -59,7 +71,7 @@ end
 
 function Settings:ShareEmojis(ply)
 	net.Start('schat.set_emojis', false)
-	net.WriteString(self.emojiData)
+	net.WriteString( self:Serialize(self.emojiData) )
 
 	if IsValid(ply) then
 		net.Send(ply)
@@ -70,7 +82,7 @@ function Settings:ShareEmojis(ply)
 end
 
 function Settings:SetTheme(data, admin)
-	SChat.PrintF('%s %s the server theme.', admin or 'Someone', (data == '') and 'removed' or 'changed')
+	SChat.PrintF('%s %s the server theme.', admin or 'Someone', table.IsEmpty(data) and 'removed' or 'changed')
 
 	self.themeData = data
 	self:ShareTheme()
@@ -78,7 +90,7 @@ function Settings:SetTheme(data, admin)
 end
 
 function Settings:SetEmojis(data, admin)
-	SChat.PrintF('%s %s the server emojis.', admin or 'Someone', (data == '') and 'removed' or 'changed')
+	SChat.PrintF('%s %s the server emojis.', admin or 'Someone', table.IsEmpty(data) and 'removed' or 'changed')
 
 	self.emojiData = data
 	self:ShareEmojis()
@@ -87,7 +99,8 @@ end
 
 net.Receive('schat.set_theme', function(_, ply)
 	if SChat:CanSetServerTheme(ply) then
-		Settings:SetTheme(net.ReadString(), ply:Nick())
+		local themeData = Settings:Unserialize(net.ReadString())
+		Settings:SetTheme(themeData, ply:Nick())
 	else
 		ply:ChatPrint('SChat: You cannot change server themes.')
 	end
@@ -95,7 +108,8 @@ end)
 
 net.Receive('schat.set_emojis', function(_, ply)
 	if SChat:CanSetServerEmojis(ply) then
-		Settings:SetEmojis(net.ReadString(), ply:Nick())
+		local emojiData = Settings:Unserialize(net.ReadString())
+		Settings:SetEmojis(emojiData, ply:Nick())
 	else
 		ply:ChatPrint('SChat: You cannot change server emojis.')
 	end
@@ -114,12 +128,12 @@ hook.Add('ClientSignOnStateChanged', 'schat_ClientStateChanged', function(user, 
 			if not IsValid(ply) then return end
 
 			-- send the server theme (if set)
-			if Settings.themeData ~= '' then
+			if not table.IsEmpty(Settings.themeData) then
 				Settings:ShareTheme(ply)
 			end
 
 			-- send the server emojis (if set)
-			if Settings.emojiData ~= '' then
+			if not table.IsEmpty(Settings.emojiData) then
 				Settings:ShareEmojis(ply)
 			end
 		end)
