@@ -127,3 +127,5 @@ hook.Add('ClientSignOnStateChanged', 'schat_ClientStateChanged', function(user, 
 end)
 
 Settings:Load()
+
+SChat.Settings = Settings
