@@ -111,13 +111,14 @@ window.addEventListener('contextmenu', function(ev) {
 window.addEventListener('keydown', function(ev) {
 	if (ev.which == 70 && ev.ctrlKey) {
 		SChatBox.OnPressFind();
+		ev.preventDefault();
+		return false;
 	}
 	else if (ev.which == 13 || (isAwesomuim && ev.which == 0)) {
 		SChatBox.OnPressEnter();
+		ev.preventDefault();
+		return false;
 	}
-
-	ev.preventDefault();
-	return false;
 });
 
 console.log('Ready.');
