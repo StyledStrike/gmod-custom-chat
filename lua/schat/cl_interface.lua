@@ -1,3 +1,5 @@
+CreateClientConVar("disable_customchat", "0", true, false)
+
 -- Cleanup previous stuff when reloading this script (helps during development)
 if IsValid(SChat.frame) then
 	chat.Close()
@@ -12,6 +14,7 @@ if IsValid(SChat.frame) then
 end
 
 SChat.isOpened = false
+SChat.isGamePaused = false
 SChat.usingServerTheme = false
 SChat.serverTheme = ''
 
@@ -396,33 +399,15 @@ function SChat:AppendMessage(contents)
 	self.chatBox:AppendContents(contents)
 end
 
-function SChat:Think()
-	if not self.chatBox then return end
-
-	-- Hide the chat box if the game is paused
-	if gui.IsGameUIVisible() then
-		if self.isOpened then
-			chat.Close()
-		end
-
-		if not self.isGamePaused then
-			self.isGamePaused = true
-			self.chatBox:SetVisible(false)
-		end
-	else
-		if self.isGamePaused then
-			self.isGamePaused = false
-			self.chatBox:SetVisible(true)
-		end
-	end
-end
-
-chat.AddText = function(...)
+local legacy_AddText = chat.AddText
+local schatAddText = function(...)
 	SChat:AppendMessage({...})
 	chat.DefaultAddText(...)
 end
+chat.AddText = schatAddText
 
-chat.Close = function()
+local legacy_chatClose = chat.Close
+local schatClose = function()
 	if not IsValid(SChat.frame) then return end
 
 	SChat:CloseExtraPanels()
@@ -443,8 +428,10 @@ chat.Close = function()
 	net.WriteBool(false)
 	net.SendToServer()
 end
+chat.Close = schatClose
 
-chat.Open = function()
+local legacy_chatOpen = chat.Open
+local schatOpen = function()
 	if not IsValid(SChat.frame) then
 		SChat:CreatePanels()
 	end
@@ -481,15 +468,17 @@ chat.Open = function()
 	net.WriteBool(true)
 	net.SendToServer()
 end
+chat.Open = schatOpen
 
-hook.Add('ChatText', 'schat_ChatText', function(_, _, text, textType)
+local function schat_ChatText(_, _, text, textType)
 	if textType ~= 'chat' then
 		SChat:AppendMessage({Color(0, 128, 255), text})
 		return true
 	end
-end)
+end
+hook.Add('ChatText', 'schat_ChatText', schat_ChatText)
 
-hook.Add('PlayerBindPress', 'schat_PlayerBindPress', function(_, bind, _)
+local function schat_PlayerBindPress(_,bind,_)
 	if bind ~= 'messagemode' and bind ~= 'messagemode2' then return end
 
 	-- Dont open the chat if Starfall is blocking input
@@ -504,15 +493,72 @@ hook.Add('PlayerBindPress', 'schat_PlayerBindPress', function(_, bind, _)
 	chat.Open()
 
 	return true
-end)
+end
+hook.Add('PlayerBindPress', 'schat_PlayerBindPress', schat_PlayerBindPress)
 
-hook.Add('HUDShouldDraw', 'schat_HUDShouldDraw', function(name)
+local function schat_HUDShouldDraw(name)
 	if name == 'CHudChat' then return false end
-end)
+end
+hook.Add('HUDShouldDraw', 'schat_HUDShouldDraw', schat_HUDShouldDraw)
 
-hook.Add('Think', 'schat_Think', function()
-	SChat:Think()
-end)
+local function schat_Think()
+	if not SChat.chatBox then return end
+
+	-- Hide the chat box if the game is paused
+	if gui.IsGameUIVisible() then
+		if SChat.isOpened then
+			chat.Close()
+		end
+
+		if SChat.isGamePaused == false then
+			SChat.isGamePaused = true
+			SChat.chatBox:SetVisible(false)
+		end
+	else
+		if SChat.isGamePaused == true then
+			SChat.isGamePaused = false
+			SChat.chatBox:SetVisible(true)
+		end
+	end
+end
+hook.Add('Think', 'schat_Think', schat_Think)
+
+local function UseLegacyChat()
+	hook.Remove('HUDShouldDraw', 'schat_HUDShouldDraw')
+	hook.Remove('ChatText', 'schat_ChatText')
+	hook.Remove('PlayerBindPress', 'schat_PlayerBindPress')
+	hook.Remove('Think', 'schat_Think')
+
+	chat.AddText = legacy_AddText
+	chat.Close = legacy_chatClose
+	chat.Open = legacy_chatOpen
+
+	if not SChat.chatBox then return end
+	SChat.chatBox:SetVisible(true)
+end
+
+if GetConVar( "disable_customchat" ):GetInt() == 1 then
+	UseLegacyChat()
+end
+
+cvars.RemoveChangeCallback( "disable_customchat", "disable_schat" )
+cvars.AddChangeCallback("disable_customchat", function(convar_name, value_old, value_new)
+    if tonumber(value_new) == 1 then
+		UseLegacyChat()
+	elseif tonumber(value_new) == 0 then
+		hook.Add('HUDShouldDraw', 'schat_HUDShouldDraw', schat_HUDShouldDraw)
+		hook.Add('ChatText', 'schat_ChatText', schat_ChatText)
+		hook.Add('PlayerBindPress', 'schat_PlayerBindPress', schat_PlayerBindPress)
+		hook.Add('Think', 'schat_Think', schat_Think)
+		
+		chat.AddText = schatAddText
+		chat.Close = schatClose
+		chat.Open = schatOpen
+
+		if not SChat.chatBox then return end
+		SChat.chatBox:SetVisible(true)
+	end
+end, "disable_schat")
 
 -- remove existing temporary messages when cl_drawhud is 0
 cvars.RemoveChangeCallback('schat_cl_drawhud_changed')
