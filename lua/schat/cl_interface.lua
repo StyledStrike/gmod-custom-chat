@@ -1,4 +1,4 @@
-CreateClientConVar("disable_betterchat", "0", true, false)
+CreateClientConVar("disable_customchat", "0", true, false)
 
 -- Cleanup previous stuff when reloading this script (helps during development)
 if IsValid(SChat.frame) then
@@ -537,12 +537,12 @@ local function UseLegacyChat()
 	SChat.chatBox:SetVisible(true)
 end
 
-if GetConVar( "disable_betterchat" ):GetInt() == 1 then
+if GetConVar( "disable_customchat" ):GetInt() == 1 then
 	UseLegacyChat()
 end
 
-cvars.RemoveChangeCallback( "disable_betterchat", "disable_schat" )
-cvars.AddChangeCallback("disable_betterchat", function(convar_name, value_old, value_new)
+cvars.RemoveChangeCallback( "disable_customchat", "disable_schat" )
+cvars.AddChangeCallback("disable_customchat", function(convar_name, value_old, value_new)
     if tonumber(value_new) == 1 then
 		UseLegacyChat()
 	elseif tonumber(value_new) == 0 then
