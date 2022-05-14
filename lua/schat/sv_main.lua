@@ -59,7 +59,12 @@ function Settings:ShareTheme(ply)
 	if game.SinglePlayer() then return end
 
 	net.Start('schat.set_theme', false)
-	net.WriteString( self:Serialize(self.themeData) )
+
+	if table.IsEmpty(self.themeData) then
+		net.WriteString('')
+	else
+		net.WriteString( self:Serialize(self.themeData) )
+	end
 
 	if IsValid(ply) then
 		net.Send(ply)
