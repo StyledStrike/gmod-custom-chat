@@ -114,10 +114,15 @@ local templates = {
 		return JSBuilder:CreateText(str_trim_ends(val, 4), font, nil, color, nil, 'b-text i-text')
 	end,
 
+	['code_line'] = function(val, color, font)
+		val = string.Replace(val, '\\n', '\n')
+		return JSBuilder:CreateText(str_trim_ends(val, 2), font, nil, color, JSBuilder.color_code_background, 'code-line')
+	end,
+
 	['code'] = function(val, color, font)
 		val = string.Replace(val, '\\n', '\n')
 		local trimAmount = val[1] == '{' and 3 or 4
-		return JSBuilder:CreateText(str_trim_ends(val, trimAmount), font, nil, color, nil, 'code')
+		return JSBuilder:CreateText(str_trim_ends(val, trimAmount), font, nil, color, JSBuilder.color_code_background, 'code')
 	end,
 
 	['rainbow'] = function(val, color, font)

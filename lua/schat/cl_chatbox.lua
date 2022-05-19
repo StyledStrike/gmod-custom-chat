@@ -332,7 +332,13 @@ img {
 	border-radius: 2px;
 	border-width: 1px;
 	border-color: #151618;
-	background-color: #2F3136;
+}
+
+.code-line {
+	display: inline;
+	padding: 2px;
+	margin: 2px;
+	border-radius: 2px;
 }
 
 /****** Text effects ******/
