@@ -537,20 +537,20 @@ local function UseLegacyChat()
 	SChat.chatBox:SetVisible(true)
 end
 
-if GetConVar( "disable_customchat" ):GetInt() == 1 then
+if GetConVar('disable_customchat'):GetInt() == 1 then
 	UseLegacyChat()
 end
 
-cvars.RemoveChangeCallback( "disable_customchat", "disable_schat" )
-cvars.AddChangeCallback("disable_customchat", function(convar_name, value_old, value_new)
-    if tonumber(value_new) == 1 then
+cvars.RemoveChangeCallback('disable_customchat', 'disable_schat')
+cvars.AddChangeCallback('disable_customchat', function(convar_name, value_old, value_new)
+	if tonumber(value_new) == 1 then
 		UseLegacyChat()
 	elseif tonumber(value_new) == 0 then
 		hook.Add('HUDShouldDraw', 'schat_HUDShouldDraw', schat_HUDShouldDraw)
 		hook.Add('ChatText', 'schat_ChatText', schat_ChatText)
 		hook.Add('PlayerBindPress', 'schat_PlayerBindPress', schat_PlayerBindPress)
 		hook.Add('Think', 'schat_Think', schat_Think)
-		
+
 		chat.AddText = schatAddText
 		chat.Close = schatClose
 		chat.Open = schatOpen
@@ -558,7 +558,7 @@ cvars.AddChangeCallback("disable_customchat", function(convar_name, value_old, v
 		if not SChat.chatBox then return end
 		SChat.chatBox:SetVisible(true)
 	end
-end, "disable_schat")
+end, 'disable_schat')
 
 -- remove existing temporary messages when cl_drawhud is 0
 cvars.RemoveChangeCallback('schat_cl_drawhud_changed')
