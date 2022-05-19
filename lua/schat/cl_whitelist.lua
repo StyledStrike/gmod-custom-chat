@@ -92,7 +92,10 @@ local whitelist = {
 	pattern [[[%a%d]+%.tenor%.com/.+]],
 
 	-- Pinterest
-	simple [[i.pinimg.com]]
+	simple [[i.pinimg.com]],
+
+	-- ImgBB
+	simple [[i.ibb.co]]
 }
 
 function SChat:IsWhitelisted(url)
