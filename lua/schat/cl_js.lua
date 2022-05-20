@@ -14,7 +14,7 @@ local JSBuilder = {
 	rootMessageElement = 'msgElm',
 
 	color_white = Color(255, 255, 255, 255),
-	color_code_background = Color(30, 30, 30, 255)
+	color_code_background = Color(47, 49, 54, 255)
 }
 
 -- used to test if a URL probably points to a image
@@ -116,13 +116,13 @@ local templates = {
 
 	['code_line'] = function(val, color, font)
 		val = string.Replace(val, '\\n', '\n')
-		return JSBuilder:CreateText(str_trim_ends(val, 2), font, nil, color, JSBuilder.color_code_background, 'code-line')
+		return JSBuilder:CreateCode(str_trim_ends(val, 2), font, true)
 	end,
 
 	['code'] = function(val, color, font)
 		val = string.Replace(val, '\\n', '\n')
 		local trimAmount = val[1] == '{' and 3 or 4
-		return JSBuilder:CreateText(str_trim_ends(val, trimAmount), font, nil, color, JSBuilder.color_code_background, 'code')
+		return JSBuilder:CreateCode(str_trim_ends(val, trimAmount), font, false)
 	end,
 
 	['rainbow'] = function(val, color, font)
@@ -204,6 +204,38 @@ function JSBuilder:CreateText(text, font, link, color, bgColor, cssClass)
 	end
 
 	return self:CreateElement('span', 'elm', self.rootMessageElement, props)
+end
+
+-- generates JS code to create a block of code
+function JSBuilder:CreateCode(code, font, inline)
+	local parentProps = {
+		['className'] = {
+			value = inline and 'code-line' or 'code'
+		},
+		['style.backgroundColor'] = {
+			value = color_to_rgb(JSBuilder.color_code_background)
+		}
+	}
+
+	font = Either(str_is_valid(font), font, 'monospace');
+
+	local elements = {
+		-- create a parent element that will hold other elements
+		self:CreateElement('span', 'elm', self.rootMessageElement, parentProps)
+	}
+
+	-- then "highlight" the code, creating child elements for each token
+	local tokens = SChat:GenerateHighlightTokens(code)
+
+	for _, t in ipairs(tokens) do
+		elements[#elements + 1] = self:CreateElement('span', 'elmText', 'elm', {
+			['textContent'] = { value = str_jssafe(t.value) },
+			['style.color'] = { value = t.color },
+			['style.fontFamily'] = {value = font}
+		})
+	end
+
+	return table.concat(elements, '\n')
 end
 
 -- generates code to create a image

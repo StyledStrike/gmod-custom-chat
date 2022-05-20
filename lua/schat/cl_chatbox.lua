@@ -329,7 +329,7 @@ img {
 	margin: 2px;
 	font-size: 80%;
 	border: solid;
-	border-radius: 2px;
+	border-radius: 4px;
 	border-width: 1px;
 	border-color: #151618;
 }
@@ -338,7 +338,8 @@ img {
 	display: inline;
 	padding: 2px;
 	margin: 2px;
-	border-radius: 2px;
+	border-radius: 4px;
+	font-size: 95%;
 }
 
 /****** Text effects ******/
