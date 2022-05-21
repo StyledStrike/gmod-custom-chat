@@ -20,7 +20,7 @@ local rangeTypes = {
 	{ type = 'advert', pattern = '%[%[[%g%s%*]+%]%]'},
 	{ type = 'emoji', pattern = ':[%w_%-]+:' },
 	{ type = 'spoiler', pattern = '||[%g%s][^||]+||' },
-	{ type = 'code_line', pattern = '`[%g%s]+`' },
+	{ type = 'code_line', pattern = '`[%g%s{}%[%]]+`' },
 	{ type = 'code', pattern = '{{[%g%s{}]+}}' },
 	{ type = 'code', pattern = '```[%g%s`]+```' }
 }

@@ -115,7 +115,6 @@ local templates = {
 	end,
 
 	['code_line'] = function(val, color, font)
-		val = string.Replace(val, '\\n', '\n')
 		return JSBuilder:CreateCode(str_trim_ends(val, 2), font, true)
 	end,
 
