@@ -1,8 +1,9 @@
-CreateClientConVar("disable_customchat", "0", true, false)
+CreateClientConVar('disable_customchat', '0', true, false)
 
 -- Cleanup previous stuff when reloading this script (helps during development)
 if IsValid(SChat.frame) then
 	chat.Close()
+	cvars.RemoveChangeCallback('disable_customchat', 'disable_customchat_changed')
 
 	SChat.frame:SetMouseInputEnabled(false)
 	SChat.frame:SetKeyboardInputEnabled(false)
@@ -403,7 +404,6 @@ local schatAddText = function(...)
 	SChat:AppendMessage({...})
 	chat.DefaultAddText(...)
 end
-chat.AddText = schatAddText
 
 local schatClose = function()
 	if not IsValid(SChat.frame) then return end
@@ -426,7 +426,6 @@ local schatClose = function()
 	net.WriteBool(false)
 	net.SendToServer()
 end
-chat.Close = schatClose
 
 local schatOpen = function()
 	if not IsValid(SChat.frame) then
@@ -465,7 +464,6 @@ local schatOpen = function()
 	net.WriteBool(true)
 	net.SendToServer()
 end
-chat.Open = schatOpen
 
 local function schat_ChatText(_, _, text, textType)
 	if textType ~= 'chat' then
@@ -473,7 +471,6 @@ local function schat_ChatText(_, _, text, textType)
 		return true
 	end
 end
-hook.Add('ChatText', 'schat_ChatText', schat_ChatText)
 
 local function schat_PlayerBindPress(_,bind,_)
 	if bind ~= 'messagemode' and bind ~= 'messagemode2' then return end
@@ -491,12 +488,10 @@ local function schat_PlayerBindPress(_,bind,_)
 
 	return true
 end
-hook.Add('PlayerBindPress', 'schat_PlayerBindPress', schat_PlayerBindPress)
 
 local function schat_HUDShouldDraw(name)
 	if name == 'CHudChat' then return false end
 end
-hook.Add('HUDShouldDraw', 'schat_HUDShouldDraw', schat_HUDShouldDraw)
 
 local function schat_Think()
 	if not SChat.chatBox then return end
@@ -518,44 +513,48 @@ local function schat_Think()
 		end
 	end
 end
-hook.Add('Think', 'schat_Think', schat_Think)
 
-local function UseLegacyChat()
-	hook.Remove('HUDShouldDraw', 'schat_HUDShouldDraw')
+function SChat:Enable()
+	chat.AddText = schatAddText
+	chat.Close = schatClose
+	chat.Open = schatOpen
+
+	hook.Add('ChatText', 'schat_ChatText', schat_ChatText)
+	hook.Add('PlayerBindPress', 'schat_PlayerBindPress', schat_PlayerBindPress)
+	hook.Add('HUDShouldDraw', 'schat_HUDShouldDraw', schat_HUDShouldDraw)
+	hook.Add('Think', 'schat_Think', schat_Think)
+
+	if SChat.chatBox then
+		SChat.chatBox:SetVisible(true)
+	end
+end
+
+function SChat:Disable()
 	hook.Remove('ChatText', 'schat_ChatText')
 	hook.Remove('PlayerBindPress', 'schat_PlayerBindPress')
+	hook.Remove('HUDShouldDraw', 'schat_HUDShouldDraw')
 	hook.Remove('Think', 'schat_Think')
 
 	chat.AddText = chat.DefaultAddText
 	chat.Close = chat.DefaultClose
 	chat.Open = chat.DefaultOpen
 
-	if not SChat.chatBox then return end
-	SChat.chatBox:SetVisible(true)
-end
-
-if GetConVar('disable_customchat'):GetInt() == 1 then
-	UseLegacyChat()
-end
-
-cvars.RemoveChangeCallback('disable_customchat', 'disable_schat')
-cvars.AddChangeCallback('disable_customchat', function(convar_name, value_old, value_new)
-	if tonumber(value_new) == 1 then
-		UseLegacyChat()
-	elseif tonumber(value_new) == 0 then
-		hook.Add('HUDShouldDraw', 'schat_HUDShouldDraw', schat_HUDShouldDraw)
-		hook.Add('ChatText', 'schat_ChatText', schat_ChatText)
-		hook.Add('PlayerBindPress', 'schat_PlayerBindPress', schat_PlayerBindPress)
-		hook.Add('Think', 'schat_Think', schat_Think)
-
-		chat.AddText = schatAddText
-		chat.Close = schatClose
-		chat.Open = schatOpen
-
-		if not SChat.chatBox then return end
-		SChat.chatBox:SetVisible(true)
+	if self.chatBox then
+		self.chatBox:SetVisible(false)
 	end
-end, 'disable_schat')
+end
+
+if GetConVar('disable_customchat'):GetInt() == 0 then
+	SChat:Enable()
+end
+
+cvars.AddChangeCallback('disable_customchat', function(convar_name, value_old, value_new)
+	if tonumber(value_new) == 0 then
+		SChat:Enable()
+	else
+		SChat:Disable()
+	end
+end, 'disable_customchat_changed')
 
 -- remove existing temporary messages when cl_drawhud is 0
 cvars.RemoveChangeCallback('schat_cl_drawhud_changed')
