@@ -399,14 +399,12 @@ function SChat:AppendMessage(contents)
 	self.chatBox:AppendContents(contents)
 end
 
-local legacy_AddText = chat.AddText
 local schatAddText = function(...)
 	SChat:AppendMessage({...})
 	chat.DefaultAddText(...)
 end
 chat.AddText = schatAddText
 
-local legacy_chatClose = chat.Close
 local schatClose = function()
 	if not IsValid(SChat.frame) then return end
 
@@ -430,7 +428,6 @@ local schatClose = function()
 end
 chat.Close = schatClose
 
-local legacy_chatOpen = chat.Open
 local schatOpen = function()
 	if not IsValid(SChat.frame) then
 		SChat:CreatePanels()
@@ -529,9 +526,9 @@ local function UseLegacyChat()
 	hook.Remove('PlayerBindPress', 'schat_PlayerBindPress')
 	hook.Remove('Think', 'schat_Think')
 
-	chat.AddText = legacy_AddText
-	chat.Close = legacy_chatClose
-	chat.Open = legacy_chatOpen
+	chat.AddText = chat.DefaultAddText
+	chat.Close = chat.DefaultClose
+	chat.Open = chat.DefaultOpen
 
 	if not SChat.chatBox then return end
 	SChat.chatBox:SetVisible(true)
