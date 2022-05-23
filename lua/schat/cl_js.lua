@@ -148,7 +148,7 @@ local fontNames = {
 	['roboto'] = 'Roboto'
 }
 
--- generates JS code that creates a element using the provided properties
+-- Generates JS code that creates a element using the provided properties
 function JSBuilder:CreateElement(tag, var, parentVar, props)
 	local strTbl = {
 		str_format('var %s = document.createElement("%s");', var, tag),
@@ -168,7 +168,7 @@ function JSBuilder:CreateElement(tag, var, parentVar, props)
 	return table.concat(strTbl, '\n')
 end
 
--- generates code to create a text element
+-- Generates JS code to create a text element
 -- (optionally, it can act as a clickable link)
 function JSBuilder:CreateText(text, font, link, color, bgColor, cssClass)
 	local props = {textContent = {value = str_jssafe(text)}}
@@ -205,7 +205,7 @@ function JSBuilder:CreateText(text, font, link, color, bgColor, cssClass)
 	return self:CreateElement('span', 'elm', self.rootMessageElement, props)
 end
 
--- generates JS code to create a block of code
+-- Generates JS code to create a block of code
 function JSBuilder:CreateCode(code, font, inline)
 	local parentProps = {
 		['className'] = {
@@ -237,7 +237,7 @@ function JSBuilder:CreateCode(code, font, inline)
 	return table.concat(elements, '\n')
 end
 
--- generates code to create a image
+-- Generates JS code to create a image
 -- (optionally, it can act as a clickable link)
 function JSBuilder:CreateImage(url, link, cssClass, altText)
 	local props = { src = { value = str_jssafe(url) } }
@@ -272,7 +272,7 @@ function JSBuilder:CreateImage(url, link, cssClass, altText)
 	return self:CreateElement('img', 'elm', self.rootMessageElement, props)
 end
 
--- generates a embed link box (with a title and thumbnail)
+-- Generates a embed box (with a title and thumbnail)
 function JSBuilder:CreateEmbedLink(iconUrl, title, link)
 	local props = {className = {value = 'embed'}}
 
@@ -291,7 +291,7 @@ function JSBuilder:CreateEmbedLink(iconUrl, title, link)
 	return table.concat(strTbl, '\n')
 end
 
--- generates a marquee-like animated text (moving right to left) 
+-- Generates a marquee-like animated text (moving right to left) 
 function JSBuilder:CreateAdvert(text, color)
 	return table.concat({
 		self:CreateElement('span', 'elm', self.rootMessageElement, {className = {value = 'advert'}}),
@@ -302,7 +302,7 @@ function JSBuilder:CreateAdvert(text, color)
 	}, '\n')
 end
 
--- Builds a JS code that creates a message element based on 'contents'.
+-- Generates JS code that creates a message element based on 'contents'.
 -- 'contents' must be a sequential table.
 function SChat:GenerateMessageFromTable(contents)
 	-- first, convert the contents into blocks
@@ -372,7 +372,7 @@ function SChat:GenerateMessageFromTable(contents)
 	return table.concat(jsLines, '\n')
 end
 
--- Builds a JS code that elements for the emoji panel.
+-- Generates JS code that populates the emoji panel.
 function SChat:GenerateEmojiList()
 	local emojiCategories = self.Settings.emojiCategories
 	local jsTbl = {'elmEmojiPanel.textContent = "";'}

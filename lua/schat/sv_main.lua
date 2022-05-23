@@ -107,7 +107,7 @@ net.Receive('schat.set_theme', function(_, ply)
 		local themeData = Settings:Unserialize(net.ReadString())
 		Settings:SetTheme(themeData, ply:Nick())
 	else
-		ply:ChatPrint('SChat: You cannot change server themes.')
+		ply:ChatPrint('SChat: You cannot change the server theme.')
 	end
 end)
 
@@ -116,7 +116,7 @@ net.Receive('schat.set_emojis', function(_, ply)
 		local emojiData = Settings:Unserialize(net.ReadString())
 		Settings:SetEmojis(emojiData, ply:Nick())
 	else
-		ply:ChatPrint('SChat: You cannot change server emojis.')
+		ply:ChatPrint('SChat: You cannot change the server emojis.')
 	end
 end)
 

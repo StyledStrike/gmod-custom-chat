@@ -1,6 +1,6 @@
 CreateClientConVar('disable_customchat', '0', true, false)
 
--- Cleanup previous stuff when reloading this script (helps during development)
+-- Clear stuff when loading this script (helps during development)
 if IsValid(SChat.frame) then
 	chat.Close()
 	cvars.RemoveChangeCallback('disable_customchat', 'disable_customchat_changed')
@@ -14,7 +14,7 @@ if IsValid(SChat.frame) then
 	SChat.frame = nil
 end
 
-SChat.isOpened = false
+SChat.isOpen = false
 SChat.isGamePaused = false
 SChat.usingServerTheme = false
 SChat.serverTheme = ''
@@ -45,7 +45,7 @@ function SChat:CreatePanels()
 	self.frame:SetMinHeight(150)
 
 	self.frame.Paint = function(s, w, h)
-		if self.isOpened then
+		if self.isOpen then
 			draw.RoundedBox(Theme.corner_radius, 0, 0, w, h, Theme.background)
 		end
 	end
@@ -168,7 +168,7 @@ function SChat:CreatePanels()
 end
 
 function SChat:OnPressEnter()
-	if not self.isOpened then return end
+	if not self.isOpen then return end
 
 	local text = string.Trim(self.entry:GetText())
 
@@ -265,7 +265,7 @@ function SChat:OpenContextMenu(data, isLink)
 	else
 		optionsMenu:AddOption('Allow images from unknown URLs', function()
 			Derma_Query([[This option will allow images to be loaded from any URL.
-This means no matter which website they came from, you will load it, and it CAN be used to grab your IP address.]],
+This means that no matter which site they come from, you will load it, and it CAN be used to grab your IP address.]],
 			'Allow unknown image URLs', 'Allow anyway', function()
 				Settings:SetWhitelistEnabled(false)
 			end, 'Cancel')
@@ -410,7 +410,7 @@ local schatClose = function()
 
 	SChat:CloseExtraPanels()
 	SChat:SetInputEnabled(false)
-	SChat.isOpened = false
+	SChat.isOpen = false
 
 	SChat.frame:SetMouseInputEnabled(false)
 	SChat.frame:SetKeyboardInputEnabled(false)
@@ -448,7 +448,7 @@ local schatOpen = function()
 		SChat.entry:SetPlaceholderText('Say...')
 	end
 
-	SChat.isOpened = true
+	SChat.isOpen = true
 	SChat:SetInputEnabled(true)
 
 	-- MakePopup calls the input functions so we dont need to call those
@@ -498,7 +498,7 @@ local function schat_Think()
 
 	-- Hide the chat box if the game is paused
 	if gui.IsGameUIVisible() then
-		if SChat.isOpened then
+		if SChat.isOpen then
 			chat.Close()
 		end
 
@@ -574,8 +574,7 @@ function PLY:IsTyping()
 	return self:GetNWBool('IsTyping', false)
 end
 
--- Receive server theme & emojis
-
+-- Received server theme
 net.Receive('schat.set_theme', function()
 	SChat.serverTheme = net.ReadString()
 
@@ -584,6 +583,7 @@ net.Receive('schat.set_theme', function()
 	end
 end)
 
+-- Received server emojis
 net.Receive('schat.set_emojis', function()
 	Settings:ClearCustomEmojis()
 	SChat.PrintF('Received emojis from the server.')

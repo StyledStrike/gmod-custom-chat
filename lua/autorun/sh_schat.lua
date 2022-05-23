@@ -19,7 +19,7 @@ if SERVER then
 	include('schat/sv_main.lua')
 
 	AddCSLuaFile('schat/cl_js.lua')
-	AddCSLuaFile('schat/cl_highligher.lua')
+	AddCSLuaFile('schat/cl_highlighter.lua')
 	AddCSLuaFile('schat/cl_parser.lua')
 	AddCSLuaFile('schat/cl_settings.lua')
 	AddCSLuaFile('schat/cl_theme.lua')
@@ -34,7 +34,7 @@ if CLIENT then
 	end
 
 	include('schat/cl_js.lua')
-	include('schat/cl_highligher.lua')
+	include('schat/cl_highlighter.lua')
 	include('schat/cl_parser.lua')
 	include('schat/cl_settings.lua')
 	include('schat/cl_theme.lua')

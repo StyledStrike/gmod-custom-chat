@@ -440,7 +440,7 @@ function SChatBox:Init()
 	end)
 
 	self:AddInternalCallback('OnRightClick', function(data, isLink)
-		if SChat.isOpened then
+		if SChat.isOpen then
 			SChat:OpenContextMenu(data, isLink)
 		end
 	end)
