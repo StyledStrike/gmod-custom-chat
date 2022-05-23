@@ -24,6 +24,7 @@ A simple and customizable chat box that can format text, display images and emoj
 **Bold text here**
 ***Bold & Italic text here***
 $$rainbow text here$$
+`line of code here`
 {{block of code here}}
 ```block of code here```
 [[Marquee-like advert here]]
