@@ -112,7 +112,7 @@ function SChat:GenerateHighlightTokens(inputStr)
 		if char:find('%a') then
 			local value = ''
 
-			while char:find('%a') and c < inputLen do
+			while char:find('%w') and c < inputLen do
 				value = value .. char
 				c = c + 1
 				char = chatAt(c)
