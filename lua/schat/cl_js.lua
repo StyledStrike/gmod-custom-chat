@@ -20,6 +20,9 @@ local JSBuilder = {
 -- used to test if a URL probably points to a image
 local imageExtensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'}
 
+-- used to test if a URL probably points to a sound
+local audioExtensions = {'wav', 'ogg', 'mp3'}
+
 local imagePatterns = {
 	'^asset://[^%s%\'%>%<]+',
 	'^https?://steamuserimages%-a%.akamaihd%.net/ugc/'
@@ -37,6 +40,12 @@ local function getURLType(url)
 	for _, ext in ipairs(imageExtensions) do
 		if withoutQueryStrings:EndsWith(ext) then
 			return 'image'
+		end
+	end
+
+	for _, ext in ipairs(audioExtensions) do
+		if withoutQueryStrings:EndsWith(ext) then
+			return 'audio'
 		end
 	end
 
@@ -80,8 +89,13 @@ local templates = {
 	['url'] = function(val, _, font)
 		local urlType = getURLType(val)
 
-		if urlType == 'image' and SChat:IsWhitelisted(val) then
-			return JSBuilder:CreateImage(val, val, nil, val)
+		if SChat:IsWhitelisted(val) then
+			if urlType == 'image' then
+				return JSBuilder:CreateImage(val, val, nil, val)
+
+			elseif urlType == 'audio' and SChat.chatBox then
+				return JSBuilder:CreateAudioPlayer(val, font)
+			end
 		end
 
 		local ytVideoId = string.match(val, 'youtube.com/watch%?v=(.+)')
@@ -300,6 +314,35 @@ function JSBuilder:CreateAdvert(text, color)
 			['style.color'] = {value = color_to_rgb(color)}
 		})
 	}, '\n')
+end
+
+-- Generates JS code to create a audio player.
+-- To prevent lag/crashes, only allow the existance of one at a time.
+function JSBuilder:CreateAudioPlayer(url, font)
+	url = str_jssafe(url)
+
+	local jsTbl = {
+		JSBuilder:CreateText(url, font, url), [[
+		var media = document.getElementsByClassName("media-player");
+
+		for (var i = 0; i < media.length; i++) {
+			var parent = media[i].parentElement;
+			parent.removeChild(media[i]);
+		}
+	]]}
+
+	local props = {
+		src = { value = url },
+		className = { value = 'media-player' },
+		volume = { type = 'raw', value = '0.5' }
+	}
+
+	jsTbl[#jsTbl + 1] = self:CreateElement('audio', 'elm', self.rootMessageElement, props)
+	jsTbl[#jsTbl + 1] = 'elm.setAttribute("preload", "none");'
+	jsTbl[#jsTbl + 1] = 'elm.setAttribute("controls", "controls");'
+	jsTbl[#jsTbl + 1] = 'elm.setAttribute("controlsList", "nodownload noremoteplayback");'
+
+	return table.concat(jsTbl, '\n')
 end
 
 -- Generates JS code that creates a message element based on 'contents'.

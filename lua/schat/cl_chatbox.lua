@@ -59,12 +59,23 @@ function toggleEmojiPanel() {
 	setEmojiPanelVisible(elmEmojiPanel.style['display'] != 'block');
 }
 
+function filterTempElements(elm) {
+	for (var i = 0; i < elm.children.length; i++) {
+		var child = elm.children[i];
+
+		if (child.className == 'media-player') {
+			elm.removeChild(child);
+		}
+	}
+}
+
 function appendMessageBlock(block, showTemporary) {
 	var wasAtBottom = isScrollAtBottom();
 	var blockCopy;
 
 	if (showTemporary) {
 		blockCopy = block.cloneNode(true);
+		filterTempElements(blockCopy);
 		elmTemp.appendChild(blockCopy);
 	}
 
@@ -137,7 +148,6 @@ console.log('Ready.');
 }
 
 body {
-	background-color: rgba(0,0,0,0);
 	overflow: hidden;
 	width: 100%;
 	height: 100%;
@@ -340,6 +350,11 @@ img {
 	margin: 2px;
 	border-radius: 4px;
 	font-size: 95%;
+}
+
+.media-player {
+	display: block;
+	width: 80%;
 }
 
 /****** Text effects ******/
