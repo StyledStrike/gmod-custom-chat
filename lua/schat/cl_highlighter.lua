@@ -29,7 +29,10 @@ local keywords = {
 	['while'] = 'keyword',
 	['continue'] = 'keyword',
 	['var'] = 'keyword',
-	['print'] = 'func'
+	['print'] = 'func',
+	['true'] = 'const',
+	['false'] = 'const',
+	['_G'] = 'const'
 }
 
 local colors = {
@@ -38,7 +41,8 @@ local colors = {
 	string = '#CE9178',
 	number = '#97D879',
 	keyword = '#C586C0',
-	func = '#DCDCAA'
+	func = '#DCDCAA',
+	const = '#569CD6'
 }
 
 function SChat:GenerateHighlightTokens(inputStr)
