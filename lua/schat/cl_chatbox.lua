@@ -243,7 +243,6 @@ img {
 	display: inline-block;
 	vertical-align: text-bottom;
 }
-
 .emoji-button {
 	display: inline-block;
 	width: 36px;
@@ -251,7 +250,6 @@ img {
 	margin: 4px;
 	cursor: pointer;
 }
-
 .emoji-category {
 	width: 100%;
 	height: 22px;
@@ -282,37 +280,45 @@ img {
 .embed {
 	display: block;
 	padding: 2px;
-	margin: 2px;
-	font-family: "monospace";
+
 	border: solid;
 	border-radius: 4px;
 	border-width: 1px;
 	border-color: #202225;
+
 	background-color: #2F3136;
-	height: 66px;
 	cursor: pointer;
 }
-.embed > img {
-	display: block;
-	float: left;
-	width: 107px;
-	height: 60px;
+.embed-thumb, .embed-body {
+	display: inline-block;
+	vertical-align: middle;
 }
-.embed > h3 {
-	display: block;
-	position: relative;
-	top: 10px;
-	left: 10px;
-	font-size: 18px;
+.embed-thumb {
+	max-width: 20%;
+	display: inline-block;
 }
-.embed > p {
-	display: block;
-	position: relative;
-	top: 10px;
-	left: 10px;
-	font-size: 14px;
+.embed-body {
+	color: #ffffff;
+	margin-left: 8px;
+	width: 60%;
+}
+.embed-body > h1 {
+	font-size: 90%;
 	color: #3264ff;
-	word-break: "break-all";
+}
+.embed-body > h2 {
+	font-size: 80%;
+}
+.embed-body > i {
+	display: block;
+	font-size: 14px;
+	color: #cccccc;
+}
+
+.link {
+	display: inline-block;
+	color: #3264ff;
+	cursor: pointer;
 }
 
 .spoiler {

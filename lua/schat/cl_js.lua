@@ -95,18 +95,10 @@ local templates = {
 
 			elseif urlType == 'audio' and SChat.chatBox then
 				return JSBuilder:CreateAudioPlayer(val, font)
+
+			else
+				return JSBuilder:CreateEmbed(val)
 			end
-		end
-
-		local ytVideoId = string.match(val, 'youtube.com/watch%?v=(.+)')
-
-		if not ytVideoId then
-			ytVideoId = string.match(val, 'youtu.be/(.+)')
-		end
-
-		if ytVideoId and #ytVideoId == 11 then
-			return JSBuilder:CreateEmbedLink('https://img.youtube.com/vi/' .. ytVideoId .. '/hqdefault.jpg',
-				'Youtube URL', val)
 		end
 
 		return JSBuilder:CreateText(val, font, val)
@@ -161,6 +153,87 @@ local fontNames = {
 	['sugoe'] = 'Sugoe Script',
 	['roboto'] = 'Roboto'
 }
+
+-- Received a response from our metadata fetcher
+function JSBuilder:OnHTTPResponse(embedId, body, url)
+	local metaTags = {}
+	local metaPatt = '<meta[%g%s]->'
+
+	for s in string.gmatch(body, metaPatt) do
+		metaTags[#metaTags + 1] = s
+	end
+
+	if #metaTags == 0 then return end
+
+	local props = {}
+
+	for _, meta in ipairs(metaTags) do
+		-- try to find any content on this meta tag
+		local _, _, content = string.find(meta, 'content="([%g%s]+)"')
+
+		-- try to find the meta tag name for Facebook
+		local _, _, name = string.find(meta, 'property="og:([%g]-)"')
+
+		-- try to find the meta tag name for Twitter
+		if not name then
+			_, _, name = string.find(meta, 'name="twitter:([%g]-)"')
+		end
+
+		if name and content then
+			props[name] = content
+		end
+	end
+
+	local _, site = string.match(url, '^(%w-)://([^/]*)/?')
+
+	local jsTbl = {[[var embeds = document.getElementsByClassName("]] .. embedId .. [[");
+
+		for (var i = 0; i < embeds.length; i++) {
+			var elm = embeds[i];
+			elm.textContent = "";
+			elm.className = "embed ]] .. embedId .. [[";]]}
+
+	if props['image'] then
+		jsTbl[#jsTbl + 1] = self:CreateElement('img', 'elmImg', 'elm', {
+			className = { value = 'embed-thumb' },
+			src = { value = str_jssafe(props['image']) }
+		})
+	end
+
+	jsTbl[#jsTbl + 1] = self:CreateElement('section', 'elmEmbedBody', 'elm', {
+		className = { value = 'embed-body' }
+	})
+
+	if props['site_name'] then
+		jsTbl[#jsTbl + 1] = self:CreateElement('h1', 'elmName', 'elmEmbedBody', {
+			textContent = { value = str_jssafe(props['site_name']) }
+		})
+	end
+
+	local title = props['title'] or site
+
+	if title:len() > 50 then
+		title = title:Left(47) .. '...'
+	end
+
+	jsTbl[#jsTbl + 1] = self:CreateElement('h2', 'elmTitle', 'elmEmbedBody', {
+		textContent = { value = str_jssafe(title) }
+	})
+
+	local desc = props['description'] or url
+
+	if desc:len() > 100 then
+		desc = desc:Left(97) .. '...'
+	end
+
+	jsTbl[#jsTbl + 1] = self:CreateElement('i', 'elmDesc', 'elmEmbedBody', {
+		textContent = { value = str_jssafe(desc) }
+	})
+
+	jsTbl[#jsTbl + 1] = '}'
+
+	SChat.chatBox:QueueJavascript( table.concat(jsTbl, '\n') )
+end
 
 -- Generates JS code that creates a element using the provided properties
 function JSBuilder:CreateElement(tag, var, parentVar, props)
@@ -287,22 +360,36 @@ function JSBuilder:CreateImage(url, link, cssClass, altText)
 end
 
 -- Generates a embed box (with a title and thumbnail)
-function JSBuilder:CreateEmbedLink(iconUrl, title, link)
-	local props = {className = {value = 'embed'}}
+function JSBuilder:CreateEmbed(url)
+	self.lastEmbedId = (self.lastEmbedId or 0) + 1
 
-	props['onclick'] = {
-		type = 'function',
-		value = 'SChatBox.OnClickLink("' .. str_jssafe(link) .. '")'
+	local embedId = 'embed_' .. self.lastEmbedId
+
+	HTTP({
+		url = url,
+		method = 'GET',
+
+		success = function(code, body)
+			code = tostring(code)
+
+			if code == '204' or code:sub(1,1) ~= '2' then
+				return
+			end
+
+			self:OnHTTPResponse(embedId, body, url)
+		end
+	})
+
+	local props = {
+		className = { value = embedId .. ' link' },
+		textContent = { value = url },
+		onclick = {
+			type = 'function',
+			value = 'SChatBox.OnClickLink("' .. str_jssafe(url) .. '")'
+		}
 	}
 
-	local strTbl = {
-		self:CreateElement('span', 'elm', self.rootMessageElement, props),
-		self:CreateElement('img', 'elmIcon', 'elm',	{src			= {value = iconUrl} }),
-		self:CreateElement('h3', 'elmTitle', 'elm',	{textContent	= {value = title}	}),
-		self:CreateElement('p', 'elmLink', 'elm',	{textContent	= {value = link}	})
-	}
-
-	return table.concat(strTbl, '\n')
+	return self:CreateElement('p', 'elm', self.rootMessageElement, props)
 end
 
 -- Generates a marquee-like animated text (moving right to left) 
