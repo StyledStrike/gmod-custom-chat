@@ -19,8 +19,8 @@ local whitelist = {
 	simple [[onedrive.live.com/redir]],
 
 	-- Google Drive
-	simple [[docs.google.com/uc]],
-	simple [[drive.google.com/uc]],
+	simple [[docs.google.com]],
+	simple [[drive.google.com]],
 
 	-- Backblaze B2 (ShareX)
 	pattern [[(%w+)%.backblazeb2%.com/(.+)]],
@@ -35,9 +35,9 @@ local whitelist = {
 	simple [[bitbucket.org]],
 
 	-- Github
+	simple [[github.com]],
 	simple [[raw.githubusercontent.com]],
 	simple [[gist.githubusercontent.com]],
-	simple [[raw.github.com]],
 	simple [[cloud.githubusercontent.com]],
 	simple [[user-images.githubusercontent.com]],
 	pattern [[avatars(%d*)%.githubusercontent%.com/(.+)]],
@@ -56,6 +56,7 @@ local whitelist = {
 	simple [[images.akamai.steamusercontent.com]],
 	simple [[steamuserimages-a.akamaihd.net]],
 	simple [[steamcdn-a.akamaihd.net]],
+	simple [[steamcommunity.com]],
 
 	-- Discord
 	pattern [[cdn[%w-_]*.discordapp%.com/(.+)]],
@@ -89,13 +90,28 @@ local whitelist = {
 	simple [[emoji.gg]],
 
 	-- Tenor
-	pattern [[[%a%d]+%.tenor%.com/.+]],
+	pattern [[tenor%.com/.+]],
+
+	-- Youtube
+	pattern [[([%w-_]+)%.youtube%.com/(.+)]],
 
 	-- Pinterest
 	simple [[i.pinimg.com]],
 
 	-- ImgBB
-	simple [[i.ibb.co]]
+	simple [[i.ibb.co]],
+
+	-- Stack Overflow
+	simple [[stackoverflow.com]],
+
+	-- Bandcamp
+	pattern [[([%w-_]+)%.bandcamp%.com/(.+)]],
+
+	-- Twitter
+	pattern [[([%w-_]+)%.twitter%.com/(.+)]],
+
+	-- Deviant Art
+	pattern [[([%w-_]+)%.deviantart%.com/(.+)]]
 }
 
 function SChat:IsWhitelisted(url)
@@ -121,6 +137,8 @@ function SChat:IsWhitelisted(url)
 			return true
 		end
 	end
+
+	print('blocked', url)
 
 	return false
 end
