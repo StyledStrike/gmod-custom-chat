@@ -103,7 +103,7 @@ local whitelist = {
 	simple [[i.ibb.co]],
 
 	-- Stack Overflow
-	simple [[stackoverflow.com]],
+	pattern [[([%w-_]*)([%.]-)stackoverflow%.com/(.+)]],
 
 	-- Bandcamp
 	pattern [[([%w-_]+)%.bandcamp%.com/(.+)]],
@@ -115,7 +115,10 @@ local whitelist = {
 	pattern [[([%w-_]+)%.deviantart%.com/(.+)]],
 
 	-- Soundcloud
-	simple [[soundcloud.com]]
+	simple [[soundcloud.com]],
+
+	-- Twitch
+	pattern [[([%w-_]*)([%.]-)twitch%.tv/(.+)]]
 }
 
 function SChat:IsWhitelisted(url)
@@ -141,8 +144,6 @@ function SChat:IsWhitelisted(url)
 			return true
 		end
 	end
-
-	print('blocked', url)
 
 	return false
 end
