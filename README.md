@@ -5,10 +5,11 @@ A simple and customizable chat box that can format text, display images and emoj
 ### Features
 
 * Customizable
-* Fancy YouTube links
+* Supports embeds
+* Code blocks
 * Find text with _Ctrl+F_
 * Emojis (server admins can add more)
-* Display icons from prop models
+* Display icons for prop models
 * Show images from URLs (Only loads images from trusted websites by default)
 * Keeps the default "hands on the ear" behaviour
 * _(Admin Only)_ Suggest a theme to be used on your server
@@ -41,6 +42,6 @@ _(A list of fonts can be found on the workshop page.)_
 
 ---
 
-### Whitelisted Image Hosting Services
+### Whitelisted Sites
 
 By default, the chat box will only load pictures from trusted websites. You can open a pull request to add more, or send a request [here](https://steamcommunity.com/workshop/filedetails/discussion/2799307109/3272437487156558008/).
