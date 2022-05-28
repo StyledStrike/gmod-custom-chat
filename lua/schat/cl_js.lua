@@ -169,7 +169,7 @@ function JSBuilder:OnHTTPResponse(embedId, body, url)
 
 	for _, meta in ipairs(metaTags) do
 		-- try to find any content on this meta tag
-		local _, _, content = string.find(meta, 'content="([%g%s]+)"')
+		local _, _, content = string.find(meta, 'content="([%g%s]-)"')
 
 		-- try to find the meta tag name for Facebook
 		local _, _, name = string.find(meta, 'property="og:([%g]-)"')
