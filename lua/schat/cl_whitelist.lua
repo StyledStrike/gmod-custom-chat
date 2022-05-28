@@ -93,6 +93,7 @@ local whitelist = {
 	pattern [[tenor%.com/.+]],
 
 	-- Youtube
+	simple [[youtu.be]],
 	pattern [[([%w-_]+)%.youtube%.com/(.+)]],
 
 	-- Pinterest
