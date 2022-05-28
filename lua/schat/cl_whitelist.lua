@@ -111,7 +111,10 @@ local whitelist = {
 	pattern [[([%w-_]+)%.twitter%.com/(.+)]],
 
 	-- Deviant Art
-	pattern [[([%w-_]+)%.deviantart%.com/(.+)]]
+	pattern [[([%w-_]+)%.deviantart%.com/(.+)]],
+
+	-- Soundcloud
+	simple [[soundcloud.com]]
 }
 
 function SChat:IsWhitelisted(url)
