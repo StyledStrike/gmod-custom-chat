@@ -110,7 +110,7 @@ function SChat:CreatePanels()
 		derma.SkinHook('Paint', 'TextEntry', s, w, h)
 	end
 
-	self.entry.OnTextChanged = function(s)
+	self.entry.OnChange = function(s)
 		if s.GetText then
 			local text = s:GetText() or ''
 			local _, nLines = string.gsub(text, '\n', '\n')
