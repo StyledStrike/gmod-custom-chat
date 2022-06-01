@@ -3,9 +3,61 @@
 ]]
 resource.AddWorkshop('2799307109')
 
+util.AddNetworkString('schat.say')
 util.AddNetworkString('schat.istyping')
+
 util.AddNetworkString('schat.set_theme')
 util.AddNetworkString('schat.set_emojis')
+
+-- handle networking of messages
+local sayCooldown = {}
+
+function SChat:GetChannelPlayers(channel, teamFilter)
+	local targets = {}
+
+	if channel == self.EVERYONE then
+		targets = player.GetHumans()
+
+	elseif channel == self.TEAM then
+		targets = team.GetPlayers(teamFilter)
+	end
+
+	return targets
+end
+
+net.Receive('schat.say', function(_, ply)
+	local id = ply:AccountID()
+	local nextSay = sayCooldown[id] or 0
+
+	if RealTime() < nextSay then return end
+
+	sayCooldown[id] = RealTime() + 0.5
+
+	local channel = net.ReadUInt(4)
+	local text = net.ReadString()
+
+	if text:len() > SChat.MAX_MESSAGE_LEN then
+		text = text:Left(SChat.MAX_MESSAGE_LEN)
+	end
+
+	text = SChat.CleanupString(text)
+
+	text = hook.Run('PlayerSay', ply, text, channel ~= SChat.EVERYONE)
+	if text == '' then return end
+
+	local targets = SChat:GetChannelPlayers(channel, ply:Team())
+	if #targets == 0 then return end
+
+	net.Start('schat.say', false)
+	net.WriteUInt(channel, 4)
+	net.WriteString(text)
+	net.WriteEntity(ply)
+	net.Send(targets)
+end)
+
+hook.Add('PlayerDisconnected', 'schat_PlayerDisconnected', function(ply)
+	sayCooldown[ply:AccountID()] = nil
+end)
 
 -- lets restore the "hands on the ear"
 -- behaviour from the default chat.

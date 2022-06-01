@@ -1,6 +1,6 @@
 CreateClientConVar('disable_customchat', '0', true, false)
 
--- Clear stuff when loading this script (helps during development)
+-- clear stuff when loading this script (helps during development)
 if IsValid(SChat.frame) then
 	chat.Close()
 	cvars.RemoveChangeCallback('disable_customchat', 'disable_customchat_changed')
@@ -103,6 +103,7 @@ function SChat:CreatePanels()
 	self.entry:SetPaintBackground(false)
 	self.entry:SetMaximumCharCount(self.MAX_MESSAGE_LEN)
 	self.entry:SetTabbingDisabled(true)
+	self.entry:SetMultiline(true)
 	self.entry:Dock(FILL)
 
 	self.entry.Paint = function(s, w, h)
@@ -110,8 +111,14 @@ function SChat:CreatePanels()
 	end
 
 	self.entry.OnTextChanged = function(s)
-		if s and s.GetText then
-			hook.Run('ChatTextChanged', s:GetText() or '')
+		if s.GetText then
+			local text = s:GetText() or ''
+			local _, nLines = string.gsub(text, '\n', '\n')
+
+			hook.Run('ChatTextChanged', text)
+
+			nLines = math.Clamp(nLines + 1, 1, 5)
+			self.entryDock:SetTall(20 * nLines)
 		end
 	end
 
@@ -136,7 +143,7 @@ function SChat:CreatePanels()
 				self:AppendAtCaret('   ')
 			end
 
-		elseif code == KEY_ENTER then
+		elseif code == KEY_ENTER and not input.IsShiftDown() then
 			self:OnPressEnter()
 		end
 	end
@@ -182,11 +189,15 @@ end
 function SChat:OnPressEnter()
 	if not self.isOpen then return end
 
-	local text = string.Trim(self.entry:GetText())
+	local text = self.CleanupString(self.entry:GetText())
 
 	if string.len(text) > 0 then
-		local commandStr = self.teamMode and 'say_team "%s"' or 'say "%s"'
-		LocalPlayer():ConCommand( string.format(commandStr, text) )
+		local channel = self.teamMode and self.TEAM or self.EVERYONE
+
+		net.Start('schat.say', false)
+		net.WriteUInt(channel, 4)
+		net.WriteString(text)
+		net.SendToServer()
 	end
 
 	chat.Close()
@@ -467,9 +478,11 @@ local schatOpen = function()
 	-- (refering to SetMouseInputEnabled/SetKeyboardInputEnabled)
 	SChat.frame:MakePopup()
 	SChat.entry:RequestFocus()
+	SChat.entry:SetText('')
+	SChat.entryDock:SetTall(20)
 	SChat.chatBox:ScrollToBottom()
 
-	-- Make sure other addons know we are chatting
+	-- make sure other addons know we are chatting
 	hook.Run('StartChat')
 
 	net.Start('schat.istyping', false)
@@ -487,11 +500,11 @@ end
 local function schat_PlayerBindPress(_,bind,_)
 	if bind ~= 'messagemode' and bind ~= 'messagemode2' then return end
 
-	-- Dont open the chat if Starfall is blocking input
+	-- dont open the chat if Starfall is blocking input
 	local existingBindHooks = hook.GetTable()['PlayerBindPress']
 	if existingBindHooks['sf_keyboard_blockinput'] then return end
 
-	-- Dont open if anything else blocks input
+	-- dont open if anything else blocks input
 	local block = hook.Run('SChat_BlockChatInput')
 	if block == true then return end
 
@@ -508,7 +521,7 @@ end
 local function schat_Think()
 	if not SChat.chatBox then return end
 
-	-- Hide the chat box if the game is paused
+	-- hide the chat box if the game is paused
 	if gui.IsGameUIVisible() then
 		if SChat.isOpen then
 			chat.Close()
@@ -577,7 +590,7 @@ cvars.AddChangeCallback('cl_drawhud', function(_, _, newValue)
 	end
 end, 'schat_cl_drawhud_changed')
 
--- Custom 'IsTyping' behavior
+-- custom 'IsTyping' behavior
 local PLY = FindMetaTable('Player')
 
 PLY.DefaultIsTyping = PLY.DefaultIsTyping or PLY.IsTyping
@@ -586,7 +599,7 @@ function PLY:IsTyping()
 	return self:GetNWBool('IsTyping', false)
 end
 
--- Received server theme
+-- received server theme
 net.Receive('schat.set_theme', function()
 	SChat.serverTheme = net.ReadString()
 
@@ -595,7 +608,7 @@ net.Receive('schat.set_theme', function()
 	end
 end)
 
--- Received server emojis
+-- received server emojis
 net.Receive('schat.set_emojis', function()
 	Settings:ClearCustomEmojis()
 	SChat.PrintF('Received emojis from the server.')
@@ -616,4 +629,17 @@ net.Receive('schat.set_emojis', function()
 	if IsValid(SChat.chatBox) then
 		SChat.chatBox:UpdateEmojiPanel()
 	end
+end)
+
+-- received a message
+net.Receive('schat.say', function()
+	local channel = net.ReadUInt(4)
+	local text = net.ReadString()
+	local ply = net.ReadEntity()
+
+	if not IsValid(ply) then return end
+
+	local isDead = not ply:Alive()
+
+	hook.Run('OnPlayerChat', ply, text, channel ~= SChat.EVERYONE, isDead)
 end)

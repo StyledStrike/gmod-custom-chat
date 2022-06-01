@@ -145,6 +145,7 @@ console.log('Ready.');
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	font-family: 'Roboto', sans-serif;
+	white-space: pre-wrap;
 }
 
 body {
@@ -183,7 +184,6 @@ img {
 	padding: 2px;
 
 	color: white;
-	white-space: pre-line;
 	word-break: break-word;
 	text-shadow: 1px 1px 2px #000, 0px 0px 2px #000;
 }
@@ -264,7 +264,6 @@ img {
 	display: block;
 	margin: 2px;
 	font-family: "monospace";
-	white-space: nowrap;
 	overflow: hidden;
 	background-color: rgba(32, 34, 37, 0.4);
 }
@@ -273,6 +272,7 @@ img {
 	bottom: 0px;
 	padding-left: 100%;
 	text-indent: 0;
+	white-space: nowrap;
 	-webkit-animation: wk_anim_advert 10s linear infinite;
 	animation: ch_anim_advert 10s linear infinite;
 }
