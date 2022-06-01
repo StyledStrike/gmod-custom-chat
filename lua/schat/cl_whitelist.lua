@@ -90,7 +90,8 @@ local whitelist = {
 	simple [[emoji.gg]],
 
 	-- Tenor
-	pattern [[tenor%.com/.+]],
+	simple [[tenor.com]],
+	pattern [[[%w-_]-%.tenor%.com/.+]],
 
 	-- Youtube
 	simple [[youtu.be]],
