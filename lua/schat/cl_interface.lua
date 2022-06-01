@@ -81,14 +81,7 @@ function SChat:CreatePanels()
 	self.chatBox:UpdateEmojiPanel()
 
 	self.chatBox.OnSelectEmoji = function(_, id)
-		local txt = self.entry:GetText() .. ':' .. id .. ':'
-
-		if string.len(txt) < self.entry:GetMaximumCharCount() then
-			self.entry:SetText(txt)
-			self.entry:SetCaretPos(string.len(txt))
-		else
-			surface.PlaySound('resource/warning.wav')
-		end
+		self:AppendAtCaret(':' .. id .. ':')
 	end
 
 	self.chatBox.OnPressEnter = function()
@@ -133,10 +126,14 @@ function SChat:CreatePanels()
 			end
 
 		elseif code == KEY_TAB then
-			local replaceText = hook.Run('OnChatTab', s:GetText() or '')
-			if replaceText and type(replaceText) == 'string' then
+			local text = s:GetText()
+			local replaceText = hook.Run('OnChatTab', text)
+
+			if type(replaceText) == 'string' and replaceText ~= text:Trim() then
 				s:SetText(replaceText)
 				s:SetCaretPos(string.len(replaceText))
+			else
+				self:AppendAtCaret('   ')
 			end
 
 		elseif code == KEY_ENTER then
@@ -165,6 +162,21 @@ function SChat:CreatePanels()
 	self:ApplyTheme(true)
 	self:SuggestServerTheme()
 	self:SetInputEnabled(false)
+end
+
+function SChat:AppendAtCaret(text)
+	if not self.isOpen then return end
+
+	local caretPos = self.entry:GetCaretPos()
+	local oldText = self.entry:GetText()
+	local newText = oldText:sub(1, caretPos) .. text .. oldText:sub(caretPos + 1)
+
+	if string.len(newText) < self.entry:GetMaximumCharCount() then
+		self.entry:SetText(newText)
+		self.entry:SetCaretPos(caretPos + text:len())
+	else
+		surface.PlaySound('resource/warning.wav')
+	end
 end
 
 function SChat:OnPressEnter()
