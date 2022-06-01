@@ -108,7 +108,7 @@ function SChat:CreatePanels()
 	self.entry:SetFont('ChatFont')
 	self.entry:SetDrawBorder(false)
 	self.entry:SetPaintBackground(false)
-	self.entry:SetMaximumCharCount(126)
+	self.entry:SetMaximumCharCount(self.MAX_MESSAGE_LEN)
 	self.entry:SetTabbingDisabled(true)
 	self.entry:Dock(FILL)
 

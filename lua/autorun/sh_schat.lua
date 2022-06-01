@@ -1,4 +1,6 @@
-SChat = {}
+SChat = {
+	MAX_MESSAGE_LEN = 500
+}
 
 -- You can override the 'CanSet' functions if you want.
 -- Just make sure to do it both on SERVER and CLIENT
