@@ -145,6 +145,7 @@ function SChat:CreatePanels()
 
 		elseif code == KEY_ENTER and not input.IsShiftDown() then
 			self:OnPressEnter()
+			return true
 		end
 	end
 
@@ -478,7 +479,6 @@ local schatOpen = function()
 	-- (refering to SetMouseInputEnabled/SetKeyboardInputEnabled)
 	SChat.frame:MakePopup()
 	SChat.entry:RequestFocus()
-	SChat.entry:SetText('')
 	SChat.entryDock:SetTall(20)
 	SChat.chatBox:ScrollToBottom()
 
