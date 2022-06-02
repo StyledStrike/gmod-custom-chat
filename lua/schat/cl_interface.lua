@@ -125,7 +125,6 @@ function SChat:CreatePanels()
 	self.entry.OnKeyCodeTyped = function(s, code)
 		if code == KEY_ESCAPE then
 			chat.Close()
-			gui.HideGameUI()
 
 		elseif code == KEY_F then
 			if input.IsControlDown() then
