@@ -18,6 +18,10 @@ local whitelist = {
 	-- Onedrive
 	simple [[onedrive.live.com/redir]],
 
+	-- Google
+	simple [[google.com]],
+	simple [[www.google.com]],
+
 	-- Google Drive
 	simple [[docs.google.com]],
 	simple [[drive.google.com]],
