@@ -12,17 +12,28 @@ util.AddNetworkString('schat.set_emojis')
 -- handle networking of messages
 local sayCooldown = {}
 
-function SChat:GetChannelPlayers(channel, teamFilter)
+-- Gets a list of all players who can
+-- listen to messages from a "speaker".
+function SChat:GetListeners(speaker, text, channel)
 	local targets = {}
 
 	if channel == self.EVERYONE then
 		targets = player.GetHumans()
 
 	elseif channel == self.TEAM then
-		targets = team.GetPlayers(teamFilter)
+		targets = team.GetPlayers(speaker:Team())
 	end
 
-	return targets
+	local listeners = {}
+	local teamOnly = channel ~= SChat.EVERYONE
+
+	for _, ply in ipairs(targets) do
+		if hook.Run('PlayerCanSeePlayersChat', text, teamOnly, ply, speaker) then
+			listeners[#listeners + 1] = ply
+		end
+	end
+
+	return listeners
 end
 
 net.Receive('schat.say', function(_, ply)
@@ -45,7 +56,7 @@ net.Receive('schat.say', function(_, ply)
 	text = hook.Run('PlayerSay', ply, text, channel ~= SChat.EVERYONE)
 	if text == '' then return end
 
-	local targets = SChat:GetChannelPlayers(channel, ply:Team())
+	local targets = SChat:GetListeners(ply, text, channel)
 	if #targets == 0 then return end
 
 	net.Start('schat.say', false)
