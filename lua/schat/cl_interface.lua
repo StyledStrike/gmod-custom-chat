@@ -500,6 +500,9 @@ local function schat_PlayerBindPress(_, bind, pressed)
 	if not pressed then return end
 	if bind ~= 'messagemode' and bind ~= 'messagemode2' then return end
 
+	-- dont open if playable piano is blocking input
+	if IsValid(LocalPlayer().Instrument) then return end
+
 	-- dont open if Starfall is blocking input
 	local existingBindHooks = hook.GetTable()['PlayerBindPress']
 	if existingBindHooks['sf_keyboard_blockinput'] then return end
