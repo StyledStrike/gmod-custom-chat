@@ -496,10 +496,11 @@ local function schat_ChatText(_, _, text, textType)
 	end
 end
 
-local function schat_PlayerBindPress(_,bind,_)
+local function schat_PlayerBindPress(_, bind, pressed)
+	if not pressed then return end
 	if bind ~= 'messagemode' and bind ~= 'messagemode2' then return end
 
-	-- dont open the chat if Starfall is blocking input
+	-- dont open if Starfall is blocking input
 	local existingBindHooks = hook.GetTable()['PlayerBindPress']
 	if existingBindHooks['sf_keyboard_blockinput'] then return end
 
