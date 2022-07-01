@@ -446,7 +446,7 @@ local schatClose = function()
 	hook.Run('FinishChat')
 	hook.Run('ChatTextChanged', '')
 
-	net.Start('schat.istyping', false)
+	net.Start('schat.is_typing', false)
 	net.WriteBool(false)
 	net.SendToServer()
 end
@@ -485,7 +485,7 @@ local schatOpen = function()
 	-- make sure other addons know we are chatting
 	hook.Run('StartChat')
 
-	net.Start('schat.istyping', false)
+	net.Start('schat.is_typing', false)
 	net.WriteBool(true)
 	net.SendToServer()
 end
