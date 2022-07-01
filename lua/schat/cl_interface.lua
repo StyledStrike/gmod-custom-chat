@@ -1,9 +1,9 @@
-CreateClientConVar('disable_customchat', '0', true, false)
+CreateClientConVar('customchat_disable', '0', true, false)
 
 -- clear stuff when loading this script (helps during development)
 if IsValid(SChat.frame) then
 	chat.Close()
-	cvars.RemoveChangeCallback('disable_customchat', 'disable_customchat_changed')
+	cvars.RemoveChangeCallback('customchat_disable', 'customchat_disable_changed')
 
 	SChat.frame:SetMouseInputEnabled(false)
 	SChat.frame:SetKeyboardInputEnabled(false)
@@ -572,17 +572,17 @@ function SChat:Disable()
 	end
 end
 
-if GetConVar('disable_customchat'):GetInt() == 0 then
+if GetConVar('customchat_disable'):GetInt() == 0 then
 	SChat:Enable()
 end
 
-cvars.AddChangeCallback('disable_customchat', function(convar_name, value_old, value_new)
+cvars.AddChangeCallback('customchat_disable', function(convar_name, value_old, value_new)
 	if tonumber(value_new) == 0 then
 		SChat:Enable()
 	else
 		SChat:Disable()
 	end
-end, 'disable_customchat_changed')
+end, 'customchat_disable_changed')
 
 -- remove existing temporary messages when cl_drawhud is 0
 cvars.RemoveChangeCallback('schat_cl_drawhud_changed')
