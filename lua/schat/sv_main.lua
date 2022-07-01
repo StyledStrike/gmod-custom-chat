@@ -4,7 +4,7 @@
 resource.AddWorkshop('2799307109')
 
 util.AddNetworkString('schat.say')
-util.AddNetworkString('schat.istyping')
+util.AddNetworkString('schat.is_typing')
 
 util.AddNetworkString('schat.set_theme')
 util.AddNetworkString('schat.set_emojis')
@@ -80,7 +80,7 @@ function PLY:IsTyping()
 	return self:GetNWBool('IsTyping', false)
 end
 
-net.Receive('schat.istyping', function(_, ply)
+net.Receive('schat.is_typing', function(_, ply)
 	ply:SetNWBool('IsTyping', net.ReadBool())
 end)
 
