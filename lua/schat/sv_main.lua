@@ -54,7 +54,7 @@ net.Receive('schat.say', function(_, ply)
 	text = SChat.CleanupString(text)
 
 	text = hook.Run('PlayerSay', ply, text, channel ~= SChat.EVERYONE)
-	if text == '' then return end
+	if not isstring(text) or text == '' then return end
 
 	local targets = SChat:GetListeners(ply, text, channel)
 	if #targets == 0 then return end
