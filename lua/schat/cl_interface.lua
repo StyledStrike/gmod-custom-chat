@@ -251,7 +251,7 @@ function SChat:OpenContextMenu(data, isLink)
 
 	optionsMenu:AddOption('Find...', function()
 		self.chatBox:FindText()
-	end):SetIcon('icon16/eye.png')
+	end):SetIcon('icon16/zoom.png')
 
 	optionsMenu:AddOption('Clear everything', function()
 		self.chatBox:ClearEverything()
@@ -285,7 +285,7 @@ function SChat:OpenContextMenu(data, isLink)
 	if Settings.allow_any_url then
 		optionsMenu:AddOption('Block images from unknown URLs', function()
 			Settings:SetWhitelistEnabled(true)
-		end):SetIcon('icon16/image_delete.png')
+		end):SetIcon('icon16/picture_delete.png')
 	else
 		optionsMenu:AddOption('Allow images from unknown URLs', function()
 			Derma_Query([[This option will allow images to be loaded from any URL.
@@ -293,7 +293,7 @@ This means that no matter which site they come from, you will load it, and it CA
 			'Allow unknown image URLs', 'Allow anyway', function()
 				Settings:SetWhitelistEnabled(false)
 			end, 'Cancel')
-		end):SetIcon('icon16/image_add.png')
+		end):SetIcon('icon16/picture_add.png')
 	end
 
 	optionsMenu:AddSpacer()
@@ -317,7 +317,7 @@ This means that no matter which site they come from, you will load it, and it CA
 		else
 			Theme:ShowCustomizePanel()
 		end
-	end):SetIcon('icon16/image_edit.png')
+	end):SetIcon('icon16/picture_edit.png')
 
 	local menuReset, btnReset = optionsMenu:AddSubMenu('Reset...')
 	btnReset:SetIcon('icon16/arrow_refresh.png')
