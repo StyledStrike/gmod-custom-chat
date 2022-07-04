@@ -163,6 +163,8 @@ function Theme:ShowCustomizePanel()
 	pnlOptions:SetTall(22)
 	pnlOptions:Dock(BOTTOM)
 
+	pnlOptions.Paint = nil
+
 	local btnReset = vgui.Create('DButton', pnlOptions)
 	btnReset:SetIcon('icon16/arrow_undo.png')
 	btnReset:SetTooltip('Reset')
@@ -181,6 +183,10 @@ function Theme:ShowCustomizePanel()
 		end, 'No')
 	end
 
+	btnReset.Paint = function(s, w, h)
+		draw.RoundedBox(0, 0, 0, w, h, Color(0, 0, 0, 200))
+	end
+
 	local btnExport = vgui.Create('DButton', pnlOptions)
 	btnExport:SetIcon('icon16/application_side_contract.png')
 	btnExport:SetTooltip('Export')
@@ -192,6 +198,10 @@ function Theme:ShowCustomizePanel()
 		self:ShowExportPanel()
 	end
 
+	btnExport.Paint = function(s, w, h)
+		draw.RoundedBox(0, 0, 0, w, h, Color(0, 0, 0, 200))
+	end
+
 	local btnImport = vgui.Create('DButton', pnlOptions)
 	btnImport:SetIcon('icon16/application_side_expand.png')
 	btnImport:SetTooltip('Import')
@@ -201,6 +211,10 @@ function Theme:ShowCustomizePanel()
 
 	btnImport.DoClick = function()
 		self:ShowImportPanel()
+	end
+
+	btnImport.Paint = function(s, w, h)
+		draw.RoundedBox(0, 0, 0, w, h, Color(0, 0, 0, 200))
 	end
 
 	if game.SinglePlayer() then return end
@@ -266,6 +280,7 @@ function Theme:ShowExportPanel()
 	local lblExportHelp = vgui.Create('DLabel', frameExport)
 	lblExportHelp:SetFont('Trebuchet18')
 	lblExportHelp:SetText('Use this code to share your current theme with others!')
+	lblExportHelp:SetTextColor(Color(255, 255, 255))
 	lblExportHelp:Dock(TOP)
 	lblExportHelp:SetContentAlignment(5)
 
@@ -300,6 +315,7 @@ function Theme:ShowImportPanel()
 	local lblImportHelp = vgui.Create('DLabel', frameImport)
 	lblImportHelp:SetFont('Trebuchet18')
 	lblImportHelp:SetText('Paste the theme code here.')
+	lblImportHelp:SetTextColor(Color(255, 255, 255))
 	lblImportHelp:Dock(TOP)
 	lblImportHelp:SetContentAlignment(5)
 
