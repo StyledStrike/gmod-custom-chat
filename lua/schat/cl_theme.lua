@@ -262,6 +262,10 @@ function Theme:ShowCustomizePanel()
 
 		Derma_Query(query, 'Set Server Theme', unpack(actions))
 	end
+
+	btnSetServerTheme.Paint = function(s, w, h)
+		draw.RoundedBox(0, 0, 0, w, h, Color(0, 0, 0, 200))
+	end
 end
 
 function Theme:ShowExportPanel()
