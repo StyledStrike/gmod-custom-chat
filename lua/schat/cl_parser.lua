@@ -114,6 +114,5 @@ function SChat:ParseString(inputStr, outFunc)
 	-- output any text after the last range
 	if lastRangeEnd - 1 < string.len(inputStr) then
 		outFunc('string', str_sub(inputStr, lastRangeEnd))
-		print('_' .. str_sub(inputStr, lastRangeEnd) .. '_')
 	end
 end
