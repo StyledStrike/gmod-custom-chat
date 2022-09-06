@@ -445,6 +445,12 @@ function SChat:GenerateMessageFromTable(contents)
 		}
 	end
 
+	local playerNicks = {}
+
+	for _, ply in ipairs(player.GetAll()) do
+		playerNicks[ply:Nick()] = true
+	end
+
 	for _, obj in ipairs(contents) do
 		if type(obj) == 'table' then
 			if obj.r and obj.g and obj.b then
@@ -454,8 +460,15 @@ function SChat:GenerateMessageFromTable(contents)
 			end
 
 		elseif type(obj) == 'string' then
-			-- if obj is a string, find more blocks using patterns
-			SChat:ParseString(obj, addBlock)
+			-- if obj contains a player name...
+			if playerNicks[obj] then
+				-- add it right away
+				-- (maybe do a mentions system later?)
+				addBlock('string', obj)
+			else
+				-- otherwise find more blocks using patterns
+				SChat:ParseString(obj, addBlock)
+			end
 
 		elseif type(obj) == 'Player' and IsValid(obj) then
 			local nameColor = team.GetColor(obj:Team())
