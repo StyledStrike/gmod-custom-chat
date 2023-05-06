@@ -194,6 +194,7 @@ hook.Add('ClientSignOnStateChanged', 'schat_ClientStateChanged', function(user, 
 		timer.Simple(0, function(arguments)
 			local ply = Player(user)
 			if not IsValid(ply) then return end
+			if ply:IsBot() then return end
 
 			-- send the server theme (if set)
 			if not table.IsEmpty(Settings.themeData) then
