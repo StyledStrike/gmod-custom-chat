@@ -532,7 +532,7 @@ function SChat:GenerateEmojiList()
         for _, v in ipairs( cat.emojis ) do
             local emojiID
 
-            jsTbl[#jsTbl + 1] = "var emojiElm = document.createElement("img");"
+            jsTbl[#jsTbl + 1] = "var emojiElm = document.createElement('img');"
 
             if type( v ) == "string" then
                 emojiID = v

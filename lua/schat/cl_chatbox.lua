@@ -539,7 +539,7 @@ end
 function SChatBox:SetFontSize( size )
     size = size and math.Round( size ) or 16
     self:QueueJavascript(
-        string.format( "elmMain.style.fontSize = '%spx; elmTemp.style.fontSize = '%spx;", size, size )
+        string.format( "elmMain.style.fontSize = '%spx'; elmTemp.style.fontSize = '%spx';", size, size )
     )
 end
 
