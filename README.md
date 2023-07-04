@@ -1,6 +1,7 @@
 # Custom Chat
 A simple and customizable chat box that can format text, display images and emojis.
 
+[![GLuaLint](https://github.com/StyledStrike/gmod-custom-chat/actions/workflows/glualint.yml/badge.svg)](https://github.com/FPtje/GLuaFixer)
 [![Workshop Page](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-steam-workshop.jross.me%2F2799307109%2Fsubscriptions-text)](https://steamcommunity.com/sharedfiles/filedetails/?id=2799307109)
 
 ### Features
