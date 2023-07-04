@@ -4,6 +4,14 @@ SChat = {
     TEAM = 1
 }
 
+CreateConVar(
+    "custom_chat_safe_mode",
+    "0",
+    bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
+    "[Custom Chat] Enable safe mode to all players. Only display images after clicking them.",
+    0, 1
+)
+
 -- You can override the "CanSet" functions if you want.
 -- Just make sure to do it both on SERVER and CLIENT
 

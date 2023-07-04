@@ -229,7 +229,10 @@ JSBuilder.builders["url"] = function( val, _, font )
 
     if SChat:IsWhitelisted( val ) then
         if urlType == "image" then
-            return JSBuilder:CreateImage( val, val, nil, val )
+            local cvarSafeMode = GetConVar( "custom_chat_safe_mode" )
+            local safeFilter = ( cvarSafeMode and cvarSafeMode:GetInt() or 0 ) > 0
+
+            return JSBuilder:CreateImage( val, val, nil, val, safeFilter )
 
         elseif urlType == "audio" and SChat.chatBox then
             return JSBuilder:CreateAudioPlayer( val, font )
@@ -298,10 +301,10 @@ end
 function JSBuilder:CreateText( text, font, link, color, bgColor, cssClass )
     local lines = { self:CreateElement( "span", "elText" ) }
 
-    AddLine( lines, "elText.textContent = '%s'", SafeString( text ) )
+    AddLine( lines, "elText.textContent = '%s';", SafeString( text ) )
 
     if IsStringValid( font ) then
-        AddLine( lines, "elText.style.fontFamily = '%s'", font )
+        AddLine( lines, "elText.style.fontFamily = '%s';", font )
     end
 
     if IsStringValid( link ) then
@@ -330,17 +333,33 @@ end
 
 -- Returns JS code to create a image element
 -- (optionally, it can act as a clickable link)
-function JSBuilder:CreateImage( url, link, cssClass, altText )
-    local lines = { self:CreateElement( "img", "elImg" ) }
+function JSBuilder:CreateImage( url, link, cssClass, altText, safeFilter )
+    url = SafeString( url )
 
-    AddLine( lines, "elImg.src = '%s'", SafeString( url ) )
+    local lines = {}
+
+    if safeFilter then
+        AddLine( lines, self:CreateElement( "span", "elSafeguard" ) )
+        AddLine( lines, "elSafeguard.className = 'safeguard';" )
+
+        AddLine( lines, self:CreateElement( "img", "elImg", "elSafeguard" ) )
+
+        AddLine( lines, self:CreateElement( "span", "elHint", "elSafeguard" ) )
+        AddLine( lines, "elHint.className = 'safeguard-hint';" )
+        AddLine( lines, "elHint.textContent = 'Click to reveal image';" )
+        AddLine( lines, "elHint.onclick = function(){ elSafeguard.removeChild(elHint); };", link )
+    else
+        AddLine( lines, self:CreateElement( "img", "elImg" ) )
+    end
+
+    AddLine( lines, "elImg.src = '%s';", url )
 
     if link then
         link = SafeString( link )
 
-        AddLine( lines, "elImg.onclick = function(){ SChatBox.OnClickLink('%s') };", SafeString( link ) )
-        AddLine( lines, "elImg.onmouseenter = function(){ SChatBox.OnImageHover('%s', true) };", SafeString( link ) )
-        AddLine( lines, "elImg.onmouseleave = function(){ SChatBox.OnImageHover('%s', false) };", SafeString( link ) )
+        AddLine( lines, "elImg.onclick = function(){ SChatBox.OnClickLink('%s') };", link )
+        AddLine( lines, "elImg.onmouseenter = function(){ SChatBox.OnImageHover('%s', true) };", link )
+        AddLine( lines, "elImg.onmouseleave = function(){ SChatBox.OnImageHover('%s', false) };", link )
     end
 
     if cssClass then

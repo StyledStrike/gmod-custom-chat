@@ -341,6 +341,29 @@ img {
     color: rgba(255, 255, 255, 1.0);
 }
 
+.safeguard {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+.safeguard-hint {
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    vertical-align: middle;
+    text-align: center;
+
+    font-size: 80%;
+    font-style: italic;
+
+    color: #aaaaaa;
+    background-color: #202225;
+}
+
 .b-text {
     font-weight: 800;
 }
