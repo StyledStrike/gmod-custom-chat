@@ -55,7 +55,7 @@ You can prevent links from certain players from embedding, by using the `CanEmbe
 
 ```lua
 hook.Add( "CanEmbedCustomChat", "override_chat_embed_access", function( ply, url, urlType )
-	-- return false to block embeds from "url"
+    -- return false to block embeds from "url"
 
     -- "urlType" will be one of these strings:
     -- "image", "audio", and "url" for other stuff
