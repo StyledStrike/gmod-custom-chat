@@ -19,7 +19,7 @@ return [[<!DOCTYPE html>
 var elmBody = document.getElementsByTagName("body")[0];
 var elmTemp = document.getElementById("temp");
 var elmMain = document.getElementById("main");
-var elmEmojiPanel = document.getElementById("emojiPanel");
+var elEmojiPanel = document.getElementById("emojiPanel");
 
 var isAwesomuim = navigator.userAgent.indexOf("Awesomium") != -1;
 var appendCount = 0;
@@ -52,11 +52,11 @@ function setDisplayMode(mode) {
 }
 
 function setEmojiPanelVisible(tgl) {
-    elmEmojiPanel.style["display"] = tgl ? "block" : "none";
+    elEmojiPanel.style["display"] = tgl ? "block" : "none";
 }
 
 function toggleEmojiPanel() {
-    setEmojiPanelVisible(elmEmojiPanel.style["display"] != "block");
+    setEmojiPanelVisible(elEmojiPanel.style["display"] != "block");
 }
 
 // remove certain elements from messages
