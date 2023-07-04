@@ -226,8 +226,9 @@ end
 
 JSBuilder.builders["url"] = function( val, _, font )
     local urlType = GetURLType( val )
+    local canEmbed = hook.Run( "CanEmbedCustomChat", SChat._lastPlayer, val, urlType ) ~= false
 
-    if SChat:IsWhitelisted( val ) then
+    if canEmbed and SChat:IsWhitelisted( val ) then
         if urlType == "image" then
             local cvarSafeMode = GetConVar( "custom_chat_safe_mode" )
             local safeFilter = ( cvarSafeMode and cvarSafeMode:GetInt() or 0 ) > 0

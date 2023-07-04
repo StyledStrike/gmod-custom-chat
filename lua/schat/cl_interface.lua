@@ -648,5 +648,7 @@ net.Receive( "schat.say", function()
 
     local isDead = not ply:Alive()
 
+    SChat._lastPlayer = ply
     hook.Run( "OnPlayerChat", ply, text, channel ~= SChat.EVERYONE, isDead )
+    SChat._lastPlayer = nil
 end )

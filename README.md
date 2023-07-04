@@ -48,3 +48,22 @@ _(A list of fonts can be found on the workshop page.)_
 ### Whitelisted Sites
 
 By default, the chat box will only load pictures from trusted websites. You can open a pull request to add more, or send a request [here](https://steamcommunity.com/workshop/filedetails/discussion/2799307109/3272437487156558008/).
+
+### For developers
+
+You can prevent links from certain players from embedding, by using the `CanEmbedCustomChat` hook on the **clientside**.
+
+```lua
+hook.Add( "CanEmbedCustomChat", "override_chat_embed_access", function( ply, url, urlType )
+	-- return false to block embeds from "url"
+
+    -- "urlType" will be one of these strings:
+    -- "image", "audio", and "url" for other stuff
+
+    -- example: only allow super admins to use embeds
+    if not ply:IsSuperAdmin() then return false end
+
+    -- example: prevent audio from embedding for everyone
+    if urlType == "audio" then return false end
+end )
+```
