@@ -10,10 +10,11 @@ A simple and customizable chat box that can format text, display images and emoj
 * Supports embeds
 * Code blocks
 * Find text with _Ctrl+F_
-* Emojis (server admins can add more)
+* Pre-added emojis
 * Display icons for prop models
 * Show images from URLs (Only loads images from trusted websites by default)
 * Keeps the default "hands on the ear" behaviour
+* Can be enabled/disabled at any time *(Using the `customchat_disable` console variable)*
 * _(Admin Only)_ Suggest a theme to be used on your server
 * _(Admin Only)_ Set custom emojis to be used on your server
 
