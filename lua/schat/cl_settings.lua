@@ -222,6 +222,7 @@ function Settings:ShowServerEmojisPanel()
         editURL:SetMaximumCharCount( 256 )
         editURL:SetUpdateOnType( true )
         editURL:SetPlaceholderText( "<link to a image>" )
+        editURL._branchWarning = true
 
         editURL.OnValueChange = function( s, value )
             local newURL = string.Trim( value )
@@ -229,6 +230,11 @@ function Settings:ShowServerEmojisPanel()
             if string.len( newURL ) == 0 then
                 markEntryAsInvalid( s, "The URL is empty" )
             else
+                if not s._branchWarning and BRANCH == "unknown" and newURL:sub( 1, 5 ) == "https" then
+                    s._branchWarning = true
+                    Derma_Message( "Some websites using the TLS protocol (https) will not work without the Chromium beta for Garry's Mod.", "Warning", "OK" )
+                end
+
                 markEntryAsValid( s )
             end
 
@@ -238,6 +244,10 @@ function Settings:ShowServerEmojisPanel()
         timer.Simple( 0, function()
             editId:SetValue( id )
             editURL:SetValue( url )
+
+            -- we only want to show branch warnings
+            -- when the user edits this field
+            editURL._branchWarning = nil
         end )
 
         local btnRemove = vgui.Create( "DButton", item )
