@@ -7,6 +7,8 @@
 		"*.txt",
 		"*.md",
 		"glualint.json",
-		"LICENSE"
+        ".editorconfig",
+		"LICENSE",
+        "README.md"
 	]
 }
