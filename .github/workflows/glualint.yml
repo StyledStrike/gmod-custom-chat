@@ -1,0 +1,17 @@
+name: GLuaLint
+
+on:
+  push:
+    branches: [ master ]
+
+  pull_request:
+    branches: [ master ]
+
+  # Allows running this workflow from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  Lint:
+    uses: FPtje/GLuaFixer/.github/workflows/glualint.yml@master
+    with:
+      config: "./glualint.json"
