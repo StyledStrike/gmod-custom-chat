@@ -72,7 +72,7 @@ function SChat.CleanupString( str )
     str = str:gsub( "\n", function()
         nBreaks = nBreaks + 1
 
-        if nBreaks > 10 then
+        if nBreaks > 8 then
             return ""
         else
             return "\n"
