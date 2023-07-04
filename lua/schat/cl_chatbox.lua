@@ -59,6 +59,8 @@ function toggleEmojiPanel() {
     setEmojiPanelVisible(elmEmojiPanel.style["display"] != "block");
 }
 
+// remove certain elements from messages
+// that are going to the "temp" container
 function filterTempElements(elm) {
     for (var i = 0; i < elm.children.length; i++) {
         var child = elm.children[i];
@@ -69,17 +71,25 @@ function filterTempElements(elm) {
     }
 }
 
-function appendMessageBlock(block, showTemporary) {
-    var wasAtBottom = isScrollAtBottom();
-    var blockCopy;
+function appendMessage(message, showTemporary) {
+    // only allow the existance of one media player at a time
+    var mediaElements = document.getElementsByClassName("media-player");
 
-    if (showTemporary) {
-        blockCopy = block.cloneNode(true);
-        filterTempElements(blockCopy);
-        elmTemp.appendChild(blockCopy);
+    for (var i = 0; i < mediaElements.length; i++) {
+        var parent = mediaElements[i].parentElement;
+        parent.removeChild(mediaElements[i]);
     }
 
-    elmMain.appendChild(block);
+    var wasAtBottom = isScrollAtBottom();
+    var copy;
+
+    if (showTemporary) {
+        copy = message.cloneNode(true);
+        filterTempElements(copy);
+        elmTemp.appendChild(copy);
+    }
+
+    elmMain.appendChild(message);
     appendCount++;
 
     if (appendCount > 256) {
@@ -94,8 +104,8 @@ function appendMessageBlock(block, showTemporary) {
         elmTemp.removeChild(elmTemp.firstChild);
 
     setTimeout(function() {
-        if (elmTemp.contains(blockCopy))
-            elmTemp.removeChild(blockCopy);
+        if (elmTemp.contains(copy))
+            elmTemp.removeChild(copy);
     }, 10000);
 }
 
@@ -294,13 +304,13 @@ img {
     vertical-align: middle;
 }
 .embed-thumb {
-    max-width: 20%;
+    max-width: 15%;
     display: inline-block;
 }
 .embed-body {
     color: #ffffff;
     margin-left: 8px;
-    width: 60%;
+    width: 80%;
 }
 .embed-body > h1 {
     font-size: 90%;

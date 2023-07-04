@@ -1,21 +1,164 @@
-local table_insert = table.insert
-local str_format = string.format
-local str_jssafe = string.JavascriptSafe
-local str_is_valid = function( s ) return s ~= nil and s ~= "" end
-local str_chop_ends = function( s, n ) return string.sub( s, n, -n ) end
-local color_to_rgb = function( c ) return str_format( "rgb(%d,%d,%d)", c.r, c.g, c.b ) end
-
---[[
-    Generates JS code that creates elements based on "blocks"
-]]
+local SafeString = string.JavascriptSafe
+local ChopEnds = function( s, n ) return string.sub( s, n, -n ) end
 
 local JSBuilder = {
-    -- the main element that represents a single message
-    rootMessageElement = "msgElm",
+    -- list of functions that convert blocks into JS code
+    builders = {},
 
-    color_white = Color( 255, 255, 255, 255 ),
-    color_code_background = Color( 47, 49, 54, 255 )
+    -- the main element that represents a single message,
+    -- and is the parent for all of it's blocks
+    rootElement = "elMessage",
+
+    -- background color for code snippets
+    codeBackgroundColor = Color( 47, 49, 54, 255 )
 }
+
+-- list of fonts usable on messages
+local fontNames = {
+    ["monospace"] = "monospace",
+    ["lucida"] = "Lucida Console",
+    ["comic"] = "Comic Sans MS",
+    ["arial"] = "Arial",
+    ["calibri"] = "Calibri",
+    ["consolas"] = "Consolas",
+    ["impact"] = "Impact",
+    ["symbol"] = "Symbol",
+    ["helvetica"] = "Helvetica Neue",
+    ["sugoe"] = "Sugoe Script",
+    ["roboto"] = "Roboto"
+}
+
+-- Generates JS code that creates a message element based on "contents".
+-- "contents" must be a sequential table, containing strings, colors, and/or player entities.
+function SChat:GenerateMessageFromTable( contents )
+    local playerNicks = {}
+
+    for _, ply in ipairs( player.GetAll() ) do
+        playerNicks[ply:Nick()] = true
+    end
+
+    -- first, lets split the message contents into "blocks"
+    local blocks = {}
+
+    local function addBlock( type, value )
+        blocks[#blocks + 1] = {
+            type = type,
+            value = value
+        }
+    end
+
+    for _, obj in ipairs( contents ) do
+        if type( obj ) == "table" then
+            if obj.r and obj.g and obj.b then
+                addBlock( "color", obj )
+            else
+                addBlock( "string", tostring( obj ) )
+            end
+
+        elseif type( obj ) == "string" then
+            -- if obj is a player name...
+            if playerNicks[obj] then
+                -- add it as a plain string (maybe do a "mention" system later?)
+                addBlock( "string", obj )
+            else
+                -- otherwise find more blocks using patterns
+                SChat:ParseString( obj, addBlock )
+            end
+
+        elseif type( obj ) == "Player" and IsValid( obj ) then
+            local nameColor = team.GetColor( obj:Team() )
+
+            -- aTags support
+            if obj.getChatTag then
+                _, _, nameColor = obj:getChatTag()
+            end
+
+            addBlock( "color", nameColor )
+            addBlock( "string", obj:Nick() )
+        else
+            addBlock( "string", tostring( obj ) )
+        end
+    end
+
+    -- then, convert the blocks into JS code,
+    -- and it will create the HTML elements for us
+    local lines = {
+        ( "var %s = document.createElement('div');" ):format( JSBuilder.rootElement )
+    }
+
+    local currentColor = color_white
+    local currentFont = ""
+
+    for _, b in ipairs( blocks ) do
+        if b.type == "font" then
+            local newFont = ChopEnds( b.value, 2 )
+            if fontNames[newFont] then
+                currentFont = fontNames[newFont]
+            end
+
+        elseif b.type == "color" then
+            currentColor = b.value
+
+        else
+            local func = JSBuilder.builders[b.type]
+
+            if func then
+                lines[#lines + 1] = func( b.value, currentColor, currentFont )
+            else
+                SChat.PrintF( "Invalid chat block type: %s", b.type )
+            end
+        end
+    end
+
+    -- lets not add this message to the temp container if hud is disabled
+    local showTemp = ( GetConVar( "cl_drawhud" ):GetInt() == 0 ) and "false" or "true"
+
+    lines[#lines + 1] = ( "appendMessage(%s, %s);" ):format( JSBuilder.rootElement, showTemp )
+
+    return table.concat( lines, "\n" )
+end
+
+-- Generates JS code that populates the emoji panel
+function SChat:GenerateEmojiList()
+    local emojiCategories = self.Settings.emojiCategories
+    local lines = { "elEmojiPanel.textContent = '';" }
+
+    for _, cat in ipairs( emojiCategories ) do
+        if #cat.emojis > 0 then
+            lines[#lines + 1] = [[
+                var emojiCat = document.createElement('div');
+                emojiCat.className = 'emoji-category';
+                emojiCat.textContent = ']] .. cat.category .. [[';
+                elEmojiPanel.appendChild(emojiCat);
+            ]]
+
+            for _, emoji in ipairs( cat.emojis ) do
+                local isBuiltin = type( emoji ) == "string"
+
+                local id = isBuiltin and emoji or emoji[1]
+                local src = isBuiltin and "asset://garrysmod/materials/icon72/" .. emoji .. ".png" or emoji[2]
+
+                lines[#lines + 1] = [[
+                    var elEmoji = document.createElement('img');
+                    elEmoji.src = ']] .. SafeString( src ) .. [[';
+                    elEmoji.className = 'emoji-button';
+                    elEmoji.onclick = function(){ SChatBox.OnSelectEmoji(']] .. id .. [[') };
+                    elEmojiPanel.appendChild(elEmoji);
+                ]]
+            end
+        end
+    end
+
+    return table.concat( lines, "\n" )
+end
+
+--[[
+    Now, lets add a bunch of functions to turn those blocks into JS
+]]
+
+local IsStringValid = function( s ) return s and s ~= "" end
+local ColorToJs = function( c ) return string.format( "rgb(%d,%d,%d)", c.r, c.g, c.b ) end
+local AddLine = function( t, line, ... ) t[#t + 1] = string.format( line, ... ) end
 
 -- used to test if a URL probably points to a image
 local imageExtensions = { "png", "jpg", "jpeg", "gif", "webp", "svg" }
@@ -28,7 +171,7 @@ local imagePatterns = {
     "^https?://steamuserimages%-a%.akamaihd%.net/ugc/"
 }
 
-local function getURLType( url )
+local function GetURLType( url )
     for _, patt in ipairs( imagePatterns ) do
         if url:match( patt ) then
             return "image"
@@ -52,315 +195,220 @@ local function getURLType( url )
     return "url"
 end
 
-local templates = {
-    ["string"] = function( val, color, font )
-        return JSBuilder:CreateText( val, font, nil, color )
-    end,
-
-    ["emoji"] = function( val, color, font )
-        local path, isOnline = SChat.Settings:GetEmojiInfo( val:sub( 2, -2 ) )
-
-        if path then
-            if not isOnline then
-                path = "asset://garrysmod/" .. path
-            end
-
-            return JSBuilder:CreateImage( path, nil, "emoji", val )
-        end
-
-        return JSBuilder:CreateText( val, font, nil, color )
-    end,
-
-    ["model"] = function( val, color, font )
-        local js = ""
-        local prevPath = "materials/spawnicons/" .. string.Replace( val, ".mdl", ".png" )
-
-        if file.Exists( prevPath, "GAME" ) then
-            js = JSBuilder:CreateImage( "asset://garrysmod/" .. prevPath, nil, "emoji" )
-        end
-
-        return js .. JSBuilder:CreateText( val, font, nil, color )
-    end,
-
-    ["profanity"] = function()
-        return JSBuilder:CreateText( "<redacted>", nil, nil, nil, JSBuilder.color_code_background )
-    end,
-
-    ["url"] = function( val, _, font )
-        local urlType = getURLType( val )
-
-        if SChat:IsWhitelisted( val ) then
-            if urlType == "image" then
-                return JSBuilder:CreateImage( val, val, nil, val )
-
-            elseif urlType == "audio" and SChat.chatBox then
-                return JSBuilder:CreateAudioPlayer( val, font )
-
-            else
-                return JSBuilder:CreateEmbed( val )
-            end
-        end
-
-        return JSBuilder:CreateText( val, font, val )
-    end,
-
-    ["spoiler"] = function( val, _, font )
-        return JSBuilder:CreateText( str_chop_ends( val, 3 ), font, nil, nil, nil, "spoiler" )
-    end,
-
-    ["italic"] = function( val, color, font )
-        return JSBuilder:CreateText( str_chop_ends( val, 2 ), font, nil, color, nil, "i-text" )
-    end,
-
-    ["bold"] = function( val, color, font )
-        return JSBuilder:CreateText( str_chop_ends( val, 3 ), font, nil, color, nil, "b-text" )
-    end,
-
-    ["bold_italic"] = function( val, color, font )
-        return JSBuilder:CreateText( str_chop_ends( val, 4 ), font, nil, color, nil, "b-text i-text" )
-    end,
-
-    ["code_line"] = function( val, _, font )
-        return JSBuilder:CreateCode( str_chop_ends( val, 2 ), font, true )
-    end,
-
-    ["code"] = function( val, _, font )
-        val = string.Replace( val, "\\n", "\n" )
-        local trimAmount = val[1] == "{" and 3 or 4
-        return JSBuilder:CreateCode( str_chop_ends( val, trimAmount ), font, false )
-    end,
-
-    ["rainbow"] = function( val, _, font )
-        return JSBuilder:CreateText( str_chop_ends( val, 3 ), font, nil, nil, nil, "tef-rainbow" )
-    end,
-
-    ["advert"] = function( val, color )
-        return JSBuilder:CreateAdvert( str_chop_ends( val, 3 ), color )
-    end
-}
-
--- used by users to change the text font at any point
-local fontNames = {
-    ["monospace"] = "monospace",
-    ["lucida"] = "Lucida Console",
-    ["comic"] = "Comic Sans MS",
-    ["arial"] = "Arial",
-    ["calibri"] = "Calibri",
-    ["consolas"] = "Consolas",
-    ["impact"] = "Impact",
-    ["symbol"] = "Symbol",
-    ["helvetica"] = "Helvetica Neue",
-    ["sugoe"] = "Sugoe Script",
-    ["roboto"] = "Roboto"
-}
-
--- Received a response from our metadata fetcher
-function JSBuilder:OnHTTPResponse( embedId, body, url )
-    local metaTags = {}
-    local metaPatt = "<meta[%g%s]->"
-
-    for s in string.gmatch( body, metaPatt ) do
-        metaTags[#metaTags + 1] = s
-    end
-
-    if #metaTags == 0 then return end
-
-    local props = {}
-
-    for _, meta in ipairs( metaTags ) do
-        -- try to find any content on this meta tag
-        local _, _, content = string.find( meta, "content='([%g%s]-)'" )
-
-        -- try to find the meta tag name for Facebook
-        local _, _, name = string.find( meta, "property='og:([%g]-)'" )
-
-        -- try to find the meta tag name for Twitter
-        if not name then
-            _, _, name = string.find( meta, "name='twitter:([%g]-)'" )
-        end
-
-        if name and content then
-            props[name] = content
-        end
-    end
-
-    local _, site = string.match( url, "^(%w-)://([^/]*)/?" )
-
-    local jsTbl = { [[
-        var embeds = document.getElementsByClassName("]] .. embedId .. [[");
-
-        for (var i = 0; i < embeds.length; i++) {
-            var elm = embeds[i];
-            elm.textContent = "";
-            elm.className = "embed ]] .. embedId .. [[";]] }
-
-    if props["image"] then
-        jsTbl[#jsTbl + 1] = self:CreateElement( "img", "elmImg", "elm", {
-            className = { value = "embed-thumb" },
-            src = { value = str_jssafe( props["image"] ) }
-        } )
-    end
-
-    jsTbl[#jsTbl + 1] = self:CreateElement( "section", "elmEmbedBody", "elm", {
-        className = { value = "embed-body" }
-    } )
-
-    if props["site_name"] then
-        jsTbl[#jsTbl + 1] = self:CreateElement( "h1", "elmName", "elmEmbedBody", {
-            textContent = { value = str_jssafe( props["site_name"] ) }
-        } )
-    end
-
-    local title = props["title"] or site
-
-    if title:len() > 50 then
-        title = title:Left( 47 ) .. "..."
-    end
-
-    jsTbl[#jsTbl + 1] = self:CreateElement( "h2", "elmTitle", "elmEmbedBody", {
-        textContent = { value = str_jssafe( title ) }
-    } )
-
-    local desc = props["description"] or url
-
-    if desc:len() > 100 then
-        desc = desc:Left( 97 ) .. "..."
-    end
-
-    jsTbl[#jsTbl + 1] = self:CreateElement( "i", "elmDesc", "elmEmbedBody", {
-        textContent = { value = str_jssafe( desc ) }
-    } )
-
-    jsTbl[#jsTbl + 1] = "}"
-
-    SChat.chatBox:QueueJavascript( table.concat( jsTbl, "\n" ) )
+JSBuilder.builders["string"] = function( val, color, font )
+    return JSBuilder:CreateText( val, font, nil, color )
 end
 
--- Generates JS code that creates a element using the provided properties
-function JSBuilder:CreateElement( tag, var, parentVar, props )
-    local strTbl = {
-        str_format( "var %s = document.createElement('%s');", var, tag ),
-        str_format( "%s.appendChild(%s);", parentVar, var )
-    }
+JSBuilder.builders["emoji"] = function( val, color, font )
+    local path, isOnline = SChat.Settings:GetEmojiInfo( val:sub( 2, -2 ) )
 
-    for name, p in pairs( props ) do
-        if p.type == "raw" then
-            table_insert( strTbl, str_format( "%s.%s = %s;", var, name, p.value ) )
-        elseif p.type == "function" then
-            table_insert( strTbl, str_format( "%s.%s = function(){ %s };", var, name, p.value ) )
+    if path then
+        if not isOnline then
+            path = "asset://garrysmod/" .. path
+        end
+
+        return JSBuilder:CreateImage( path, nil, "emoji", val )
+    end
+
+    return JSBuilder:CreateText( val, font, nil, color )
+end
+
+JSBuilder.builders["model"] = function( val, color, font )
+    local js = ""
+    local prevPath = "materials/spawnicons/" .. string.Replace( val, ".mdl", ".png" )
+
+    if file.Exists( prevPath, "GAME" ) then
+        js = JSBuilder:CreateImage( "asset://garrysmod/" .. prevPath, nil, "emoji" )
+    end
+
+    return js .. JSBuilder:CreateText( val, font, nil, color )
+end
+
+JSBuilder.builders["url"] = function( val, _, font )
+    local urlType = GetURLType( val )
+
+    if SChat:IsWhitelisted( val ) then
+        if urlType == "image" then
+            return JSBuilder:CreateImage( val, val, nil, val )
+
+        elseif urlType == "audio" and SChat.chatBox then
+            return JSBuilder:CreateAudioPlayer( val, font )
+
         else
-            table_insert( strTbl, str_format( "%s.%s = '%s';", var, name, p.value ) )
+            return JSBuilder:CreateEmbed( val )
         end
     end
 
-    return table.concat( strTbl, "\n" )
+    return JSBuilder:CreateText( val, font, val )
 end
 
--- Generates JS code to create a text element
+JSBuilder.builders["spoiler"] = function( val, _, font )
+    return JSBuilder:CreateText( ChopEnds( val, 3 ), font, nil, nil, nil, "spoiler" )
+end
+
+JSBuilder.builders["italic"] = function( val, color, font )
+    return JSBuilder:CreateText( ChopEnds( val, 2 ), font, nil, color, nil, "i-text" )
+end
+
+JSBuilder.builders["bold"] = function( val, color, font )
+    return JSBuilder:CreateText( ChopEnds( val, 3 ), font, nil, color, nil, "b-text" )
+end
+
+JSBuilder.builders["bold_italic"] = function( val, color, font )
+    return JSBuilder:CreateText( ChopEnds( val, 4 ), font, nil, color, nil, "b-text i-text" )
+end
+
+JSBuilder.builders["code_line"] = function( val, _, font )
+    return JSBuilder:CreateCode( ChopEnds( val, 2 ), font, true )
+end
+
+JSBuilder.builders["code"] = function( val, _, font )
+    val = string.Replace( val, "\\n", "\n" )
+    local chopAmount = val[1] == "{" and 3 or 4
+    return JSBuilder:CreateCode( ChopEnds( val, chopAmount ), font, false )
+end
+
+JSBuilder.builders["rainbow"] = function( val, _, font )
+    return JSBuilder:CreateText( ChopEnds( val, 3 ), font, nil, nil, nil, "tef-rainbow" )
+end
+
+JSBuilder.builders["advert"] = function( val, color )
+    return JSBuilder:CreateAdvert( ChopEnds( val, 3 ), color )
+end
+
+--
+-- Returns JS code to create an element,
+-- and make it a child of another one.
+--
+-- tag: the element tag type
+-- myVar: the element's variable
+-- parentVar: the element's parent variable (JSBuilder.rootElement by default)
+--
+function JSBuilder:CreateElement( tag, myVar, parentVar )
+    parentVar = parentVar or self.rootElement
+
+    return ( [[
+        var %s = document.createElement('%s');
+        %s.appendChild(%s);
+    ]] ):format( myVar, tag, parentVar, myVar )
+end
+
+-- Returns JS code to create a text element
 -- (optionally, it can act as a clickable link)
 function JSBuilder:CreateText( text, font, link, color, bgColor, cssClass )
-    local props = { textContent = { value = str_jssafe( text ) } }
+    local lines = { self:CreateElement( "span", "elText" ) }
 
-    if str_is_valid( font ) then
-        props["style.fontFamily"] = { value = font }
+    AddLine( lines, "elText.textContent = '%s'", SafeString( text ) )
+
+    if IsStringValid( font ) then
+        AddLine( lines, "elText.style.fontFamily = '%s'", font )
     end
 
-    if str_is_valid( link ) then
+    if IsStringValid( link ) then
         color = Color( 50, 100, 255 )
 
-        props["onclick"] = {
-            type = "function",
-            value = "SChatBox.OnClickLink('" .. str_jssafe( link ) .. "')"
-        }
-
-        props["clickableText"] = { type = "raw", value = "true" }
-        props["style.cursor"] = { value = "pointer" }
-        props["style.wordBreak"] = { value = "break-all" }
+        AddLine( lines, "elText.onclick = function(){ SChatBox.OnClickLink('%s') };", SafeString( link ) )
+        AddLine( lines, "elText.clickableText = true;" )
+        AddLine( lines, "elText.style.cursor = 'pointer';" )
+        AddLine( lines, "elText.style.wordBreak = 'break-all';" )
     end
 
     if cssClass then
-        props["className"] = { value = cssClass }
+        AddLine( lines, "elText.className = '%s';", cssClass )
     end
 
-    if color and color ~= self.color_white then
-        props["style.color"] = { value = color_to_rgb( color ) }
+    if color and color ~= color_white then
+        AddLine( lines, "elText.style.color = '%s';", ColorToJs( color ) )
     end
 
     if bgColor then
-        props["style.backgroundColor"] = { value = color_to_rgb( bgColor ) }
+        AddLine( lines, "elText.style.backgroundColor = '%s';", ColorToJs( bgColor ) )
     end
 
-    return self:CreateElement( "span", "elm", self.rootMessageElement, props )
+    return table.concat( lines, "\n" )
 end
 
--- Generates JS code to create a block of code
-function JSBuilder:CreateCode( code, font, inline )
-    local parentProps = {
-        ["className"] = {
-            value = inline and "code-line" or "code"
-        },
-        ["style.backgroundColor"] = {
-            value = color_to_rgb( JSBuilder.color_code_background )
-        }
-    }
-
-    font = Either( str_is_valid( font ), font, "monospace" );
-
-    local elements = {
-        -- create a parent element that will hold other elements
-        self:CreateElement( "span", "elm", self.rootMessageElement, parentProps )
-    }
-
-    -- then "highlight" the code, creating child elements for each token
-    local tokens = SChat:GenerateHighlightTokens( code )
-
-    for _, t in ipairs( tokens ) do
-        elements[#elements + 1] = self:CreateElement( "span", "elmText", "elm", {
-            ["textContent"] = { value = str_jssafe( t.value ) },
-            ["style.color"] = { value = t.color },
-            ["style.fontFamily"] = { value = font }
-        } )
-    end
-
-    return table.concat( elements, "\n" )
-end
-
--- Generates JS code to create a image
+-- Returns JS code to create a image element
 -- (optionally, it can act as a clickable link)
 function JSBuilder:CreateImage( url, link, cssClass, altText )
-    local props = { src = { value = str_jssafe( url ) } }
+    local lines = { self:CreateElement( "img", "elImg" ) }
+
+    AddLine( lines, "elImg.src = '%s'", SafeString( url ) )
 
     if link then
-        link = str_jssafe( link )
+        link = SafeString( link )
 
-        props["onclick"] = {
-            type = "function",
-            value = "SChatBox.OnClickLink('" .. link .. "')"
-        }
-
-        props["onmouseenter"] = {
-            type = "function",
-            value = "SChatBox.OnImageHover('" .. link .. "', true)"
-        }
-
-        props["onmouseleave"] = {
-            type = "function",
-            value = "SChatBox.OnImageHover('" .. link .. "', false)"
-        }
+        AddLine( lines, "elImg.onclick = function(){ SChatBox.OnClickLink('%s') };", SafeString( link ) )
+        AddLine( lines, "elImg.onmouseenter = function(){ SChatBox.OnImageHover('%s', true) };", SafeString( link ) )
+        AddLine( lines, "elImg.onmouseleave = function(){ SChatBox.OnImageHover('%s', false) };", SafeString( link ) )
     end
 
     if cssClass then
-        props["className"] = { value = cssClass }
+        AddLine( lines, "elImg.className = '%s';", cssClass )
     end
 
-    if altText then
-        props["alt"] = { value = altText }
+    if cssClass then
+        AddLine( lines, "elImg.alt = '%s';", altText )
     end
 
-    return self:CreateElement( "img", "elm", self.rootMessageElement, props )
+    return table.concat( lines, "\n" )
 end
 
--- Generates a embed box (with a title and thumbnail)
+-- Returns JS code that creates a marquee-like animated text (moving right to left) 
+function JSBuilder:CreateAdvert( text, color )
+    local lines = {
+        self:CreateElement( "span", "elAdvert" ),
+        "elAdvert.className = 'advert';",
+        self:CreateElement( "p", "elText", "elAdvert" )
+    }
+
+    AddLine( lines, "elText.textContent = '%s';", SafeString( text ) )
+    AddLine( lines, "elText.style.color = '%s';", ColorToJs( color ) )
+
+    return table.concat( lines, "\n" )
+end
+
+-- Returns JS code to create a audio player
+function JSBuilder:CreateAudioPlayer( url, font )
+    url = SafeString( url )
+
+    local lines = {
+        self:CreateText( url, font, url ),
+        self:CreateElement( "audio", "elAudio" ),
+        [[elAudio.className = 'media-player';
+        elAudio.volume = 0.5;
+        elAudio.setAttribute('preload', 'none');
+        elAudio.setAttribute('controls', 'controls');
+        elAudio.setAttribute('controlsList', 'nodownload noremoteplayback');]]
+    }
+
+    return table.concat( lines, "\n" )
+end
+
+-- Returns JS code that creates a block of code
+function JSBuilder:CreateCode( code, font, inline )
+    local lines = { self:CreateElement( "span", "elCode" ) }
+
+    AddLine( lines, "elCode.className = '%s';", inline and "code-line" or "code" )
+    AddLine( lines, "elCode.style.backgroundColor = '%s';", ColorToJs( JSBuilder.codeBackgroundColor ) )
+
+    font = Either( IsStringValid( font ), font, "monospace" )
+
+    -- "highlight" the code, creating child elements for each token
+    local tokens = SChat:GenerateHighlightTokens( code )
+
+    for _, t in ipairs( tokens ) do
+        lines[#lines + 1] = self:CreateElement( "span", "elToken", "elCode" )
+
+        AddLine( lines, "elToken.textContent = '%s';", SafeString( t.value ) )
+        AddLine( lines, "elToken.style.color = '%s';", t.color )
+        AddLine( lines, "elToken.style.fontFamily = '%s';", font )
+    end
+
+    return table.concat( lines, "\n" )
+end
+
+-- Returns JS code that creates a embed box
 function JSBuilder:CreateEmbed( url )
     self.lastEmbedId = ( self.lastEmbedId or 0 ) + 1
 
@@ -381,173 +429,93 @@ function JSBuilder:CreateEmbed( url )
         end
     } )
 
-    local props = {
-        className = { value = embedId .. " link" },
-        textContent = { value = url },
-        onclick = {
-            type = "function",
-            value = "SChatBox.OnClickLink('" .. str_jssafe( url ) .. "')"
-        }
-    }
+    url = SafeString( url )
 
-    return self:CreateElement( "p", "elm", self.rootMessageElement, props )
+    local lines = { self:CreateElement( "p", "elEmbed" ) }
+
+    AddLine( lines, "elEmbed.className = '%s';", "link " .. embedId )
+    AddLine( lines, "elEmbed.textContent = '%s';", url )
+    AddLine( lines, "elEmbed.onclick = function(){ SChatBox.OnClickLink('%s') };", url )
+
+    return table.concat( lines, "\n" )
 end
 
--- Generates a marquee-like animated text (moving right to left) 
-function JSBuilder:CreateAdvert( text, color )
-    return table.concat( {
-        self:CreateElement( "span", "elm", self.rootMessageElement, { className = { value = "advert" } } ),
-        self:CreateElement( "p", "elmText", "elm", {
-            textContent = { value = str_jssafe( text ) },
-            ["style.color"] = { value = color_to_rgb( color ) }
-        } )
-    }, "\n" )
-end
+-- Received a response from our metadata fetcher
+function JSBuilder:OnHTTPResponse( embedId, body, url )
+    local metaTags = {}
+    local metaPatt = "<meta[%g%s]->"
 
--- Generates JS code to create a audio player.
--- To prevent lag/spam, only allow the existance of one at a time.
-function JSBuilder:CreateAudioPlayer( url, font )
-    url = str_jssafe( url )
-
-    local jsTbl = {
-        JSBuilder:CreateText( url, font, url ),
-        [[var media = document.getElementsByClassName("media-player");
-
-        for (var i = 0; i < media.length; i++) {
-            var parent = media[i].parentElement;
-            parent.removeChild(media[i]);
-        }]]
-    }
-
-    local props = {
-        src = { value = url },
-        className = { value = "media-player" },
-        volume = { type = "raw", value = "0.5" }
-    }
-
-    jsTbl[#jsTbl + 1] = self:CreateElement( "audio", "elm", self.rootMessageElement, props )
-    jsTbl[#jsTbl + 1] = "elm.setAttribute('preload', 'none');"
-    jsTbl[#jsTbl + 1] = "elm.setAttribute('controls', 'controls');"
-    jsTbl[#jsTbl + 1] = "elm.setAttribute('controlsList', 'nodownload noremoteplayback');"
-
-    return table.concat( jsTbl, "\n" )
-end
-
--- Generates JS code that creates a message element based on "contents".
--- "contents" must be a sequential table.
-function SChat:GenerateMessageFromTable( contents )
-    -- first, convert the contents into blocks
-    local blocks = {}
-
-    local function addBlock( type, value )
-        blocks[#blocks + 1] = {
-            type = type,
-            value = value
-        }
+    for s in string.gmatch( body, metaPatt ) do
+        metaTags[#metaTags + 1] = s
     end
 
-    local playerNicks = {}
+    if #metaTags == 0 then return end
 
-    for _, ply in ipairs( player.GetAll() ) do
-        playerNicks[ply:Nick()] = true
-    end
+    local props = {}
 
-    for _, obj in ipairs( contents ) do
-        if type( obj ) == "table" then
-            if obj.r and obj.g and obj.b then
-                addBlock( "color", obj )
-            else
-                addBlock( "string", tostring( obj ) )
-            end
+    for _, meta in ipairs( metaTags ) do
+        -- try to find any content on this meta tag
+        local _, _, content = string.find( meta, "content=\"([%g%s]-)\"" )
 
-        elseif type( obj ) == "string" then
-            -- if obj contains a player name...
-            if playerNicks[obj] then
-                -- add it right away
-                -- (maybe do a mentions system later?)
-                addBlock( "string", obj )
-            else
-                -- otherwise find more blocks using patterns
-                SChat:ParseString( obj, addBlock )
-            end
+        -- try to find the meta tag name for Facebook
+        local _, _, name = string.find( meta, "property=\"og:([%g]-)\"" )
 
-        elseif type( obj ) == "Player" and IsValid( obj ) then
-            local nameColor = team.GetColor( obj:Team() )
+        -- try to find the meta tag name for Twitter
+        if not name then
+            _, _, name = string.find( meta, "name=\"twitter:([%g]-)\"" )
+        end
 
-            -- aTags support
-            if obj.getChatTag then
-                _, _, nameColor = obj:getChatTag()
-            end
-
-            addBlock( "color", nameColor )
-            addBlock( "string", obj:Nick() )
-        else
-            addBlock( "string", tostring( obj ) )
+        if name and content then
+            props[name] = content
         end
     end
 
-    -- then, convert the blocks into JS code that creates elements
-    local jsLines = { "var " .. JSBuilder.rootMessageElement .. " = document.createElement('div');" }
-    local color = color_white
-    local font = ""
+    local _, site = string.match( url, "^(%w-)://([^/]*)/?" )
 
-    for _, b in ipairs( blocks ) do
-        if b.type == "font" then
-            local newFont = str_chop_ends( b.value, 2 )
-            if fontNames[newFont] then
-                font = fontNames[newFont]
-            end
+    -- replace the content of existing embeds
+    -- with what we've got from the internet
+    local lines = { ( [[
+        var embedElements = document.getElementsByClassName('%s');
 
-        elseif b.type == "color" then
-            color = b.value
-        else
-            local templateFunc = templates[b.type]
-            if templateFunc then
-                jsLines[#jsLines + 1] = templateFunc( b.value, color, font )
-            else
-                SChat.PrintF( "Invalid chat block type: %s", b.type )
-            end
-        end
+        for (var i = 0; i < embedElements.length; i++) {
+            var elEmbed = embedElements[i];
+            elEmbed.textContent = "";
+            elEmbed.className = "embed %s";
+        ]] ):format( embedId, embedId )
+    }
+
+    if props["image"] then
+        AddLine( lines, self:CreateElement( "img", "elImg", "elEmbed" ) )
+        AddLine( lines, "elImg.className = 'embed-thumb';" )
+        AddLine( lines, "elImg.src = '%s';", SafeString( props["image"] ) )
     end
 
-    local showTemporary = ( GetConVar( "cl_drawhud" ):GetInt() == 0 ) and "false" or "true"
-    jsLines[#jsLines + 1] = "appendMessageBlock(" .. JSBuilder.rootMessageElement .. "," .. showTemporary .. ");"
+    AddLine( lines, self:CreateElement( "section", "elEmbedBody", "elEmbed" ) )
+    AddLine( lines, "elEmbedBody.className = 'embed-body';" )
 
-    return table.concat( jsLines, "\n" )
-end
-
--- Generates JS code that populates the emoji panel.
-function SChat:GenerateEmojiList()
-    local emojiCategories = self.Settings.emojiCategories
-    local jsTbl = { "elmEmojiPanel.textContent = '';" }
-
-    for _, cat in ipairs( emojiCategories ) do
-        if #cat.emojis == 0 then continue end
-
-        jsTbl[#jsTbl + 1] = "var emojiCat = document.createElement('div');"
-        jsTbl[#jsTbl + 1] = "emojiCat.className = 'emoji-category';"
-        jsTbl[#jsTbl + 1] = "emojiCat.textContent = '" .. cat.category .. "';"
-        jsTbl[#jsTbl + 1] = "elmEmojiPanel.appendChild(emojiCat);"
-
-        for _, v in ipairs( cat.emojis ) do
-            local emojiID
-
-            jsTbl[#jsTbl + 1] = "var emojiElm = document.createElement('img');"
-
-            if type( v ) == "string" then
-                emojiID = v
-                jsTbl[#jsTbl + 1] = "emojiElm.src = '" .. str_jssafe( "asset://garrysmod/materials/icon72/" .. v .. ".png" ) .. "';"
-            else
-                emojiID = v[1]
-                jsTbl[#jsTbl + 1] = "emojiElm.src = '" .. str_jssafe( v[2] ) .. "';"
-            end
-
-            jsTbl[#jsTbl + 1] = "emojiElm.className = 'emoji-button';"
-            jsTbl[#jsTbl + 1] = "emojiElm.onclick = function(){"
-            jsTbl[#jsTbl + 1] = "SChatBox.OnSelectEmoji('" .. emojiID .. "')};"
-            jsTbl[#jsTbl + 1] = "elmEmojiPanel.appendChild(emojiElm);"
-        end
+    if props["site_name"] then
+        AddLine( lines, self:CreateElement( "h1", "elName", "elEmbedBody" ) )
+        AddLine( lines, "elName.textContent = '%s';", SafeString( props["site_name"] ) )
     end
 
-    return table.concat( jsTbl, "\n" )
+    local title = props["title"] or site
+
+    if title:len() > 50 then
+        title = title:Left( 47 ) .. "..."
+    end
+
+    AddLine( lines, self:CreateElement( "h2", "elTitle", "elEmbedBody" ) )
+    AddLine( lines, "elTitle.textContent = '%s';", SafeString( title ) )
+
+    local desc = props["description"] or url
+
+    if desc:len() > 100 then
+        desc = desc:Left( 97 ) .. "..."
+    end
+
+    AddLine( lines, self:CreateElement( "i", "elDesc", "elEmbedBody" ) )
+    AddLine( lines, "elDesc.textContent = '%s';", SafeString( desc ) )
+    AddLine( lines, "}" )
+
+    SChat.chatBox:QueueJavascript( table.concat( lines, "\n" ) )
 end
