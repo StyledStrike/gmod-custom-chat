@@ -215,6 +215,18 @@ function SChat:SuggestServerTheme()
         return
     end
 
+    if not Theme.imported then
+        local success, errMsg = Theme:Import( self.serverTheme )
+        if success then
+            self.usingServerTheme = true
+            self:ApplyTheme( true )
+        else
+            SChat.PrintF( "Failed to apply the server theme: " .. errMsg )
+        end
+
+        return
+    end
+
     self:CloseExtraPanels()
 
     self.btnSuggest = vgui.Create( "DImageButton", self.entryDock )

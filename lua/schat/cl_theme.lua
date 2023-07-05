@@ -106,10 +106,14 @@ function Theme:Import( data )
         self.scrollbarThumb = Settings:ValidateColor( data.scroll_thumb )
     end
 
+    self.imported = true
+
     return true
 end
 
 function Theme:Reset()
+    self.imported = false
+
     self.padding = 4
     self.corner_radius = 4
     self.blur = 4
