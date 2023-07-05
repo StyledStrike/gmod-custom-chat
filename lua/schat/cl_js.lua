@@ -86,6 +86,17 @@ function SChat:GenerateMessageFromTable( contents )
         ( "var %s = document.createElement('div');" ):format( JSBuilder.rootElement )
     }
 
+    if self.Settings.timestamps then
+        local code = [[
+            var elTimestamp = document.createElement('span');
+            %s.appendChild(elTimestamp);
+            elTimestamp.className = 'timestamp';
+            elTimestamp.textContent = '[%s] ';
+        ]]
+
+        lines[#lines + 1] = code:format( JSBuilder.rootElement, os.date( "%H:%M:%S" ) )
+    end
+
     local currentColor = color_white
     local currentFont = ""
 

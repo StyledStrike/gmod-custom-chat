@@ -292,7 +292,19 @@ function SChat:OpenContextMenu( data, isLink )
         Settings:Save()
     end
 
+    local checkTimestamps = vgui.Create( "DCheckBoxLabel", panelSettings )
+    checkTimestamps:Dock( TOP )
+    checkTimestamps:SetText( "Show timestamps" )
+    checkTimestamps:SetValue( Settings.timestamps )
+    checkTimestamps:SizeToContents()
+
+    checkTimestamps.OnChange = function( _, val )
+        Settings.timestamps = val
+        Settings:Save()
+    end
+
     panelSettings:SizeToChildren()
+    panelSettings:SetTall( panelSettings:GetTall() * 2 )
     optionsMenu:AddPanel( panelSettings )
 
     if Settings.allow_any_url then

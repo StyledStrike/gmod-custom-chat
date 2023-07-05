@@ -396,6 +396,10 @@ img {
     display: block;
     width: 80%;
 }
+.timestamp {
+    color: #74ABD3;
+    font-weight: 200;
+}
 
 /****** Text effects ******/
 

@@ -7,7 +7,8 @@ local Settings = {
     offset_bottom = -1,
 
     font_size = 18,
-    allow_any_url = false
+    allow_any_url = false,
+    timestamps = false
 }
 
 function Settings:ValidateInteger( n, min, max )
@@ -29,6 +30,7 @@ function Settings:Save()
         height			= self.height,
         font_size		= self.font_size,
         allow_any_url 	= self.allow_any_url,
+        timestamps      = self.timestamps,
         offset_left		= self.offset_left,
         offset_bottom	= self.offset_bottom
     }, true ) )
@@ -61,6 +63,7 @@ function Settings:Load()
         self.offset_bottom = self:ValidateInteger( data.offset_bottom, -1, 1000 )
     end
 
+    self.timestamps = tobool( data.timestamps )
     self.allow_any_url = tobool( data.allow_any_url )
 end
 
