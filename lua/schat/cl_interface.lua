@@ -400,6 +400,9 @@ function SChat:ApplyTheme( invalidate )
     self.chatBox:SetHighlightColor( Theme.highlight )
     self.chatBox:SetBackgroundColor( Theme.input_background )
 
+    self.chatBox:SetDefaultFont( Theme.fontName )
+    self.chatBox:SetFontShadowEnabled( Theme.fontShadow )
+
     self.chatBox:SetScrollbarBackgroundColor( Theme.scrollbarBackground )
     self.chatBox:SetScrollbarThumbColor( Theme.scrollbarThumb )
 

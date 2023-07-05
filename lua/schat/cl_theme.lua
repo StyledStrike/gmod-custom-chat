@@ -1,5 +1,16 @@
 local Theme = {
-    path = "schat_theme.json"
+    path = "schat_theme.json",
+    availableFonts = {
+        "Arial",
+        "Roboto",
+        "Lucida Console",
+        "Comic Sans MS",
+        "Calibri",
+        "Consolas",
+        "Impact",
+        "Helvetica Neue",
+        "monospace"
+    }
 }
 
 function Theme:Save()
@@ -23,13 +34,16 @@ function Theme:ToJSON()
         corner = self.corner_radius,
         blur = self.blur,
 
+        font = self.fontName,
+        font_shadow = self.fontShadow,
+
         input = self.input,
         input_bg = self.input_background,
         highlight = self.highlight,
         background = self.background,
 
         scroll_bg = self.scrollbarBackground,
-        scroll_thumb = self.scrollbarThumb,
+        scroll_thumb = self.scrollbarThumb
     }, false )
 end
 
@@ -59,6 +73,12 @@ function Theme:Import( data )
     if data.blur then
         self.blur = Settings:ValidateInteger( data.blur, 0, 8 )
     end
+
+    if type( data.font ) == "string" then
+        self.fontName = data.font
+    end
+
+    self.fontShadow = Either( data.font_shadow, true, false )
 
     if data.input then
         self.input = Settings:ValidateColor( data.input )
@@ -92,6 +112,9 @@ function Theme:Reset()
     self.corner_radius = 4
     self.blur = 4
 
+    self.fontName = self.availableFonts[1]
+    self.fontShadow = true
+
     self.input = Color( 255, 255, 255, 255 )
     self.input_background = Color( 0, 0, 0, 180 )
     self.highlight = Color( 95, 181, 231 )
@@ -114,6 +137,10 @@ function Theme:ShowCustomizePanel()
     end
 
     local fields = {
+        {
+            index = "font",
+            label = "Font"
+        },
         {
             index = "input",
             label = "Input Text",
@@ -174,6 +201,48 @@ function Theme:ShowCustomizePanel()
 
         if IsValid( fieldEditor ) then
             fieldEditor:Remove()
+        end
+
+        if f.index == "font" then
+            fieldEditor = vgui.Create( "DPanel", self.customFrame )
+            fieldEditor:SetPaintBackground( false )
+            fieldEditor:Dock( FILL )
+            fieldEditor:DockMargin( 8, 8, 8, 0 )
+
+            local cmbFonts = vgui.Create( "DComboBox", fieldEditor )
+            cmbFonts:Dock( TOP )
+            cmbFonts:SetSortItems( false )
+            cmbFonts:AddChoice( "<Custom>", nil, true )
+
+            for _, font in ipairs( self.availableFonts ) do
+                cmbFonts:AddChoice( font, nil, font == self.fontName )
+            end
+
+            cmbFonts.OnSelect = function( _, index )
+                if index > 1 then
+                    self.fontName = self.availableFonts[index - 1]
+                    SChat:ApplyTheme()
+                else
+                    Derma_StringRequest( "Custom Font", "Please enter the desired font name.", self.fontName, function( txt )
+                        self.fontName = string.JavascriptSafe( string.Trim( txt ) )
+                        SChat:ApplyTheme()
+                    end )
+                end
+            end
+
+            local tglFontShadow = vgui.Create( "DButton", fieldEditor )
+            tglFontShadow:SetText( "Font Shadow" )
+            tglFontShadow:SetIcon( self.fontShadow and "icon16/accept.png" or "icon16/cross.png" )
+            tglFontShadow:Dock( TOP )
+            tglFontShadow:DockMargin( 0, 8, 0, 0 )
+
+            tglFontShadow.DoClick = function()
+                self.fontShadow = not self.fontShadow
+                tglFontShadow:SetIcon( self.fontShadow and "icon16/accept.png" or "icon16/cross.png" )
+                SChat:ApplyTheme()
+            end
+
+            return
         end
 
         fieldEditor = vgui.Create( f.class, self.customFrame )

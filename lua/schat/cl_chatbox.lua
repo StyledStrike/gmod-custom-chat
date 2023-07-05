@@ -169,7 +169,6 @@ console.log("Ready.");
     box-sizing: border-box;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-family: "Roboto", sans-serif;
     white-space: pre-wrap;
 }
 
@@ -195,7 +194,6 @@ img {
 
     color: white;
     word-break: break-word;
-    text-shadow: 1px 1px 2px #000, 0px 0px 2px #000;
 }
 
 #temp > div {
@@ -577,6 +575,18 @@ function SChatBox:SetFontSize( size )
     self:QueueJavascript(
         string.format( "elmMain.style.fontSize = '%spx'; elmTemp.style.fontSize = '%spx';", size, size )
     )
+end
+
+function SChatBox:SetDefaultFont( fontName )
+    local code = "document.styleSheets[1].cssRules[0].style.fontFamily = '%s';"
+    self:QueueJavascript( string.format( code, fontName ) )
+end
+
+function SChatBox:SetFontShadowEnabled( enabled )
+    local code = "elmMain.style.textShadow = '%s'; elmTemp.style.textShadow = '%s';"
+    local shadowCSS = enabled and "1px 1px 2px #000, 0px 0px 2px #000" or ""
+
+    self:QueueJavascript( string.format( code, shadowCSS, shadowCSS ) )
 end
 
 function SChatBox:SetScrollbarBackgroundColor( color )
