@@ -250,10 +250,6 @@ JSBuilder.builders["hyperlink"] = function( val, color, font )
     local label = string.match( val, "%[[%s%g]+%]" )
     local url = string.match( val, "%(https?://[^'\">%s]+%)" )
 
-    if not label or not url then
-        return val
-    end
-
     label = ChopEnds( label, 2 )
     url = ChopEnds( url, 2 )
 
