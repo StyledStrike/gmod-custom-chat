@@ -21,6 +21,7 @@ function Theme:ToJSON()
     return util.TableToJSON( {
         pad = self.padding,
         corner = self.corner_radius,
+        blur = self.blur,
 
         input = self.input,
         input_bg = self.input_background,
@@ -52,6 +53,10 @@ function Theme:Import( data )
         self.corner_radius = Settings:ValidateInteger( data.corner, 0, 32 )
     end
 
+    if data.blur then
+        self.blur = Settings:ValidateInteger( data.blur, 0, 8 )
+    end
+
     if data.input then
         self.input = Settings:ValidateColor( data.input )
     end
@@ -74,6 +79,7 @@ end
 function Theme:Reset()
     self.padding = 4
     self.corner_radius = 4
+    self.blur = 4
 
     self.input = Color( 255, 255, 255, 255 )
     self.input_background = Color( 0, 0, 0, 180 )
@@ -127,6 +133,13 @@ function Theme:ShowCustomizePanel()
             class = "DNumSlider",
             min = 0,
             max = 64
+        },
+        {
+            index = "blur",
+            label = "Blur",
+            class = "DNumSlider",
+            min = 0,
+            max = 8
         }
     }
 
@@ -370,6 +383,23 @@ function Theme:ShowImportPanel()
         else
             Derma_Message( "Error: " .. errMsg, "Failed to import", "OK" )
         end
+    end
+end
+
+local MAT_BLUR = Material( "pp/blurscreen" )
+
+function Theme:BlurPanel( panel )
+    if self.blur > 0 then
+        surface.SetDrawColor( 255, 255, 255, 255 )
+        surface.SetMaterial( MAT_BLUR )
+
+        MAT_BLUR:SetFloat( "$blur", self.blur )
+        MAT_BLUR:Recompute()
+
+        render.UpdateScreenEffectTexture()
+
+        local x, y = panel:LocalToScreen( 0, 0 )
+        surface.DrawTexturedRect( -x, -y, ScrW(), ScrH() )
     end
 end
 

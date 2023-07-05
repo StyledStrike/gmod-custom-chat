@@ -44,8 +44,9 @@ function SChat:CreatePanels()
     self.frame:SetMinWidth( 250 )
     self.frame:SetMinHeight( 150 )
 
-    self.frame.Paint = function( _, w, h )
+    self.frame.Paint = function( s, w, h )
         if self.isOpen then
+            Theme:BlurPanel( s )
             draw.RoundedBox( Theme.corner_radius, 0, 0, w, h, Theme.background )
         end
     end
@@ -365,7 +366,8 @@ function SChat:CreateSidePanel( title, showCloseButton )
     pnl:SetDeleteOnClose( true )
     pnl:MakePopup()
 
-    pnl.Paint = function( _, w, h )
+    pnl.Paint = function( s, w, h )
+        Theme:BlurPanel( s )
         draw.RoundedBox( 4, 0, 0, w, h, Theme.background )
         draw.RoundedBox( 4, 0, 0, w, 25, Color( 0, 0, 0, 200 ) )
     end
