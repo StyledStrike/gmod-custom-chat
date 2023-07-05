@@ -97,7 +97,18 @@ function SChat:GenerateMessageFromTable( contents )
             end
 
         elseif b.type == "color" then
-            currentColor = b.value
+            if type( b.value ) == "string" then
+                local colorStr = ChopEnds( b.value, 2 )
+                local colorTbl = string.Explode( ",", colorStr, false )
+
+                currentColor = Color(
+                    math.Clamp( tonumber( colorTbl[1] ) or 0, 0, 255 ),
+                    math.Clamp( tonumber( colorTbl[2] ) or 0, 0, 255 ),
+                    math.Clamp( tonumber( colorTbl[3] ) or 0, 0, 255 )
+                )
+            else
+                currentColor = b.value
+            end
 
         else
             local func = JSBuilder.builders[b.type]

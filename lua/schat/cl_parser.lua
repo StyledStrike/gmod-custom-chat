@@ -17,6 +17,7 @@ local rangeTypes = {
     { type = "italic", pattern = "%*[%g%s][^%*]+%*" },
     { type = "bold", pattern = "%*%*[%g%s][^%*]+%*%*" },
     { type = "bold_italic", pattern = "%*%*%*[%g%s][^%*]+%*%*%*" },
+    { type = "color", pattern = "<%d+,%d+,%d+>" },
     { type = "rainbow", pattern = "%$%$[%g%s%*]+%$%$" },
     { type = "advert", pattern = "%[%[[%g%s%*]+%]%]" },
     { type = "emoji", pattern = ":[%w_%-]+:" },
