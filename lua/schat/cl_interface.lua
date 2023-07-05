@@ -225,7 +225,7 @@ function SChat:SuggestServerTheme()
     self.btnSuggest:Dock( RIGHT )
 
     self.btnSuggest.DoClick = function()
-        Derma_Query( "This server has a custom theme.\nDo you want to use it?", "Server Theme", "Yes", function()
+        Derma_Query( "This server has a custom theme.\nDo you want to try it out?", "Server Theme", "Yes", function()
             local success, errMsg = Theme:Import( self.serverTheme )
             if success then
                 self.usingServerTheme = true
@@ -365,12 +365,6 @@ function SChat:CreateSidePanel( title, showCloseButton )
     pnl:ShowCloseButton( showCloseButton )
     pnl:SetDeleteOnClose( true )
     pnl:MakePopup()
-
-    pnl.Paint = function( s, w, h )
-        Theme:BlurPanel( s )
-        draw.RoundedBox( 4, 0, 0, w, h, Theme.background )
-        draw.RoundedBox( 4, 0, 0, w, 25, Color( 0, 0, 0, 200 ) )
-    end
 
     pnl.OnKeyCodePressed = function( _, code )
         if code == KEY_ENTER then
