@@ -400,6 +400,9 @@ function SChat:ApplyTheme( invalidate )
     self.chatBox:SetHighlightColor( Theme.highlight )
     self.chatBox:SetBackgroundColor( Theme.input_background )
 
+    self.chatBox:SetScrollbarBackgroundColor( Theme.scrollbarBackground )
+    self.chatBox:SetScrollbarThumbColor( Theme.scrollbarThumb )
+
     if invalidate then
         self.frame:InvalidateChildren( false )
     end

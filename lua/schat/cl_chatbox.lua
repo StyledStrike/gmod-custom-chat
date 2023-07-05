@@ -6,6 +6,21 @@ return [[<!DOCTYPE html>
     <meta charset="utf-8">
     <style>
         ::selection { background-color: rgb(0,160,215); }
+
+        ::-webkit-scrollbar {
+            height: 16px;
+            width: 12px;
+            background: rgba(0, 0, 0, 50);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgb(180, 180, 180);
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: rgb(180, 180, 180);
+            height: 16px;
+        }
     </style>
 </head>
 
@@ -162,21 +177,6 @@ body {
     overflow: hidden;
     width: 100%;
     height: 100%;
-}
-
-::-webkit-scrollbar {
-    height: 16px;
-    width: 12px;
-    background: rgba(0, 0, 0, 50);
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgb(180, 180, 180);
-}
-
-::-webkit-scrollbar-corner {
-    background: rgb(180, 180, 180);
-    height: 16px;
 }
 
 /****** chat elements ******/
@@ -577,6 +577,16 @@ function SChatBox:SetFontSize( size )
     self:QueueJavascript(
         string.format( "elmMain.style.fontSize = '%spx'; elmTemp.style.fontSize = '%spx';", size, size )
     )
+end
+
+function SChatBox:SetScrollbarBackgroundColor( color )
+    local code = "document.styleSheets[0].cssRules[1].style.backgroundColor = 'rgba(%d,%d,%d,%02.2f)';"
+    self:Call( string.format( code, color.r, color.g, color.b, color.a / 255 ) )
+end
+
+function SChatBox:SetScrollbarThumbColor( color )
+    local code = "document.styleSheets[0].cssRules[2].style.backgroundColor = 'rgba(%d,%d,%d,%02.2f)';"
+    self:Call( string.format( code, color.r, color.g, color.b, color.a / 255 ) )
 end
 
 function SChatBox:AppendContents( contents )

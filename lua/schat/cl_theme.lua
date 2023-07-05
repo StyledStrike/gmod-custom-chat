@@ -26,7 +26,10 @@ function Theme:ToJSON()
         input = self.input,
         input_bg = self.input_background,
         highlight = self.highlight,
-        background = self.background
+        background = self.background,
+
+        scroll_bg = self.scrollbarBackground,
+        scroll_thumb = self.scrollbarThumb,
     }, false )
 end
 
@@ -73,6 +76,14 @@ function Theme:Import( data )
         self.background = Settings:ValidateColor( data.background )
     end
 
+    if data.scroll_bg then
+        self.scrollbarBackground = Settings:ValidateColor( data.scroll_bg )
+    end
+
+    if data.scroll_thumb then
+        self.scrollbarThumb = Settings:ValidateColor( data.scroll_thumb )
+    end
+
     return true
 end
 
@@ -85,6 +96,9 @@ function Theme:Reset()
     self.input_background = Color( 0, 0, 0, 180 )
     self.highlight = Color( 95, 181, 231 )
     self.background = Color( 0, 0, 0, 200 )
+
+    self.scrollbarBackground = Color( 0, 0, 0, 50 )
+    self.scrollbarThumb = Color( 180, 180, 180, 255 )
 end
 
 function Theme:ShowCustomizePanel()
@@ -140,6 +154,16 @@ function Theme:ShowCustomizePanel()
             class = "DNumSlider",
             min = 0,
             max = 8
+        },
+        {
+            index = "scrollbarBackground",
+            label = "Scrollbar Background",
+            class = "DColorMixer"
+        },
+        {
+            index = "scrollbarThumb",
+            label = "Scrollbar Handle",
+            class = "DColorMixer"
         }
     }
 
