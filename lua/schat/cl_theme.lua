@@ -36,6 +36,7 @@ function Theme:ToJSON()
 
         font = self.fontName,
         font_shadow = self.fontShadow,
+        slide_anim = self.slideAnimation,
 
         input = self.input,
         input_bg = self.input_background,
@@ -79,6 +80,7 @@ function Theme:Import( data )
     end
 
     self.fontShadow = Either( data.font_shadow, true, false )
+    self.slideAnimation = Either( data.slide_anim, true, false )
 
     if data.input then
         self.input = Settings:ValidateColor( data.input )
@@ -114,6 +116,7 @@ function Theme:Reset()
 
     self.fontName = self.availableFonts[1]
     self.fontShadow = true
+    self.slideAnimation = true
 
     self.input = Color( 255, 255, 255, 255 )
     self.input_background = Color( 0, 0, 0, 180 )
@@ -139,7 +142,7 @@ function Theme:ShowCustomizePanel()
     local fields = {
         {
             index = "font",
-            label = "Font"
+            label = "Font & Behaviour"
         },
         {
             index = "input",
@@ -239,6 +242,18 @@ function Theme:ShowCustomizePanel()
             tglFontShadow.DoClick = function()
                 self.fontShadow = not self.fontShadow
                 tglFontShadow:SetIcon( self.fontShadow and "icon16/accept.png" or "icon16/cross.png" )
+                SChat:ApplyTheme()
+            end
+
+            local tglSlideAnim = vgui.Create( "DButton", fieldEditor )
+            tglSlideAnim:SetText( "Slide-In Animation" )
+            tglSlideAnim:SetIcon( self.slideAnimation and "icon16/accept.png" or "icon16/cross.png" )
+            tglSlideAnim:Dock( TOP )
+            tglSlideAnim:DockMargin( 0, 8, 0, 0 )
+
+            tglSlideAnim.DoClick = function()
+                self.slideAnimation = not self.slideAnimation
+                tglSlideAnim:SetIcon( self.slideAnimation and "icon16/accept.png" or "icon16/cross.png" )
                 SChat:ApplyTheme()
             end
 

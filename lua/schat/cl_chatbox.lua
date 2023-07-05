@@ -86,7 +86,7 @@ function filterTempElements(elm) {
     }
 }
 
-function appendMessage(message, showTemporary) {
+function appendMessage(message, showTemporary, animate) {
     // only allow the existance of one media player at a time
     var mediaElements = document.getElementsByClassName("media-player");
 
@@ -110,6 +110,14 @@ function appendMessage(message, showTemporary) {
     if (appendCount > 256) {
         appendCount--;
         elmMain.removeChild(elmMain.firstChild);
+    }
+
+    if (animate) {
+        var animStr = isAwesomuim ? "wk_anim_slidein 0.3s ease-out 1" : "ch_anim_slidein 0.3s ease-out 1";
+        var animProp = isAwesomuim ? "-webkit-animation" : "animation";
+
+        message.style[animProp] = animStr;
+        if (copy) copy.style[animProp] = animStr;
     }
 
     if (wasAtBottom) scrollToBottom();
@@ -194,14 +202,6 @@ img {
 
     color: white;
     word-break: break-word;
-}
-
-#temp > div {
-    -webkit-animation: wk_anim_slidein 10s ease-out;
-    -webkit-animation-iteration-count: 1;
-
-    animation: ch_anim_slidein 10s ease-out;
-    animation-iteration-count: 1;
 }
 
 #temp {
@@ -419,9 +419,7 @@ img {
 
 @-webkit-keyframes wk_anim_slidein {
     0% { -webkit-transform: translateX(-100%); }
-    3% { -webkit-transform: translateX(0%); }
-    97% { -webkit-transform: translateX(0%); }
-    100% { -webkit-transform: translateX(-100%); }
+    100% { -webkit-transform: translateX(0%); }
 }
 
 @-webkit-keyframes wk_anim_rainbow {
@@ -443,9 +441,7 @@ img {
 
 @keyframes ch_anim_slidein {
     0% { transform: translateX(-100vw); }
-    3% { transform: translateX(0vw); }
-    97% { transform: translateX(0vw); }
-    100% { transform: translateX(-100vw); }
+    100% { transform: translateX(0vw); }
 }
 
 @keyframes ch_anim_rainbow {

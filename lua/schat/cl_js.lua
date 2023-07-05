@@ -112,8 +112,9 @@ function SChat:GenerateMessageFromTable( contents )
 
     -- lets not add this message to the temp container if hud is disabled
     local showTemp = ( GetConVar( "cl_drawhud" ):GetInt() == 0 ) and "false" or "true"
+    local showAnim = self.Theme.slideAnimation and "true" or "false"
 
-    lines[#lines + 1] = ( "appendMessage(%s, %s);" ):format( JSBuilder.rootElement, showTemp )
+    lines[#lines + 1] = ( "appendMessage(%s, %s, %s);" ):format( JSBuilder.rootElement, showTemp, showAnim )
 
     return table.concat( lines, "\n" )
 end
