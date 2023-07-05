@@ -330,6 +330,9 @@ img {
     color: #3264ff;
     cursor: pointer;
 }
+.hyperlink {
+    text-decoration: underline;
+}
 
 .spoiler {
     border-radius: 4px;

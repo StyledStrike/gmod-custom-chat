@@ -243,7 +243,21 @@ JSBuilder.builders["url"] = function( val, _, font )
         end
     end
 
-    return JSBuilder:CreateText( val, font, val )
+    return JSBuilder:CreateText( val, font, val, Color( 50, 100, 255 ) )
+end
+
+JSBuilder.builders["hyperlink"] = function( val, color, font )
+    local label = string.match( val, "%[[%s%g]+%]" )
+    local url = string.match( val, "%(https?://[^'\">%s]+%)" )
+
+    if not label or not url then
+        return val
+    end
+
+    label = ChopEnds( label, 2 )
+    url = ChopEnds( url, 2 )
+
+    return JSBuilder:CreateText( label, font, url, color, nil, "hyperlink" )
 end
 
 JSBuilder.builders["spoiler"] = function( val, _, font )
@@ -309,8 +323,6 @@ function JSBuilder:CreateText( text, font, link, color, bgColor, cssClass )
     end
 
     if IsStringValid( link ) then
-        color = Color( 50, 100, 255 )
-
         AddLine( lines, "elText.onclick = function(){ SChatBox.OnClickLink('%s') };", SafeString( link ) )
         AddLine( lines, "elText.clickableText = true;" )
         AddLine( lines, "elText.style.cursor = 'pointer';" )
