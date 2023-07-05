@@ -146,7 +146,7 @@ function Theme:ShowCustomizePanel()
             fieldEditor:SetPalette( true )
             fieldEditor:SetAlphaBar( true )
             fieldEditor:SetWangs( true )
-            fieldEditor:SetColor( self[f.id] )
+            fieldEditor:SetColor( self[f.index] )
 
             fieldEditor.ValueChanged = function( _, clr )
                 -- clr doesnt have the color metatable... *sigh*
