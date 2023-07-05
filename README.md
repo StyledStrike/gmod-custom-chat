@@ -32,6 +32,7 @@ $$rainbow text here$$
 {{block of code here}}
 ```block of code here```
 [[Marquee-like advert here]]
+[Link text Here](https://link-url-here.org)
 ```
 
 ---
