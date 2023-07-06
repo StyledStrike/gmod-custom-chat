@@ -91,7 +91,7 @@ function SChat:GenerateMessageFromTable( contents )
             var elTimestamp = document.createElement('span');
             %s.appendChild(elTimestamp);
             elTimestamp.className = 'timestamp';
-            elTimestamp.textContent = '[%s] ';
+            elTimestamp.textContent = '%s ';
         ]]
 
         lines[#lines + 1] = code:format( JSBuilder.rootElement, os.date( "%H:%M:%S" ) )

@@ -399,6 +399,7 @@ img {
 .timestamp {
     color: #74ABD3;
     font-weight: 200;
+    font-size: 90%;
 }
 
 /****** Text effects ******/
