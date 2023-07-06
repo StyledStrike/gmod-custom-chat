@@ -14,7 +14,7 @@ local punctuation = {
 
 local groups = {
     ["\""] = "string",
-    ["\""] = "string"
+    ["'"] = "string"
 }
 
 local keywords = {
@@ -25,13 +25,28 @@ local keywords = {
     ["do"] = "keyword",
     ["end"] = "keyword",
     ["local"] = "keyword",
+    ["var"] = "keyword",
+    ["const"] = "keyword",
     ["for"] = "keyword",
     ["while"] = "keyword",
     ["continue"] = "keyword",
-    ["var"] = "keyword",
+    ["function"] = "keyword",
+    ["return"] = "keyword",
+
     ["print"] = "func",
+    ["Vector"] = "func",
+    ["Angle"] = "func",
+    ["Color"] = "func",
+    ["vec"] = "func",
+    ["vec2"] = "func",
+    ["vec4"] = "func",
+
+    ["undefined"] = "const",
+    ["nil"] = "const",
     ["true"] = "const",
     ["false"] = "const",
+    ["SERVER"] = "const",
+    ["CLIENT"] = "const",
     ["_G"] = "const"
 }
 
@@ -39,9 +54,9 @@ local colors = {
     text = "#FFFFFF",
     bracket = "#FFD700",
     string = "#CE9178",
-    number = "#97D879",
+    number = "#B5CEA8",
     keyword = "#C586C0",
-    func = "#DCDCAA",
+    func = "#DCDC80",
     const = "#569CD6"
 }
 
@@ -113,10 +128,10 @@ function SChat:GenerateHighlightTokens( inputStr )
             continue
         end
 
-        if char:find( "%a" ) then
+        if char:find( "[%w_]" ) then
             local value = ""
 
-            while char:find( "%w" ) and c < inputLen do
+            while char:find( "[%w_]" ) and c < inputLen do
                 value = value .. char
                 c = c + 1
                 char = chatAt( c )
