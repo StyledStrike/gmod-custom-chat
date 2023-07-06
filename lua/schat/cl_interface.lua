@@ -105,6 +105,7 @@ function SChat:CreatePanels()
     self.entry:SetMaximumCharCount( self.MAX_MESSAGE_LEN )
     self.entry:SetTabbingDisabled( true )
     self.entry:SetMultiline( true )
+    self.entry:SetHistoryEnabled( true )
     self.entry:Dock( FILL )
 
     self.entry.Paint = function( s, w, h )
@@ -147,6 +148,18 @@ function SChat:CreatePanels()
         elseif code == KEY_ENTER and not input.IsShiftDown() then
             self:OnPressEnter()
             return true
+        end
+
+        if s.m_bHistory then
+            if code == KEY_UP then
+                s.HistoryPos = s.HistoryPos - 1
+                s:UpdateFromHistory()
+            end
+
+            if code == KEY_DOWN then
+                s.HistoryPos = s.HistoryPos + 1
+                s:UpdateFromHistory()
+            end
         end
     end
 
@@ -200,6 +213,15 @@ function SChat:OnPressEnter()
         net.WriteUInt( channel, 4 )
         net.WriteString( text )
         net.SendToServer()
+
+        local history = self.entry.History
+        local historyCount = #history
+
+        history[historyCount + 1] = text
+
+        if historyCount >= 50 then
+            table.remove( history, 1 )
+        end
     end
 
     chat.Close()
@@ -469,6 +491,7 @@ local schatClose = function()
     SChat.frame:SetKeyboardInputEnabled( false )
     SChat.chatBox:ClearSelection()
     SChat.entry:SetText( "" )
+    SChat.entry.HistoryPos = 0
 
     gui.EnableScreenClicker( false )
 
