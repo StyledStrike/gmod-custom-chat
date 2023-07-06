@@ -76,7 +76,7 @@ function Settings:GetDefaultPosition()
     local bottomY = ( ScrH() - self.height )
     return
         Either( self.offset_left > 0, self.offset_left, ScrW() * 0.032 ),
-        Either( self.offset_bottom > 0, bottomY - self.offset_bottom, bottomY - ScrH() * 0.18 )
+        Either( self.offset_bottom > 0, bottomY - self.offset_bottom, bottomY - ScrH() * 0.2 )
 end
 
 function Settings:GetDefaultSize()

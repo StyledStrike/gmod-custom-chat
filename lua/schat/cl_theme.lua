@@ -125,7 +125,7 @@ function Theme:Reset()
     self.input = Color( 255, 255, 255, 255 )
     self.input_background = Color( 0, 0, 0, 100 )
     self.highlight = Color( 95, 181, 231 )
-    self.background = Color( 120, 120, 120, 10 )
+    self.background = Color( 40, 40, 40, 200 )
 
     self.scrollbarBackground = Color( 0, 0, 0, 80 )
     self.scrollbarThumb = Color( 120, 120, 120, 255 )
