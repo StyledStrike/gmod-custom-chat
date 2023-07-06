@@ -114,8 +114,8 @@ end
 function Theme:Reset()
     self.imported = false
 
-    self.padding = 4
-    self.corner_radius = 4
+    self.padding = 8
+    self.corner_radius = 8
     self.blur = 4
 
     self.fontName = self.availableFonts[1]
@@ -123,12 +123,12 @@ function Theme:Reset()
     self.slideAnimation = true
 
     self.input = Color( 255, 255, 255, 255 )
-    self.input_background = Color( 0, 0, 0, 180 )
+    self.input_background = Color( 0, 0, 0, 100 )
     self.highlight = Color( 95, 181, 231 )
-    self.background = Color( 0, 0, 0, 200 )
+    self.background = Color( 120, 120, 120, 10 )
 
-    self.scrollbarBackground = Color( 0, 0, 0, 50 )
-    self.scrollbarThumb = Color( 180, 180, 180, 255 )
+    self.scrollbarBackground = Color( 0, 0, 0, 80 )
+    self.scrollbarThumb = Color( 120, 120, 120, 255 )
 end
 
 function Theme:ShowCustomizePanel()
