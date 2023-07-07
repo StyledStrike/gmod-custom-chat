@@ -140,6 +140,14 @@ function findAndHighlight(text) {
         sel.anchorNode.parentElement.scrollIntoView(true);
 }
 
+function removeByClass(className) {
+    var els = document.getElementsByClassName(className);
+
+    for (var i = 0; i < els.length; i++) {
+        els[i].parentElement.removeChild(els[i]);
+    }
+}
+
 window.addEventListener("contextmenu", function(ev) {
     ev.preventDefault();
     var nodeName = ev.target.nodeName.toLowerCase();
@@ -345,7 +353,6 @@ img {
 .safeguard {
     position: relative;
     display: inline-block;
-    cursor: pointer;
 }
 .safeguard-hint {
     display: inline-block;
@@ -354,6 +361,8 @@ img {
     left: 0;
     width: 100%;
     height: 100%;
+    min-width: 150px;
+    min-height: 20px;
 
     vertical-align: middle;
     text-align: center;
@@ -363,6 +372,7 @@ img {
 
     color: #aaaaaa;
     background-color: #202225;
+    cursor: pointer;
 }
 
 .b-text {

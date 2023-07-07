@@ -371,15 +371,19 @@ function JSBuilder:CreateImage( url, link, cssClass, altText, safeFilter )
     local lines = {}
 
     if safeFilter then
+        self.lastEmbedId = ( self.lastEmbedId or 0 ) + 1
+
+        local safeguardId = "safeguard_" .. self.lastEmbedId
+
         AddLine( lines, self:CreateElement( "span", "elSafeguard" ) )
         AddLine( lines, "elSafeguard.className = 'safeguard';" )
 
         AddLine( lines, self:CreateElement( "img", "elImg", "elSafeguard" ) )
 
         AddLine( lines, self:CreateElement( "span", "elHint", "elSafeguard" ) )
-        AddLine( lines, "elHint.className = 'safeguard-hint';" )
+        AddLine( lines, "elHint.className = 'safeguard-hint %s';", safeguardId )
         AddLine( lines, "elHint.textContent = 'Click to reveal image';" )
-        AddLine( lines, "elHint.onclick = function(){ elSafeguard.removeChild(elHint); };", link )
+        AddLine( lines, "elHint.onclick = function(){ removeByClass('%s'); };", safeguardId )
     else
         AddLine( lines, self:CreateElement( "img", "elImg" ) )
     end
