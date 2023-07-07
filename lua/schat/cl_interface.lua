@@ -215,8 +215,9 @@ function SChat:OnPressEnter()
         net.SendToServer()
 
         local history = self.entry.History
-        local historyCount = #history
+        table.RemoveByValue( history, text )
 
+        local historyCount = #history
         history[historyCount + 1] = text
 
         if historyCount >= 50 then
