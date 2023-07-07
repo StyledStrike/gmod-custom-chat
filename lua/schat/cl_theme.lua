@@ -326,12 +326,18 @@ function Theme:ShowCustomizePanel()
 
     btnReset.DoClick = function()
         Derma_Query( "Reset theme to default? All changes will be lost!", "Reset Theme", "Yes", function()
+            self.customFrame:Close()
             self:Reset()
+
             SChat:ApplyTheme( true )
 
             if file.Exists( self.path, "DATA" ) then
                 file.Delete( self.path )
             end
+
+            timer.Simple( 0, function()
+                self:ShowCustomizePanel()
+            end )
         end, "No" )
     end
 
