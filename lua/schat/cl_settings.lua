@@ -155,7 +155,7 @@ function Settings:ShowServerEmojisPanel()
 
     local function markEntryAsInvalid( entry, reason )
         entry._invalidReason = reason
-        entry:SetBGColor( Color( 100, 0, 0, 255 ) )
+        entry:SetBGColor( Color( 120, 20, 20, 255 ) )
         entry:SetPaintBackgroundEnabled( true )
     end
 
@@ -169,6 +169,13 @@ function Settings:ShowServerEmojisPanel()
             if v[1] == id then
                 return k
             end
+        end
+    end
+
+    local function isBuiltinEmoji( id )
+        local existingId, isOnline = self:GetEmojiInfo( id )
+        if existingId then
+            return not isOnline
         end
     end
 
@@ -200,16 +207,20 @@ function Settings:ShowServerEmojisPanel()
 
         editId.OnValueChange = function( s, value )
             local newId = string.Trim( value )
-            local existingId = findEmojiIndexById( newId )
+            local existingIndex = findEmojiIndexById( newId )
 
-            if existingId and existingId ~= index then
-                markEntryAsInvalid( s, "Emoji #" .. existingId .. " has the same ID" )
-
-            elseif string.len( newId ) == 0 then
+            if string.len( newId ) == 0 then
                 markEntryAsInvalid( s, "The ID is empty" )
 
             elseif string.find( newId, "[^%w_%-]" ) then
                 markEntryAsInvalid( s, "Only _, -, characters between 0-9 and A-Z are allowed" )
+
+            elseif existingIndex and existingIndex ~= index then
+                markEntryAsInvalid( s, "Emoji #" .. existingIndex .. " has the same ID" )
+
+            elseif isBuiltinEmoji( newId ) then
+                markEntryAsInvalid( s, "The ID \"" .. newId .. "\" is reserved for a builtin emoji" )
+
             else
                 markEntryAsValid( s )
             end
