@@ -154,6 +154,8 @@ window.addEventListener("contextmenu", function(ev) {
 
     if (nodeName == "img")
         SChatBox.OnRightClick(ev.target.src, true);
+    else if (ev.target.steamId)
+        SChatBox.OnRightClick(ev.target.steamId, false, ev.target.steamId64);
     else if (ev.target.clickableText)
         SChatBox.OnRightClick(ev.target.textContent, true);
     else
@@ -505,9 +507,9 @@ function SChatBox:Init()
         self:OnSelectEmoji( id )
     end )
 
-    self:AddInternalCallback( "OnRightClick", function( data, isLink )
+    self:AddInternalCallback( "OnRightClick", function( data, isLink, steamId64 )
         if SChat.isOpen then
-            SChat:OpenContextMenu( data, isLink )
+            SChat:OpenContextMenu( data, isLink, steamId64 )
         end
     end )
 end

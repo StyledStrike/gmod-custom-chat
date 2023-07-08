@@ -275,11 +275,24 @@ function SChat:SuggestServerTheme()
     end
 end
 
-function SChat:OpenContextMenu( data, isLink )
+function SChat:OpenContextMenu( data, isLink, steamId64 )
     local optionsMenu = DermaMenu( false, self.frame )
     optionsMenu:SetMinimumWidth( 200 )
 
-    if data ~= "" then
+    if steamId64 and steamId64 ~= "" then
+        optionsMenu:AddOption( "Copy SteamID..", function()
+            SetClipboardText( data )
+        end ):SetIcon( "icon16/comment_edit.png" )
+
+        optionsMenu:AddOption( "Copy SteamID64..", function()
+            SetClipboardText( steamId64 )
+        end ):SetIcon( "icon16/comment_edit.png" )
+
+        optionsMenu:AddOption( "Open profile page..", function()
+            gui.OpenURL( "http://steamcommunity.com/profiles/" .. steamId64 )
+        end ):SetIcon( "icon16/user.png" )
+
+    elseif data ~= "" then
         optionsMenu:AddOption( isLink and "Copy Link.." or "Copy...", function()
             SetClipboardText( data )
         end ):SetIcon( "icon16/comment_edit.png" )

@@ -31,10 +31,10 @@ local fontNames = {
 -- Generates JS code that creates a message element based on "contents".
 -- "contents" must be a sequential table, containing strings, colors, and/or player entities.
 function SChat:GenerateMessageFromTable( contents )
-    local playerNicks = {}
+    local playerIdsByName = {}
 
     for _, ply in ipairs( player.GetAll() ) do
-        playerNicks[ply:Nick()] = true
+        playerIdsByName[ply:Nick()] = { ply:SteamID(), ply:SteamID64() }
     end
 
     -- first, lets split the message contents into "blocks"
@@ -57,9 +57,12 @@ function SChat:GenerateMessageFromTable( contents )
 
         elseif type( obj ) == "string" then
             -- if obj is a player name...
-            if playerNicks[obj] then
-                -- add it as a plain string (maybe do a "mention" system later?)
-                addBlock( "string", obj )
+            if playerIdsByName[obj] then
+                addBlock( "player", {
+                    name = obj,
+                    id = playerIdsByName[obj][1],
+                    id64 = playerIdsByName[obj][2]
+                } )
             else
                 -- otherwise find more blocks using patterns
                 SChat:ParseString( obj, addBlock )
@@ -74,7 +77,11 @@ function SChat:GenerateMessageFromTable( contents )
             end
 
             addBlock( "color", nameColor )
-            addBlock( "string", obj:Nick() )
+            addBlock( "player", {
+                name = obj:Nick(),
+                id = obj:SteamID(),
+                id64 = obj:SteamID64()
+            } )
         else
             addBlock( "string", tostring( obj ) )
         end
@@ -220,6 +227,24 @@ end
 
 JSBuilder.builders["string"] = function( val, color, font )
     return JSBuilder:CreateText( val, font, nil, color )
+end
+
+JSBuilder.builders["player"] = function( val, color, font )
+    local lines = { JSBuilder:CreateElement( "span", "elPlayer" ) }
+
+    AddLine( lines, "elPlayer.textContent = '%s';", SafeString( val.name ) )
+    AddLine( lines, "elPlayer.steamId = '%s';", val.id )
+    AddLine( lines, "elPlayer.steamId64 = '%s';", val.id64 )
+
+    if IsStringValid( font ) then
+        AddLine( lines, "elPlayer.style.fontFamily = '%s';", font )
+    end
+
+    if color and color ~= color_white then
+        AddLine( lines, "elPlayer.style.color = '%s';", ColorToJs( color ) )
+    end
+
+    return table.concat( lines, "\n" )
 end
 
 JSBuilder.builders["emoji"] = function( val, color, font )
