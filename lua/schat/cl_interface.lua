@@ -408,6 +408,17 @@ This means that no matter which site they come from, you will load it, and it CA
         end ):SetIcon( "icon16/emoticon_tongue.png" )
     end
 
+    if self:CanSetChatTags( LocalPlayer() ) then
+        optionsMenu:AddOption( "[Admin] Chat Tags...", function()
+            if self.DO_NOT_USE_TAGS then
+                self.Tags:ShowChatTagsPanel()
+            else
+                Derma_Message( [[To avoid conflicts with other addons, chat tags are disabled.
+Make sure aTags is not installed.]], "Chat Tags", "OK" )
+            end
+        end ):SetIcon( "icon16/tag_blue_edit.png" )
+    end
+
     optionsMenu:Open()
 end
 

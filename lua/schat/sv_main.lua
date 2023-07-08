@@ -8,6 +8,7 @@ util.AddNetworkString( "schat.is_typing" )
 
 util.AddNetworkString( "schat.set_theme" )
 util.AddNetworkString( "schat.set_emojis" )
+util.AddNetworkString( "schat.set_tags" )
 
 -- handle networking of messages
 local sayCooldown = {}
@@ -88,9 +89,11 @@ end )
 local Settings = {
     themeFilePath = "schat_server_theme.json",
     emojiFilePath = "schat_server_emojis.json",
+    tagsFilePath = "schat_server_tags.json",
 
     themeData = {},
-    emojiData = {}
+    emojiData = {},
+    tagsData = {}
 }
 
 function Settings:Serialize( tbl )
@@ -111,11 +114,15 @@ function Settings:Load()
 
     -- load existing server emojis
     self.emojiData = self:Unserialize( file.Read( self.emojiFilePath, "DATA" ) )
+
+    -- load existing server chat tags
+    self.tagsData = self:Unserialize( file.Read( self.tagsFilePath, "DATA" ) )
 end
 
 function Settings:Save()
     file.Write( self.themeFilePath, self:Serialize( self.themeData ) )
     file.Write( self.emojiFilePath, self:Serialize( self.emojiData ) )
+    file.Write( self.tagsFilePath, self:Serialize( self.tagsData ) )
 end
 
 function Settings:ShareTheme( ply )
@@ -143,7 +150,19 @@ function Settings:ShareEmojis( ply )
 
     if IsValid( ply ) then
         net.Send( ply )
-        SChat.PrintF( "Sent emoji data to %s", ply:Nick() )
+        SChat.PrintF( "Emoji data was sent to %s", ply:Nick() )
+    else
+        net.Broadcast()
+    end
+end
+
+function Settings:ShareTags( ply )
+    net.Start( "schat.set_tags", false )
+    net.WriteString( self:Serialize( self.tagsData ) )
+
+    if IsValid( ply ) then
+        net.Send( ply )
+        SChat.PrintF( "Tags data was sent to %s", ply:Nick() )
     else
         net.Broadcast()
     end
@@ -165,6 +184,14 @@ function Settings:SetEmojis( data, admin )
     self:Save()
 end
 
+function Settings:SetChatTags( data, admin )
+    SChat.PrintF( "%s changed the chat tags.", admin or "Someone" )
+
+    self.tagsData = data
+    self:ShareTags()
+    self:Save()
+end
+
 net.Receive( "schat.set_theme", function( _, ply )
     if SChat:CanSetServerTheme( ply ) then
         local themeData = Settings:Unserialize( net.ReadString() )
@@ -180,6 +207,15 @@ net.Receive( "schat.set_emojis", function( _, ply )
         Settings:SetEmojis( emojiData, ply:Nick() )
     else
         ply:ChatPrint( "SChat: You cannot change the server emojis." )
+    end
+end )
+
+net.Receive( "schat.set_tags", function( _, ply )
+    if SChat:CanSetChatTags( ply ) then
+        local tagsData = Settings:Unserialize( net.ReadString() )
+        Settings:SetChatTags( tagsData, ply:Nick() )
+    else
+        ply:ChatPrint( "SChat: You cannot change the chat tags." )
     end
 end )
 
@@ -204,6 +240,11 @@ hook.Add( "ClientSignOnStateChanged", "schat_ClientStateChanged", function( user
             -- send the server emojis (if set)
             if not table.IsEmpty( Settings.emojiData ) then
                 Settings:ShareEmojis( ply )
+            end
+
+            -- send chat tags (if set)
+            if not table.IsEmpty( Settings.tagsData ) then
+                Settings:ShareTags( ply )
             end
         end )
     end

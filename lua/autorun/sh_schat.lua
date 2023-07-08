@@ -23,6 +23,10 @@ function SChat:CanSetServerEmojis( ply )
     return ply:IsSuperAdmin()
 end
 
+function SChat:CanSetChatTags( ply )
+    return ply:IsSuperAdmin()
+end
+
 function SChat.PrintF( str, ... )
     MsgC( Color( 0, 123, 255 ), "[Custom Chat] ", Color( 255, 255, 255 ), string.format( str, ... ), "\n" )
 end
@@ -98,6 +102,7 @@ if SERVER then
     AddCSLuaFile( "schat/cl_parser.lua" )
     AddCSLuaFile( "schat/cl_settings.lua" )
     AddCSLuaFile( "schat/cl_theme.lua" )
+    AddCSLuaFile( "schat/cl_tags.lua" )
     AddCSLuaFile( "schat/cl_whitelist.lua" )
     AddCSLuaFile( "schat/cl_chatbox.lua" )
     AddCSLuaFile( "schat/cl_interface.lua" )
@@ -113,6 +118,7 @@ if CLIENT then
     include( "schat/cl_parser.lua" )
     include( "schat/cl_settings.lua" )
     include( "schat/cl_theme.lua" )
+    include( "schat/cl_tags.lua" )
     include( "schat/cl_whitelist.lua" )
     include( "schat/cl_chatbox.lua" )
     include( "schat/cl_interface.lua" )
