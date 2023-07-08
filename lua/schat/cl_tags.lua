@@ -9,7 +9,7 @@ hook.Add( "InitPostEntity", "SChat.PreventChatTagsConflict", function()
     hook.Remove( "InitPostEntity", "SChat.PreventChatTagsConflict" )
 
     if not aTags then
-        SChat.DO_NOT_USE_TAGS = true
+        SChat.USE_TAGS = true
     end
 end )
 
@@ -38,7 +38,7 @@ function Tags:GetParts( ply )
 end
 
 hook.Add( "OnPlayerChat", "SChat.AddCustomTags", function( ply, text, isTeam, isDead )
-    if not SChat.DO_NOT_USE_TAGS then return end
+    if not SChat.USE_TAGS then return end
 
     local parts = Tags:GetParts( ply )
     if not parts then return end
