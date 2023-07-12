@@ -139,8 +139,12 @@ function Theme:ShowCustomizePanel()
 
     self.customFrame = SChat:CreateSidePanel( "Customize Theme", true )
 
+    SChat.wasThemeChanged = false
+
     self.customFrame.OnClose = function()
-        self:Save()
+        if SChat.wasThemeChanged then
+            self:Save()
+        end
     end
 
     local fields = {

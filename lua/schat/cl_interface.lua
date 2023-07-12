@@ -474,6 +474,8 @@ function SChat:ApplyTheme( invalidate )
     if invalidate then
         self.frame:InvalidateChildren( false )
     end
+
+    self.wasThemeChanged = true
 end
 
 function SChat:SetInputEnabled( enable )
