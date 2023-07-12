@@ -402,7 +402,8 @@ function Theme:ShowCustomizePanel()
         local query
 
         if SChat.serverTheme == "" then
-            query = "This action will suggest your current theme to all players on this server (Including those who join later).\nAre you sure?"
+            query = [[This action will make all players (including those who join later) use this theme,
+but only if they aren't using one already. Are you sure?]]
             actions = {
                 "Yes", function()
                     setServerTheme( self:ToJSON() )
