@@ -328,20 +328,13 @@ function SChat:OpenContextMenu( data, isLink, steamId64 )
         Settings:Save()
     end
 
-    local checkTimestamps = vgui.Create( "DCheckBoxLabel", panelSettings )
-    checkTimestamps:Dock( TOP )
-    checkTimestamps:SetText( "Show timestamps" )
-    checkTimestamps:SetValue( Settings.timestamps )
-    checkTimestamps:SizeToContents()
-
-    checkTimestamps.OnChange = function( _, val )
-        Settings.timestamps = val
-        Settings:Save()
-    end
-
     panelSettings:SizeToChildren()
-    panelSettings:SetTall( panelSettings:GetTall() * 2 )
     optionsMenu:AddPanel( panelSettings )
+
+    optionsMenu:AddOption( Settings.timestamps and "Disable timestamps" or "Enable timestamps", function()
+        Settings.timestamps = not Settings.timestamps
+        Settings:Save()
+    end ):SetIcon( Settings.timestamps and "icon16/time_delete.png" or "icon16/time_add.png" )
 
     if Settings.allow_any_url then
         optionsMenu:AddOption( "Block images from unknown URLs", function()
