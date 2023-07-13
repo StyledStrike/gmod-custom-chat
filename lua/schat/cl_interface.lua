@@ -115,12 +115,14 @@ function SChat:CreatePanels()
     self.entry.OnChange = function( s )
         if s.GetText then
             local text = s:GetText() or ""
-            local _, nLines = string.gsub( text, "\n", "\n" )
 
             hook.Run( "ChatTextChanged", text )
 
+            local _, nLines = string.gsub( text, "\n", "\n" )
             nLines = math.Clamp( nLines + 1, 1, 5 )
+
             self.entryDock:SetTall( 20 * nLines )
+            self.multilineMode = nLines > 1
         end
     end
 
@@ -150,7 +152,7 @@ function SChat:CreatePanels()
             return true
         end
 
-        if s.m_bHistory then
+        if not self.multilineMode and s.m_bHistory then
             if code == KEY_UP then
                 s.HistoryPos = s.HistoryPos - 1
                 s:UpdateFromHistory()
