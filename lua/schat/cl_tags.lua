@@ -39,6 +39,7 @@ end
 
 hook.Add( "OnPlayerChat", "SChat.AddCustomTags", function( ply, text, isTeam, isDead )
     if not SChat.USE_TAGS then return end
+    if not IsValid( ply ) or not ply:IsPlayer() then return end
 
     local parts = Tags:GetParts( ply )
     if not parts then return end
