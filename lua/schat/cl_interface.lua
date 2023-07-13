@@ -106,6 +106,7 @@ function SChat:CreatePanels()
     self.entry:SetTabbingDisabled( true )
     self.entry:SetMultiline( true )
     self.entry:SetHistoryEnabled( true )
+    self.entry:SetDrawLanguageID( false )
     self.entry:Dock( FILL )
 
     self.entry.Paint = function( s, w, h )
