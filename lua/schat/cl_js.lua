@@ -370,7 +370,6 @@ function JSBuilder:CreateText( text, font, link, color, bgColor, cssClass )
         AddLine( lines, "elText.onclick = function(){ SChatBox.OnClickLink('%s') };", SafeString( link ) )
         AddLine( lines, "elText.clickableText = true;" )
         AddLine( lines, "elText.style.cursor = 'pointer';" )
-        AddLine( lines, "elText.style.wordBreak = 'break-all';" )
     end
 
     if cssClass then
