@@ -274,7 +274,11 @@ end
 
 JSBuilder.builders["url"] = function( val, _, font )
     local urlType = GetURLType( val )
-    local canEmbed = hook.Run( "CanEmbedCustomChat", SChat._lastPlayer, val, urlType ) ~= false
+    local canEmbed = false
+
+    if IsValid( SChat._lastPlayer ) then
+        canEmbed = hook.Run( "CanEmbedCustomChat", SChat._lastPlayer, val, urlType ) ~= false
+    end
 
     if canEmbed and SChat:IsWhitelisted( val ) then
         if urlType == "image" then
