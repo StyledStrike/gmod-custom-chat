@@ -292,7 +292,7 @@ function SChat:OpenContextMenu( data, isLink, steamId64 )
         end ):SetIcon( "icon16/comment_edit.png" )
 
         optionsMenu:AddOption( "Open profile page..", function()
-            gui.OpenURL( "http://steamcommunity.com/profiles/" .. steamId64 )
+            gui.OpenURL( "https://steamcommunity.com/profiles/" .. steamId64 )
         end ):SetIcon( "icon16/user.png" )
 
     elseif data ~= "" then
