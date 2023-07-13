@@ -341,6 +341,14 @@ img {
 .hyperlink {
     text-decoration: underline;
 }
+.avatar {
+    height: 1.2em;
+    cursor: default;
+    display: inline-block;
+    vertical-align: text-bottom;
+    border-radius: 25%;
+    margin-right: 0.2em;
+}
 
 .spoiler {
     border-radius: 4px;

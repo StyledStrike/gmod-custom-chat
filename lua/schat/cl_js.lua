@@ -10,7 +10,13 @@ local JSBuilder = {
     rootElement = "elMessage",
 
     -- background color for code snippets
-    codeBackgroundColor = Color( 47, 49, 54, 255 )
+    codeBackgroundColor = Color( 47, 49, 54, 255 ),
+
+    -- avatar url cache
+    avatarCache = {},
+
+    -- placeholder until we are done fetching the player's avatar
+    avatarPlaceholder = "asset://garrysmod/materials/icon16/user.png"
 }
 
 -- list of fonts usable on messages
@@ -230,11 +236,16 @@ JSBuilder.builders["string"] = function( val, color, font )
 end
 
 JSBuilder.builders["player"] = function( val, color, font )
-    local lines = { JSBuilder:CreateElement( "span", "elPlayer" ) }
+    local lines = {
+        JSBuilder:CreateImage( JSBuilder:FetchUserAvatarURL( val.id64 ), nil, "avatar ply-" .. val.id64 ),
+        JSBuilder:CreateElement( "span", "elPlayer" )
+    }
 
     AddLine( lines, "elPlayer.textContent = '%s';", SafeString( val.name ) )
     AddLine( lines, "elPlayer.steamId = '%s';", val.id )
     AddLine( lines, "elPlayer.steamId64 = '%s';", val.id64 )
+    AddLine( lines, "elPlayer.style.cursor = 'pointer';" )
+    AddLine( lines, "elPlayer.clickableText = true;" )
 
     if IsStringValid( font ) then
         AddLine( lines, "elPlayer.style.fontFamily = '%s';", font )
@@ -601,4 +612,79 @@ function JSBuilder:OnHTTPResponse( embedId, body, url )
     AddLine( lines, "}" )
 
     SChat.chatBox:QueueJavascript( table.concat( lines, "\n" ) )
+end
+
+-- Steam Avatar Fetcher
+local XML_PROFILE_START = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<profile>"
+
+local function ExtractAvatarFromXML( data )
+    if string.StartsWith( data, XML_PROFILE_START ) then return end
+
+    local urlPattern = "<!%[CDATA%[(https://[%g%.]+/[%g]+%.jpg)%]%]>"
+    local _, _, url = string.find( data, "<avatarMedium>" .. urlPattern .. "</avatarMedium>"  )
+
+    if not url then
+        _, _, url = string.find( data, "<avatarIcon>" .. urlPattern .. "</avatarIcon>"  )
+    end
+
+    return url
+end
+
+local function UpdateAllAvatars( steamId64, url )
+    -- replace the image source of existing avatars
+    local code = (
+        [[var avatarElements = document.getElementsByClassName('ply-%s');
+
+        for (var i = 0; i < avatarElements.length; i++) {
+            avatarElements[i].src = '%s';
+        }]]
+    ):format( steamId64, url )
+
+    SChat.chatBox:QueueJavascript( code )
+end
+
+function JSBuilder:FetchUserAvatarURL( steamId64 )
+    local url = self.avatarCache[steamId64]
+    if url and url ~= "" then
+        return url
+    end
+
+    -- prevent fetching the same user
+    -- multiple times at the same time
+    if url == "" then
+        return self.avatarPlaceholder
+    end
+
+    self.avatarCache[steamId64] = ""
+
+    SChat.PrintF( "Fetching avatar for %d", steamId64 )
+
+    local OnFail = function( reason )
+        SChat.PrintF( "Failed to fetch avatar for %d: %s", steamId64, reason )
+        self.avatarCache[steamId64] = nil
+    end
+
+    HTTP( {
+        url = string.format( "https://steamcommunity.com/profiles/%s?xml=true", steamId64 ),
+        method = "GET",
+
+        success = function( code, body )
+            if not body or code ~= 200 then
+                OnFail( "Non-OK code or empty body" )
+                return
+            end
+
+            self.avatarCache[steamId64] = ExtractAvatarFromXML( body )
+
+            if self.avatarCache[steamId64] then
+                UpdateAllAvatars( steamId64, self.avatarCache[steamId64] )
+            else
+                OnFail( "Missing URLs from the XML data" )
+            end
+        end,
+
+        failed = OnFail
+    } )
+
+    return self.avatarPlaceholder
 end
