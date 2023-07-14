@@ -566,10 +566,14 @@ local schatOpen = function()
 end
 
 local function schat_ChatText( _, _, text, textType )
-    if textType ~= "chat" then
-        SChat:AppendMessage( { Color( 0, 128, 255 ), text } )
-        return true
-    end
+    if textType == "chat" then return end
+
+    local canShowJoinLeave = not ( SChat.Tags.connection.showConnect or SChat.Tags.connection.showDisconnect )
+    if not canShowJoinLeave and textType == "joinleave" then return end
+
+    SChat:AppendMessage( { Color( 0, 128, 255 ), text } )
+
+    return true
 end
 
 local function schat_PlayerBindPress( _, bind, pressed )
