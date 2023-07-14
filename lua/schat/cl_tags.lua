@@ -548,7 +548,7 @@ function Tags:ShowChatTagsPanel()
     end
 
     local labelLeaveSuffix = vgui.Create( "DLabel", pnlDisconnect )
-    labelLeaveSuffix:SetText( "leave suffix" )
+    labelLeaveSuffix:SetText( "Leave suffix" )
     labelLeaveSuffix:SizeToContents()
     labelLeaveSuffix:Dock( TOP )
     labelLeaveSuffix:DockMargin( 0, 12, 0, 4 )
