@@ -630,8 +630,8 @@ local function ExtractAvatarFromXML( data )
     return url
 end
 
+-- Replace the image source of existing avatars for a specific steamid
 local function UpdateAllAvatars( steamId64, url )
-    -- replace the image source of existing avatars
     local code = (
         [[var avatarElements = document.getElementsByClassName('ply-%s');
 
@@ -644,7 +644,9 @@ local function UpdateAllAvatars( steamId64, url )
 end
 
 function JSBuilder:FetchUserAvatarURL( steamId64 )
-    local url = self.avatarCache[steamId64]
+    local id = steamId64
+    local url = self.avatarCache[id]
+
     if url and url ~= "" then
         return url
     end
@@ -655,17 +657,17 @@ function JSBuilder:FetchUserAvatarURL( steamId64 )
         return self.avatarPlaceholder
     end
 
-    self.avatarCache[steamId64] = ""
+    self.avatarCache[id] = ""
 
-    SChat.PrintF( "Fetching avatar for %d", steamId64 )
+    SChat.PrintF( "Fetching avatar for %s", id )
 
     local OnFail = function( reason )
-        SChat.PrintF( "Failed to fetch avatar for %d: %s", steamId64, reason )
-        self.avatarCache[steamId64] = nil
+        SChat.PrintF( "Failed to fetch avatar for %s: %s", id, reason )
+        self.avatarCache[id] = nil
     end
 
     HTTP( {
-        url = string.format( "https://steamcommunity.com/profiles/%s?xml=true", steamId64 ),
+        url = string.format( "https://steamcommunity.com/profiles/%s?xml=true", id ),
         method = "GET",
 
         success = function( code, body )
@@ -674,12 +676,15 @@ function JSBuilder:FetchUserAvatarURL( steamId64 )
                 return
             end
 
-            self.avatarCache[steamId64] = ExtractAvatarFromXML( body )
+            url = ExtractAvatarFromXML( body )
 
-            if self.avatarCache[steamId64] then
-                UpdateAllAvatars( steamId64, self.avatarCache[steamId64] )
+            if url then
+                self.avatarCache[id] = url
+
+                SChat.PrintF( "Got avatar for %s: %s", id, url )
+                UpdateAllAvatars( id, url )
             else
-                OnFail( "Missing URLs from the XML data" )
+                OnFail( "Missing avatar URL from the XML data" )
             end
         end,
 
