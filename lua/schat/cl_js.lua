@@ -40,7 +40,7 @@ function SChat:GenerateMessageFromTable( contents )
     local playerIdsByName = {}
 
     for _, ply in ipairs( player.GetAll() ) do
-        playerIdsByName[ply:Nick()] = { ply:SteamID(), ply:SteamID64() }
+        playerIdsByName[ply:Nick()] = { ply:SteamID(), ply:SteamID64(), ply:IsBot() }
     end
 
     -- first, lets split the message contents into "blocks"
@@ -67,7 +67,8 @@ function SChat:GenerateMessageFromTable( contents )
                 addBlock( "player", {
                     name = obj,
                     id = playerIdsByName[obj][1],
-                    id64 = playerIdsByName[obj][2]
+                    id64 = playerIdsByName[obj][2],
+                    isBot = playerIdsByName[obj][3]
                 } )
             else
                 -- otherwise find more blocks using patterns
@@ -86,7 +87,8 @@ function SChat:GenerateMessageFromTable( contents )
             addBlock( "player", {
                 name = obj:Nick(),
                 id = obj:SteamID(),
-                id64 = obj:SteamID64()
+                id64 = obj:SteamID64(),
+                isBot = obj:IsBot()
             } )
         else
             addBlock( "string", tostring( obj ) )
@@ -236,16 +238,21 @@ JSBuilder.builders["string"] = function( val, color, font )
 end
 
 JSBuilder.builders["player"] = function( val, color, font )
-    local lines = {
-        JSBuilder:CreateImage( JSBuilder:FetchUserAvatarURL( val.id64 ), nil, "avatar ply-" .. val.id64 ),
-        JSBuilder:CreateElement( "span", "elPlayer" )
-    }
+    local lines = {}
 
+    if not val.isBot then
+        lines[#lines + 1] = JSBuilder:CreateImage( JSBuilder:FetchUserAvatarURL( val.id64 ), nil, "avatar ply-" .. val.id64 )
+    end
+
+    lines[#lines + 1] = JSBuilder:CreateElement( "span", "elPlayer" )
     AddLine( lines, "elPlayer.textContent = '%s';", SafeString( val.name ) )
-    AddLine( lines, "elPlayer.steamId = '%s';", val.id )
-    AddLine( lines, "elPlayer.steamId64 = '%s';", val.id64 )
-    AddLine( lines, "elPlayer.style.cursor = 'pointer';" )
-    AddLine( lines, "elPlayer.clickableText = true;" )
+
+    if not val.isBot then
+        AddLine( lines, "elPlayer.steamId = '%s';", val.id )
+        AddLine( lines, "elPlayer.steamId64 = '%s';", val.id64 )
+        AddLine( lines, "elPlayer.style.cursor = 'pointer';" )
+        AddLine( lines, "elPlayer.clickableText = true;" )
+    end
 
     if IsStringValid( font ) then
         AddLine( lines, "elPlayer.style.fontFamily = '%s';", font )
