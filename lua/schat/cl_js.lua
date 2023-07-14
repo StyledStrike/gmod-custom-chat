@@ -253,6 +253,7 @@ JSBuilder.builders["player"] = function( val, color, font )
 
     if color and color ~= color_white then
         AddLine( lines, "elPlayer.style.color = '%s';", ColorToJs( color ) )
+        AddLine( lines, "elImg.style['border-color'] = '%s';", ColorToJs( color ) )
     end
 
     return table.concat( lines, "\n" )

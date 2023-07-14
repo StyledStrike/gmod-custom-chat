@@ -346,8 +346,12 @@ img {
     cursor: default;
     display: inline-block;
     vertical-align: text-bottom;
-    border-radius: 25%;
     margin-right: 0.2em;
+
+    border: solid;
+    border-radius: 25%;
+    border-width: 1px;
+    border-color: #555555;
 }
 
 .spoiler {
