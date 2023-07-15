@@ -37,10 +37,16 @@ local fontNames = {
 -- Generates JS code that creates a message element based on "contents".
 -- "contents" must be a sequential table, containing strings, colors, and/or player entities.
 function SChat:GenerateMessageFromTable( contents )
-    local playerIdsByName = {}
+    local playersByName = {}
 
     for _, ply in ipairs( player.GetAll() ) do
-        playerIdsByName[ply:Nick()] = { ply:SteamID(), ply:SteamID64(), ply:IsBot() }
+        playersByName[ply:Nick()] = {
+            ply = ply,
+            name = ply:Nick(),
+            id = ply:SteamID(),
+            id64 = ply:SteamID64(),
+            isBot = ply:IsBot()
+        }
     end
 
     -- first, lets split the message contents into "blocks"
@@ -63,28 +69,16 @@ function SChat:GenerateMessageFromTable( contents )
 
         elseif type( obj ) == "string" then
             -- if obj is a player name...
-            if playerIdsByName[obj] then
-                addBlock( "player", {
-                    name = obj,
-                    id = playerIdsByName[obj][1],
-                    id64 = playerIdsByName[obj][2],
-                    isBot = playerIdsByName[obj][3]
-                } )
+            if playersByName[obj] then
+                addBlock( "player", playersByName[obj] )
             else
                 -- otherwise find more blocks using patterns
                 SChat:ParseString( obj, addBlock )
             end
 
         elseif type( obj ) == "Player" and IsValid( obj ) then
-            local nameColor = team.GetColor( obj:Team() )
-
-            -- aTags support
-            if obj.getChatTag then
-                _, _, nameColor = obj:getChatTag()
-            end
-
-            addBlock( "color", nameColor )
             addBlock( "player", {
+                ply = obj,
                 name = obj:Nick(),
                 id = obj:SteamID(),
                 id64 = obj:SteamID64(),
@@ -256,6 +250,18 @@ JSBuilder.builders["player"] = function( val, color, font )
 
     if IsStringValid( font ) then
         AddLine( lines, "elPlayer.style.fontFamily = '%s';", font )
+    end
+
+    if IsValid( val.ply ) then
+        if SChat.USE_TAGS then
+            local nameColor = SChat.Tags:GetNameColor( val.ply )
+            if nameColor then color = nameColor end
+
+        elseif val.ply.getChatTag then
+            -- aTags support
+            local _, _, nameColor = val.ply:getChatTag()
+            if nameColor then color = nameColor end
+        end
     end
 
     if color and color ~= color_white then

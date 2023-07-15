@@ -55,6 +55,20 @@ function Tags:GetParts( ply )
     end
 end
 
+function Tags:GetNameColor( ply )
+    local parts = self:GetParts( ply )
+
+    if parts and #parts > 0 then
+        for _, v in pairs( parts ) do
+            if v[1] == "NAME_COL" then
+                return Color( v[2], v[3], v[4] )
+            end
+        end
+    end
+
+    return GAMEMODE:GetTeamColor( ply )
+end
+
 hook.Add( "OnPlayerChat", "SChat.AddCustomTags", function( ply, text, isTeam, isDead )
     if not SChat.USE_TAGS then return end
     if not IsValid( ply ) or not ply:IsPlayer() then return end
@@ -78,27 +92,23 @@ hook.Add( "OnPlayerChat", "SChat.AddCustomTags", function( ply, text, isTeam, is
         Insert( "*DEAD* " )
     end
 
-    local nameColor = GAMEMODE:GetTeamColor( ply )
     local messageColor = Color( 255, 255, 255 )
 
     if #parts > 0 then
         for _, v in pairs( parts ) do
             local color = Color( v[2], v[3], v[4] )
 
-            if v[1] == "NAME_COL" then
-                nameColor = color
-            elseif v[1] == "MESSAGE_COL" then
+            if v[1] == "MESSAGE_COL" then
                 messageColor = color
-            else
+
+            elseif v[1] ~= "NAME_COL" then
                 Insert( color )
                 Insert( v[1] )
             end
         end
     end
 
-    Insert( nameColor )
-    Insert( ply:Nick() )
-
+    Insert( ply )
     Insert( messageColor )
     Insert( ": " .. text )
 
