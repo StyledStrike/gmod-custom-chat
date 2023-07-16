@@ -63,6 +63,10 @@ function SChat:GenerateMessageFromTable( contents )
         if type( obj ) == "table" then
             if obj.r and obj.g and obj.b then
                 addBlock( "color", obj )
+
+            elseif obj.blockType and obj.blockValue then
+                addBlock( obj.blockType, obj.blockValue )
+
             else
                 addBlock( "string", tostring( obj ) )
             end
