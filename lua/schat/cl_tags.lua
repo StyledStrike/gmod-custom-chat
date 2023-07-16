@@ -124,10 +124,24 @@ hook.Add( "player_connect_client", "schat_PlayerConnect", function( data )
     if not Tags.connection.showConnect then return end
 
     local c = Tags.connection.joinColor
+    local name = data.name
+
+    -- only use custom player block if schat is enabled
+    if GetConVar( "customchat_disable" ):GetInt() == 0 then
+        name = {
+            blockType = "player",
+            blockValue = {
+                name = data.name,
+                id = data.networkid,
+                id64 = util.SteamIDTo64( data.networkid ),
+                isBot = data.bot == 1
+            }
+        }
+    end
 
     SChat:AppendMessage( {
         Color( 255, 255, 255 ), Tags.connection.joinPrefix,
-        Color( c[1], c[2], c[3] ), data.name,
+        Color( c[1], c[2], c[3] ), name,
         Color( 150, 150, 150 ), " <" .. data.networkid .. "> ",
         Color( 255, 255, 255 ), Tags.connection.joinSuffix
     } )
@@ -137,10 +151,24 @@ hook.Add( "player_disconnect", "schat_PlayerDisconnect", function( data )
     if not Tags.connection.showDisconnect then return end
 
     local c = Tags.connection.leaveColor
+    local name = data.name
+
+    -- only use custom player block if schat is enabled
+    if GetConVar( "customchat_disable" ):GetInt() == 0 then
+        name = {
+            blockType = "player",
+            blockValue = {
+                name = data.name,
+                id = data.networkid,
+                id64 = util.SteamIDTo64( data.networkid ),
+                isBot = data.bot == 1
+            }
+        }
+    end
 
     SChat:AppendMessage( {
         Color( 255, 255, 255 ), Tags.connection.leavePrefix,
-        Color( c[1], c[2], c[3] ), data.name,
+        Color( c[1], c[2], c[3] ), name,
         Color( 150, 150, 150 ), " <" .. data.networkid .. "> ",
         Color( 255, 255, 255 ), Tags.connection.leaveSuffix,
         Color( 150, 150, 150 ), " (" .. data.reason .. ")"
