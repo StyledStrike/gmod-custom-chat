@@ -19,6 +19,18 @@ local JSBuilder = {
     avatarPlaceholder = "asset://garrysmod/materials/icon16/user.png"
 }
 
+if BRANCH == "unknown" then
+    SChat.PrintF( "Not using Chromium, enforcing plain HTTP for some image links." )
+
+    -- force plain HTTP for certain image links when Chromium is not in use
+    JSBuilder.forceHTTP = {
+        ["avatars.cloudflare.steamstatic.com"] = true,
+        ["avatars.akamai.steamstatic.com"] = true,
+        ["media.discordapp.net"] = true,
+        ["cdn.discordapp.com"] = true -- seems like it still does not work
+    }
+end
+
 -- list of fonts usable on messages
 local fontNames = {
     ["monospace"] = "monospace",
@@ -423,6 +435,15 @@ end
 -- Returns JS code to create a image element
 -- (optionally, it can act as a clickable link)
 function JSBuilder:CreateImage( url, link, cssClass, altText, safeFilter )
+    if self.forceHTTP then
+        local prefix, site = string.match( url, "^(%w-)://([^/]*)/" )
+
+        if site and prefix == "https" and self.forceHTTP[site] then
+            SChat.PrintF( "Forcing plain HTTP for %s", site )
+            url = "http" .. string.sub( url, 6 )
+        end
+    end
+
     url = SafeString( url )
 
     local lines = {}
@@ -697,6 +718,10 @@ function JSBuilder:FetchUserAvatarURL( steamId64 )
             url = ExtractAvatarFromXML( body )
 
             if url then
+                if self.forceHTTP then
+                    url = "http" .. string.sub( url, 6 )
+                end
+
                 self.avatarCache[id] = url
 
                 SChat.PrintF( "Got avatar for %s: %s", id, url )
