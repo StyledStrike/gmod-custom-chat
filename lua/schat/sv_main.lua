@@ -138,7 +138,6 @@ function Settings:ShareTheme( ply )
 
     if IsValid( ply ) then
         net.Send( ply )
-        SChat.PrintF( "Theme data was sent to %s", ply:Nick() )
     else
         net.Broadcast()
     end
@@ -150,7 +149,6 @@ function Settings:ShareEmojis( ply )
 
     if IsValid( ply ) then
         net.Send( ply )
-        SChat.PrintF( "Emoji data was sent to %s", ply:Nick() )
     else
         net.Broadcast()
     end
@@ -162,7 +160,6 @@ function Settings:ShareTags( ply )
 
     if IsValid( ply ) then
         net.Send( ply )
-        SChat.PrintF( "Tags data was sent to %s", ply:Nick() )
     else
         net.Broadcast()
     end
