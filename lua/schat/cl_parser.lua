@@ -1,30 +1,28 @@
+local string_sub = string.sub
 local table_insert = table.insert
-local str_sub = string.sub
 
 --[[
-    Parses patterns on strings, turning them into "blocks"
+    Find patterns on strings, and turns them into "blocks"
 ]]
 
--- List of patterns to search on the input,
--- from the lowest to highest priority, meaning the
--- next item on the table overrides the previous
+-- list of pattern ranges to look for
 local rangeTypes = {
     { type = "url", pattern = "asset://[^%s%\"%>%<%!]+" },
     { type = "url", pattern = "https?://[^%s%\"%>%<%!]+" },
-    { type = "hyperlink", pattern = "%[[%s%g][^%[%]]+%]%(https?://[^'\">%s]+%)" },
+    { type = "hyperlink", pattern = "%[[^%c]-[^%[%]]*%]%(https?://[^'\">%s]+%)" },
     { type = "model", pattern = "models/[%w_/]+.mdl" },
     { type = "font", pattern = ";[%w_]+;" },
-    { type = "italic", pattern = "%*[%g%s][^%*]+%*" },
-    { type = "bold", pattern = "%*%*[%g%s][^%*]+%*%*" },
-    { type = "bold_italic", pattern = "%*%*%*[%g%s][^%*]+%*%*%*" },
+    { type = "italic", pattern = "%*[^%c][^%*]+%*" },
+    { type = "bold", pattern = "%*%*[^%c][^%*]+%*%*" },
+    { type = "bold_italic", pattern = "%*%*%*[^%c][^%*]+%*%*%*" },
     { type = "color", pattern = "<%d+,%d+,%d+>" },
-    { type = "rainbow", pattern = "%$%$[%g%s%*]+%$%$" },
-    { type = "advert", pattern = "%[%[[%g%s%*]+%]%]" },
+    { type = "rainbow", pattern = "%$%$[^%c]+%$%$" },
+    { type = "advert", pattern = "%[%[[^%c]+%]%]" },
     { type = "emoji", pattern = ":[%w_%-]+:" },
-    { type = "spoiler", pattern = "||[%g%s][^||]+||" },
-    { type = "code_line", pattern = "`[%g%s{}%[%]`´]+`" },
-    { type = "code", pattern = "{{[%g%s`´]+}}" },
-    { type = "code", pattern = "```[%g%s`´]+```" }
+    { type = "spoiler", pattern = "||[^%c]-[^|]*||" },
+    { type = "code_line", pattern = "`[^%c]+[`]*`" },
+    { type = "code", pattern = "{{[^%z]-[^}}]*}}" },
+    { type = "code", pattern = "```[^%z]-[^```]*```" }
 }
 
 -- A "range" is where a pattern starts/ends on a string.
@@ -98,7 +96,7 @@ function SChat:ParseString( inputStr, outFunc )
     for _, r in ipairs( ranges ) do
         -- output any text before this range
         if r.s > lastRangeEnd then
-            outFunc( "string", str_sub( inputStr, lastRangeEnd, r.s - 1 ) )
+            outFunc( "string", string_sub( inputStr, lastRangeEnd, r.s - 1 ) )
         end
 
         -- remeber where this range ended at
@@ -106,7 +104,7 @@ function SChat:ParseString( inputStr, outFunc )
 
         -- output a block with the type of this range, and
         -- where (on the string) it starts/ends as a value
-        local value = str_sub( inputStr, r.s, r.e )
+        local value = string_sub( inputStr, r.s, r.e )
 
         if value ~= "" then
             outFunc( r.type, value )
@@ -115,6 +113,6 @@ function SChat:ParseString( inputStr, outFunc )
 
     -- output any leftover text after the last range
     if lastRangeEnd - 1 < string.len( inputStr ) then
-        outFunc( "string", str_sub( inputStr, lastRangeEnd ) )
+        outFunc( "string", string_sub( inputStr, lastRangeEnd ) )
     end
 end
