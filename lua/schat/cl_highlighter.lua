@@ -66,7 +66,7 @@ function SChat:GenerateHighlightTokens( inputStr )
     local buff = ""
     local c = 0
 
-    local function chatAt( idx )
+    local function CharAt( idx )
         return string.sub( inputStr, idx, idx )
     end
 
@@ -89,7 +89,7 @@ function SChat:GenerateHighlightTokens( inputStr )
     while c < inputLen do
         c = c + 1
 
-        local char = chatAt( c )
+        local char = CharAt( c )
 
         if punctuation[char] then
             pushToken( punctuation[char], char )
@@ -102,7 +102,7 @@ function SChat:GenerateHighlightTokens( inputStr )
             while char:find( "%d" ) do
                 value = value .. char
                 c = c + 1
-                char = chatAt( c )
+                char = CharAt( c )
             end
 
             pushToken( "number", value )
@@ -116,12 +116,12 @@ function SChat:GenerateHighlightTokens( inputStr )
             local value = char
 
             c = c + 1
-            char = chatAt( c )
+            char = CharAt( c )
 
             while char ~= opener and c < inputLen do
                 value = value .. char
                 c = c + 1
-                char = chatAt( c )
+                char = CharAt( c )
             end
 
             pushToken( type, value .. char )
@@ -134,7 +134,7 @@ function SChat:GenerateHighlightTokens( inputStr )
             while char:find( "[%w_]" ) and c < inputLen do
                 value = value .. char
                 c = c + 1
-                char = chatAt( c )
+                char = CharAt( c )
             end
 
             pushToken( keywords[value] or "text", value )
