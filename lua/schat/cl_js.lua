@@ -682,8 +682,11 @@ local function UpdateAllAvatars( steamId64, url )
     SChat.chatBox:QueueJavascript( code )
 end
 
-function JSBuilder:FetchUserAvatarURL( steamId64 )
-    local id = steamId64
+function JSBuilder:FetchUserAvatarURL( id )
+    if not id then
+        return self.avatarPlaceholder
+    end
+
     local url = self.avatarCache[id]
 
     if url and url ~= "" then
