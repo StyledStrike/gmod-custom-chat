@@ -682,6 +682,21 @@ local function UpdateAllAvatars( steamId64, url )
     SChat.chatBox:QueueJavascript( code )
 end
 
+local function ValidateURL( url, callback )
+    HTTP( {
+        url = url,
+        method = "GET",
+
+        success = function( code )
+            callback( code < 400 )
+        end,
+
+        failed = function()
+            callback( false )
+        end
+    } )
+end
+
 function JSBuilder:FetchUserAvatarURL( id )
     if not id then
         return self.avatarPlaceholder
@@ -701,7 +716,7 @@ function JSBuilder:FetchUserAvatarURL( id )
 
     self.avatarCache[id] = ""
 
-    SChat.PrintF( "Fetching avatar for %s", id )
+    SChat.PrintF( "Fetching profile data for %s", id )
 
     local OnFail = function( reason )
         SChat.PrintF( "Failed to fetch avatar for %s: %s", id, reason )
@@ -714,7 +729,7 @@ function JSBuilder:FetchUserAvatarURL( id )
 
         success = function( code, body )
             if not body or code ~= 200 then
-                OnFail( "Non-OK code or empty body" )
+                OnFail( "Non-OK code or empty profile data" )
                 return
             end
 
@@ -725,10 +740,18 @@ function JSBuilder:FetchUserAvatarURL( id )
                     url = "http" .. string.sub( url, 6 )
                 end
 
-                self.avatarCache[id] = url
+                SChat.PrintF( "Fetching avatar image for %s: %s", id, url )
 
-                SChat.PrintF( "Got avatar for %s: %s", id, url )
-                UpdateAllAvatars( id, url )
+                ValidateURL( url, function( success )
+                    if success then
+                        self.avatarCache[id] = url
+
+                        SChat.PrintF( "Got avatar for %s", id )
+                        UpdateAllAvatars( id, url )
+                    else
+                        OnFail( "Failed to fetch avatar image" )
+                    end
+                end )
             else
                 OnFail( "Missing avatar URL from the XML data" )
             end
