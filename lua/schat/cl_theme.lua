@@ -509,6 +509,43 @@ function Theme:ShowImportPanel()
     end
 end
 
+function Theme:GetHashFromJSON( data )
+    local t = util.JSONToTable( data )
+    if not t then return end
+
+    local function GetColorParts( c )
+        if type( c ) ~= "table" then
+            return 0, 0, 0, 0
+        end
+
+        return c.r or 0, c.g or 0, c.b or 0, c.a or 0
+    end
+
+    local parts = {
+        t.pad or 0,
+        t.corner or 0,
+        t.blur or 0,
+
+        t.font or "",
+        t.font_shadow or true,
+        t.slide_anim or true,
+
+        GetColorParts( t.input ),
+        GetColorParts( t.input_bg ),
+        GetColorParts( t.highlight ),
+        GetColorParts( t.background ),
+
+        GetColorParts( t.scroll_bg ),
+        GetColorParts( t.scroll_thumb )
+    }
+
+    for i, v in ipairs( parts ) do
+        parts[i] = tostring( v )
+    end
+
+    return util.SHA256( table.concat( parts, " " ) )
+end
+
 local MAT_BLUR = Material( "pp/blurscreen" )
 
 function Theme:BlurPanel( panel )

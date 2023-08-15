@@ -253,6 +253,12 @@ function SChat:SuggestServerTheme()
         return
     end
 
+    if Theme:GetHashFromJSON( Theme:ToJSON() ) == Theme:GetHashFromJSON( self.serverTheme ) then
+        SChat.PrintF( "Current theme matches the server theme already." )
+
+        return
+    end
+
     self:CloseExtraPanels()
 
     self.btnSuggest = vgui.Create( "DImageButton", self.entryDock )
