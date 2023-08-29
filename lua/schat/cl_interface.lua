@@ -236,7 +236,7 @@ function SChat:SuggestServerTheme()
         self.btnSuggest = nil
     end
 
-    if self.serverTheme == "" then
+    if not self.serverTheme or self.serverTheme == "" then
         return
     end
 

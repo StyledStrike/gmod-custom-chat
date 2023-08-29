@@ -49,6 +49,10 @@ function Theme:ToJSON()
 end
 
 function Theme:Import( data )
+    if type( data ) ~= "string" then
+        return false, "Invalid data"
+    end
+
     data = string.Trim( data )
 
     if string.len( data ) == 0 then
