@@ -17,7 +17,6 @@ end
 SChat.isOpen = false
 SChat.isGamePaused = false
 SChat.usingServerTheme = false
-SChat.serverTheme = ""
 
 -- keep track of the original functions
 chat.DefaultOpen = chat.DefaultOpen or chat.Open

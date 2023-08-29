@@ -527,8 +527,8 @@ function Theme:GetHashFromJSON( data )
         t.blur or 0,
 
         t.font or "",
-        t.font_shadow or true,
-        t.slide_anim or true,
+        t.font_shadow,
+        t.slide_anim,
 
         GetColorParts( t.input ),
         GetColorParts( t.input_bg ),
