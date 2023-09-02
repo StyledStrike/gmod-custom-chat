@@ -1,5 +1,6 @@
-local Theme = {
+local Theme = SChat.Theme or {
     path = "schat_theme.json",
+
     availableFonts = {
         "Arial",
         "Roboto",
@@ -13,17 +14,20 @@ local Theme = {
     }
 }
 
+SChat.Theme = Theme
+
 function Theme:Save()
     file.Write( self.path, self:ToJSON() )
 end
 
 function Theme:Load()
-    -- try to load the theme
     local rawData = file.Read( self.path, "DATA" )
+
     if rawData then
-        local success, errMsg = self:Import( rawData )
+        local success, errorMessage = self:Import( rawData )
+
         if not success then
-            SChat.PrintF( "Failed to load %s: %s", self.path, errMsg )
+            SChat.PrintF( "Failed to load %s: %s", self.path, errorMessage )
         end
     end
 end
@@ -31,7 +35,7 @@ end
 function Theme:ToJSON()
     return util.TableToJSON( {
         pad = self.padding,
-        corner = self.corner_radius,
+        corner = self.cornerRadius,
         blur = self.blur,
 
         font = self.fontName,
@@ -39,7 +43,7 @@ function Theme:ToJSON()
         slide_anim = self.slideAnimation,
 
         input = self.input,
-        input_bg = self.input_background,
+        input_bg = self.inputBackground,
         highlight = self.highlight,
         background = self.background,
 
@@ -72,7 +76,7 @@ function Theme:Import( data )
     end
 
     if data.corner then
-        self.corner_radius = Settings:ValidateInteger( data.corner, 0, 32 )
+        self.cornerRadius = Settings:ValidateInteger( data.corner, 0, 32 )
     end
 
     if data.blur then
@@ -91,7 +95,7 @@ function Theme:Import( data )
     end
 
     if data.input_bg then
-        self.input_background = Settings:ValidateColor( data.input_bg )
+        self.inputBackground = Settings:ValidateColor( data.input_bg )
     end
 
     if data.highlight then
@@ -119,7 +123,7 @@ function Theme:Reset()
     self.imported = false
 
     self.padding = 8
-    self.corner_radius = 8
+    self.cornerRadius = 8
     self.blur = 4
 
     self.fontName = self.availableFonts[1]
@@ -127,7 +131,7 @@ function Theme:Reset()
     self.slideAnimation = true
 
     self.input = Color( 255, 255, 255, 255 )
-    self.input_background = Color( 0, 0, 0, 100 )
+    self.inputBackground = Color( 0, 0, 0, 100 )
     self.highlight = Color( 95, 181, 231 )
     self.background = Color( 40, 40, 40, 200 )
 
@@ -136,17 +140,16 @@ function Theme:Reset()
 end
 
 function Theme:ShowCustomizePanel()
-    if IsValid( self.customFrame ) then
-        self.customFrame:RequestFocus()
+    if IsValid( self.customizeFrame ) then
+        self.customizeFrame:RequestFocus()
         return
     end
 
-    self.customFrame = SChat:CreateSidePanel( "Customize Theme", true )
+    self.customizeFrame = SChat:CreateSidePanel( "Customize Theme", true )
+    self.hasChanged = false
 
-    SChat.wasThemeChanged = false
-
-    self.customFrame.OnClose = function()
-        if SChat.wasThemeChanged then
+    self.customizeFrame.OnClose = function()
+        if self.hasChanged then
             self:Save()
         end
     end
@@ -162,7 +165,7 @@ function Theme:ShowCustomizePanel()
             class = "DColorMixer"
         },
         {
-            index = "input_background",
+            index = "inputBackground",
             label = "Input Background",
             class = "DColorMixer"
         },
@@ -177,7 +180,7 @@ function Theme:ShowCustomizePanel()
             class = "DColorMixer"
         },
         {
-            index = "corner_radius",
+            index = "cornerRadius",
             label = "Corner Radius",
             class = "DNumSlider",
             min = 0,
@@ -219,7 +222,7 @@ function Theme:ShowCustomizePanel()
         end
 
         if f.index == "font" then
-            fieldEditor = vgui.Create( "DPanel", self.customFrame )
+            fieldEditor = vgui.Create( "DPanel", self.customizeFrame )
             fieldEditor:SetPaintBackground( false )
             fieldEditor:Dock( FILL )
             fieldEditor:DockMargin( 8, 8, 8, 0 )
@@ -272,7 +275,7 @@ function Theme:ShowCustomizePanel()
             return
         end
 
-        fieldEditor = vgui.Create( f.class, self.customFrame )
+        fieldEditor = vgui.Create( f.class, self.customizeFrame )
 
         if f.class == "DColorMixer" then
             fieldEditor:Dock( FILL )
@@ -305,7 +308,7 @@ function Theme:ShowCustomizePanel()
         fieldEditor:DockMargin( 2, 12, 2, 12 )
     end
 
-    local cmbFields = vgui.Create( "DComboBox", self.customFrame )
+    local cmbFields = vgui.Create( "DComboBox", self.customizeFrame )
     cmbFields:Dock( TOP )
     cmbFields:SetSortItems( false )
 
@@ -319,7 +322,7 @@ function Theme:ShowCustomizePanel()
 
     setCurrentField( 1 )
 
-    local pnlOptions = vgui.Create( "DPanel", self.customFrame )
+    local pnlOptions = vgui.Create( "DPanel", self.customizeFrame )
     pnlOptions:SetTall( 22 )
     pnlOptions:Dock( BOTTOM )
 
@@ -334,7 +337,7 @@ function Theme:ShowCustomizePanel()
 
     btnReset.DoClick = function()
         Derma_Query( "Reset theme to default? All changes will be lost!", "Reset Theme", "Yes", function()
-            self.customFrame:Close()
+            self.customizeFrame:Close()
             self:Reset()
 
             SChat:ApplyTheme( true )
@@ -368,25 +371,25 @@ function Theme:ShowCustomizePanel()
         draw.RoundedBox( 0, 0, 0, w, h, Color( 0, 0, 0, 200 ) )
     end
 
-    local btnImport = vgui.Create( "DButton", pnlOptions )
-    btnImport:SetIcon( "icon16/application_side_expand.png" )
-    btnImport:SetTooltip( "Import" )
-    btnImport:SetText( "" )
-    btnImport:SetWide( 24 )
-    btnImport:Dock( RIGHT )
+    local buttonImport = vgui.Create( "DButton", pnlOptions )
+    buttonImport:SetIcon( "icon16/application_side_expand.png" )
+    buttonImport:SetTooltip( "Import" )
+    buttonImport:SetText( "" )
+    buttonImport:SetWide( 24 )
+    buttonImport:Dock( RIGHT )
 
-    btnImport.DoClick = function()
+    buttonImport.DoClick = function()
         self:ShowImportPanel()
     end
 
-    btnImport.Paint = function( _, w, h )
+    buttonImport.Paint = function( _, w, h )
         draw.RoundedBox( 0, 0, 0, w, h, Color( 0, 0, 0, 200 ) )
     end
 
     if game.SinglePlayer() then return end
     if not SChat:CanSetServerTheme( LocalPlayer() ) then return end
 
-    local function setServerTheme( data )
+    local function SetServerTheme( data )
         net.Start( "schat.set_theme", false )
         net.WriteString( data )
         net.SendToServer()
@@ -402,32 +405,34 @@ function Theme:ShowCustomizePanel()
     btnSetServerTheme:Dock( RIGHT )
 
     btnSetServerTheme.DoClick = function()
-        local actions
         local query
+        local args
 
         if SChat.serverTheme == "" then
-            query = [[This action will make all players (including those who join later) use this theme,
-but only if they aren't using one already. Are you sure?]]
-            actions = {
+            query = "This action will make all players (including those who join later) use this theme."
+                .. "\nFor players who are not using the default theme, it shows a button that players"
+                .. " can click to try it out.\nAre you sure?"
+
+            args = {
                 "Yes", function()
-                    setServerTheme( self:ToJSON() )
+                    SetServerTheme( self:ToJSON() )
                 end,
                 "No"
             }
         else
             query = "This server already has a theme. What do you want to do with it?"
-            actions = {
+            args = {
                 "Override", function()
-                    setServerTheme( self:ToJSON() )
+                    SetServerTheme( self:ToJSON() )
                 end,
                 "Remove", function()
-                    setServerTheme( "" )
+                    SetServerTheme( "" )
                 end,
                 "Cancel"
             }
         end
 
-        Derma_Query( query, "Set Server Theme", unpack( actions ) )
+        Derma_Query( query, "Set Server Theme", unpack( args ) )
     end
 
     btnSetServerTheme.Paint = function( _, w, h )
@@ -448,12 +453,12 @@ function Theme:ShowExportPanel()
     frameExport:Center()
     frameExport:MakePopup()
 
-    local lblExportHelp = vgui.Create( "DLabel", frameExport )
-    lblExportHelp:SetFont( "Trebuchet18" )
-    lblExportHelp:SetText( "Use this code to share your current theme with others!" )
-    lblExportHelp:SetTextColor( Color( 255, 255, 255 ) )
-    lblExportHelp:Dock( TOP )
-    lblExportHelp:SetContentAlignment( 5 )
+    local labelHelp = vgui.Create( "DLabel", frameExport )
+    labelHelp:SetFont( "Trebuchet18" )
+    labelHelp:SetText( "Use this code to share your current theme with others!" )
+    labelHelp:SetTextColor( Color( 255, 255, 255 ) )
+    labelHelp:Dock( TOP )
+    labelHelp:SetContentAlignment( 5 )
 
     local textField = vgui.Create( "DTextEntry", frameExport )
     textField:Dock( FILL )
@@ -462,11 +467,11 @@ function Theme:ShowExportPanel()
     textField:SetMultiline( true )
     textField:SetValue( data )
 
-    local btnCopy = vgui.Create( "DButton", frameExport )
-    btnCopy:SetText( "Copy to clipboard" )
-    btnCopy:Dock( BOTTOM )
+    local buttonCopy = vgui.Create( "DButton", frameExport )
+    buttonCopy:SetText( "Copy to clipboard" )
+    buttonCopy:Dock( BOTTOM )
 
-    btnCopy.DoClick = function()
+    buttonCopy.DoClick = function()
         SetClipboardText( data )
         frameExport:Close()
     end
@@ -483,12 +488,12 @@ function Theme:ShowImportPanel()
     frameImport:Center()
     frameImport:MakePopup()
 
-    local lblImportHelp = vgui.Create( "DLabel", frameImport )
-    lblImportHelp:SetFont( "Trebuchet18" )
-    lblImportHelp:SetText( "Paste the theme code here." )
-    lblImportHelp:SetTextColor( Color( 255, 255, 255 ) )
-    lblImportHelp:Dock( TOP )
-    lblImportHelp:SetContentAlignment( 5 )
+    local labelHelp = vgui.Create( "DLabel", frameImport )
+    labelHelp:SetFont( "Trebuchet18" )
+    labelHelp:SetText( "Paste the theme code here." )
+    labelHelp:SetTextColor( Color( 255, 255, 255 ) )
+    labelHelp:Dock( TOP )
+    labelHelp:SetContentAlignment( 5 )
 
     local textField = vgui.Create( "DTextEntry", frameImport )
     textField:Dock( FILL )
@@ -496,19 +501,19 @@ function Theme:ShowImportPanel()
     textField:SetEditable( true )
     textField:SetMultiline( true )
 
-    local btnImport = vgui.Create( "DButton", frameImport )
-    btnImport:SetText( "Apply" )
-    btnImport:Dock( BOTTOM )
+    local buttonApply = vgui.Create( "DButton", frameImport )
+    buttonApply:SetText( "Apply" )
+    buttonApply:Dock( BOTTOM )
 
-    btnImport.DoClick = function()
-        local success, errMsg = self:Import( textField:GetValue() )
+    buttonApply.DoClick = function()
+        local success, errorMessage = self:Import( textField:GetValue() )
 
         if success then
             self:Save()
             SChat:ApplyTheme( true )
             frameImport:Close()
         else
-            Derma_Message( "Error: " .. errMsg, "Failed to import", "OK" )
+            Derma_Message( "Error: " .. errorMessage, "Failed to import", "OK" )
         end
     end
 end
@@ -568,5 +573,3 @@ function Theme:BlurPanel( panel )
 end
 
 Theme:Reset()
-
-SChat.Theme = Theme

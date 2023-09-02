@@ -60,24 +60,28 @@ local colors = {
     const = "#569CD6"
 }
 
+local string_sub = string.sub
+
 function SChat:GenerateHighlightTokens( inputStr )
     local inputLen = string.len( inputStr ) + 1
     local tokens = {}
-    local buff = ""
-    local c = 0
+    local buffer = ""
+    local i = 0
+    local char
 
-    local function CharAt( idx )
-        return string.sub( inputStr, idx, idx )
+    local function NextChar()
+        i = i + 1
+        char = string_sub( inputStr, i, i )
     end
 
-    local function pushToken( type, value )
-        if buff:len() > 0 then
+    local function PushToken( type, value )
+        if buffer:len() > 0 then
             tokens[#tokens + 1] = {
-                color = colors["text"],
-                value = buff
+                color = colors.text,
+                value = buffer
             }
 
-            buff = ""
+            buffer = ""
         end
 
         tokens[#tokens + 1] = {
@@ -86,62 +90,56 @@ function SChat:GenerateHighlightTokens( inputStr )
         }
     end
 
-    while c < inputLen do
-        c = c + 1
-
-        local char = CharAt( c )
+    while i < inputLen do
+        NextChar()
 
         if punctuation[char] then
-            pushToken( punctuation[char], char )
+            PushToken( punctuation[char], char )
 
         elseif char:find( "%d" ) then
             local value = ""
 
             while char:find( "%d" ) do
                 value = value .. char
-                c = c + 1
-                char = CharAt( c )
+                NextChar()
             end
 
-            pushToken( "number", value )
-            c = c - 1
+            PushToken( "number", value )
+            i = i - 1
 
         elseif groups[char] then
             local type = groups[char]
-            local opener = char
+            local closer = char
             local value = char
 
-            c = c + 1
-            char = CharAt( c )
+            NextChar()
 
-            while char ~= opener and c < inputLen do
+            while char ~= closer and i < inputLen do
                 value = value .. char
-                c = c + 1
-                char = CharAt( c )
+                NextChar()
             end
 
-            pushToken( type, value .. char )
+            PushToken( type, value .. char )
 
         elseif char:find( "[%w_]" ) then
             local value = ""
 
-            while char:find( "[%w_]" ) and c < inputLen do
+            while char:find( "[%w_]" ) and i < inputLen do
                 value = value .. char
-                c = c + 1
-                char = CharAt( c )
+                NextChar()
             end
 
-            pushToken( keywords[value] or "text", value )
-            c = c - 1
+            PushToken( keywords[value] or "text", value )
+            i = i - 1
         else
-            buff = buff .. char
+            buffer = buffer .. char
         end
     end
 
-    if buff:len() > 0 then
+    if buffer:len() > 0 then
         tokens[#tokens + 1] = {
-            color = colors["text"],
-            value = buff
+            color = colors.text,
+            value = buffer
         }
     end
 

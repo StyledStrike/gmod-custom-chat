@@ -18,15 +18,15 @@ local sayCooldown = {}
 function SChat:GetListeners( speaker, text, channel )
     local targets = {}
 
-    if channel == self.EVERYONE then
+    if channel == self.channels.everyone then
         targets = player.GetHumans()
 
-    elseif channel == self.TEAM then
+    elseif channel == self.channels.team then
         targets = team.GetPlayers( speaker:Team() )
     end
 
     local listeners = {}
-    local teamOnly = channel ~= SChat.EVERYONE
+    local teamOnly = channel ~= SChat.channels.everyone
 
     for _, ply in ipairs( targets ) do
         if hook.Run( "PlayerCanSeePlayersChat", text, teamOnly, ply, speaker ) then
@@ -48,13 +48,13 @@ net.Receive( "schat.say", function( _, ply )
     local channel = net.ReadUInt( 4 )
     local text = net.ReadString()
 
-    if text:len() > SChat.MAX_MESSAGE_LEN then
-        text = text:Left( SChat.MAX_MESSAGE_LEN )
+    if text:len() > SChat.maxMessageLength then
+        text = text:Left( SChat.maxMessageLength )
     end
 
     text = SChat.CleanupString( text )
+    text = hook.Run( "PlayerSay", ply, text, channel ~= SChat.channels.everyone )
 
-    text = hook.Run( "PlayerSay", ply, text, channel ~= SChat.EVERYONE )
     if not isstring( text ) or text == "" then return end
 
     local targets = SChat:GetListeners( ply, text, channel )
@@ -67,26 +67,12 @@ net.Receive( "schat.say", function( _, ply )
     net.Send( targets )
 end )
 
-hook.Add( "PlayerDisconnected", "schat_PlayerDisconnected", function( ply )
+hook.Add( "PlayerDisconnected", "SChat.SayCooldownCleanup", function( ply )
     sayCooldown[ply:AccountID()] = nil
 end )
 
--- lets restore the "hands on the ear"
--- behaviour from the default chat.
-local PLY = FindMetaTable( "Player" )
-
-PLY.DefaultIsTyping = PLY.DefaultIsTyping or PLY.IsTyping
-
-function PLY:IsTyping()
-    return self:GetNWBool( "IsTyping", false )
-end
-
-net.Receive( "schat.is_typing", function( _, ply )
-    ply:SetNWBool( "IsTyping", net.ReadBool() )
-end )
-
 -- server settings
-local Settings = {
+local Settings = SChat.Settings or {
     themeFilePath = "schat_server_theme.json",
     emojiFilePath = "schat_server_emojis.json",
     tagsFilePath = "schat_server_tags.json",
@@ -95,6 +81,8 @@ local Settings = {
     emojiData = {},
     tagsData = {}
 }
+
+SChat.Settings = Settings
 
 function Settings:Serialize( tbl )
     return util.TableToJSON( tbl )
@@ -220,33 +208,31 @@ end )
 
 -- since PlayerInitialSpawn is called BEFORE the player is ready
 -- to receive net events, we have to use ClientSignOnStateChanged instead
-hook.Add( "ClientSignOnStateChanged", "schat_ClientStateChanged", function( user, _, new )
-    if new == SIGNONSTATE_FULL then
-        -- since we can only retrieve the player entity
-        -- after this hook runs, lets use a timer
-        timer.Simple( 0, function()
-            local ply = Player( user )
-            if not IsValid( ply ) then return end
-            if ply:IsBot() then return end
+hook.Add( "ClientSignOnStateChanged", "SChat.SendData", function( user, _, new )
+    if new ~= SIGNONSTATE_FULL then return end
 
-            -- send the server theme (if set)
-            if not table.IsEmpty( Settings.themeData ) then
-                Settings:ShareTheme( ply )
-            end
+    -- since we can only retrieve the player entity
+    -- after this hook runs, lets use a timer
+    timer.Simple( 0, function()
+        local ply = Player( user )
+        if not IsValid( ply ) then return end
+        if ply:IsBot() then return end
 
-            -- send the server emojis (if set)
-            if not table.IsEmpty( Settings.emojiData ) then
-                Settings:ShareEmojis( ply )
-            end
+        -- send the server theme (if set)
+        if not table.IsEmpty( Settings.themeData ) then
+            Settings:ShareTheme( ply )
+        end
 
-            -- send chat tags (if set)
-            if not table.IsEmpty( Settings.tagsData ) then
-                Settings:ShareTags( ply )
-            end
-        end )
-    end
+        -- send the server emojis (if set)
+        if not table.IsEmpty( Settings.emojiData ) then
+            Settings:ShareEmojis( ply )
+        end
+
+        -- send chat tags (if set)
+        if not table.IsEmpty( Settings.tagsData ) then
+            Settings:ShareTags( ply )
+        end
+    end )
 end )
 
 Settings:Load()
-
-SChat.Settings = Settings

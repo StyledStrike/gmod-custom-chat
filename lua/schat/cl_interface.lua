@@ -46,7 +46,7 @@ function SChat:CreatePanels()
     self.frame.Paint = function( s, w, h )
         if self.isOpen then
             Theme:BlurPanel( s )
-            draw.RoundedBox( Theme.corner_radius, 0, 0, w, h, Theme.background )
+            draw.RoundedBox( Theme.cornerRadius, 0, 0, w, h, Theme.background )
         end
     end
 
@@ -55,8 +55,8 @@ function SChat:CreatePanels()
 
         Settings.width = w
         Settings.height = h
-        Settings.offset_left = x
-        Settings.offset_bottom = ScrH() - h - y
+        Settings.offsetLeft = x
+        Settings.offsetBottom = ScrH() - h - y
         Settings:Save()
     end
 
@@ -66,8 +66,8 @@ function SChat:CreatePanels()
         if s.Dragging then
             local x, y, _, h = s:GetBounds()
 
-            Settings.offset_left = x
-            Settings.offset_bottom = ScrH() - h - y
+            Settings.offsetLeft = x
+            Settings.offsetBottom = ScrH() - h - y
             Settings:Save()
         end
 
@@ -75,7 +75,7 @@ function SChat:CreatePanels()
     end
 
     self.chatBox = vgui.Create( "SChatBox", self.frame )
-    self.chatBox:SetFontSize( Settings.font_size )
+    self.chatBox:SetFontSize( Settings.fontSize )
     self.chatBox:Dock( FILL )
     self.chatBox:DockMargin( 0, -24, 0, 0 )
     self.chatBox:UpdateEmojiPanel()
@@ -91,7 +91,7 @@ function SChat:CreatePanels()
     self.entryDock = vgui.Create( "DPanel", self.frame )
     self.entryDock:Dock( BOTTOM )
     self.entryDock:DockMargin( 0, 4, 0, 0 )
-    self.entryDock._backgroundColor = Theme.input_background
+    self.entryDock._backgroundColor = Theme.inputBackground
 
     self.entryDock.Paint = function( s, w, h )
         draw.RoundedBox( 0, 0, 0, w, h, s._backgroundColor )
@@ -101,7 +101,7 @@ function SChat:CreatePanels()
     self.entry:SetFont( "ChatFont" )
     self.entry:SetDrawBorder( false )
     self.entry:SetPaintBackground( false )
-    self.entry:SetMaximumCharCount( self.MAX_MESSAGE_LEN )
+    self.entry:SetMaximumCharCount( self.maxMessageLength )
     self.entry:SetTabbingDisabled( true )
     self.entry:SetMultiline( true )
     self.entry:SetHistoryEnabled( true )
@@ -118,11 +118,11 @@ function SChat:CreatePanels()
 
             hook.Run( "ChatTextChanged", text )
 
-            local _, nLines = string.gsub( text, "\n", "\n" )
-            nLines = math.Clamp( nLines + 1, 1, 5 )
+            local _, lineCount = string.gsub( text, "\n", "\n" )
+            lineCount = math.Clamp( lineCount + 1, 1, 5 )
 
-            self.entryDock:SetTall( 20 * nLines )
-            self.multilineMode = nLines > 1
+            self.entryDock:SetTall( 20 * lineCount )
+            self.entry._multilineMode = lineCount > 1
         end
     end
 
@@ -152,7 +152,7 @@ function SChat:CreatePanels()
             return true
         end
 
-        if not self.multilineMode and s.m_bHistory then
+        if not s._multilineMode and s.m_bHistory then
             if code == KEY_UP then
                 s.HistoryPos = s.HistoryPos - 1
                 s:UpdateFromHistory()
@@ -165,13 +165,13 @@ function SChat:CreatePanels()
         end
     end
 
-    local btnEmotes = vgui.Create( "DImageButton", self.entryDock )
-    btnEmotes:SetImage( "icon16/emoticon_smile.png" )
-    btnEmotes:SetStretchToFit( false )
-    btnEmotes:SetWide( 22 )
-    btnEmotes:Dock( RIGHT )
+    local emojisButton = vgui.Create( "DImageButton", self.entryDock )
+    emojisButton:SetImage( "icon16/emoticon_smile.png" )
+    emojisButton:SetStretchToFit( false )
+    emojisButton:SetWide( 22 )
+    emojisButton:Dock( RIGHT )
 
-    btnEmotes.DoClick = function()
+    emojisButton.DoClick = function()
         self.chatBox:ToggleEmojiPanel()
     end
 
@@ -209,7 +209,7 @@ function SChat:OnPressEnter()
     local text = self.CleanupString( self.entry:GetText() )
 
     if string.len( text ) > 0 then
-        local channel = self.teamMode and self.TEAM or self.EVERYONE
+        local channel = self.teamMode and self.channels.team or self.channels.everyone
 
         net.Start( "schat.say", false )
         net.WriteUInt( channel, 4 )
@@ -231,22 +231,25 @@ function SChat:OnPressEnter()
 end
 
 function SChat:SuggestServerTheme()
-    if IsValid( self.btnSuggest ) then
-        self.btnSuggest:Remove()
-        self.btnSuggest = nil
+    if IsValid( self.suggestThemeButton ) then
+        self.suggestThemeButton:Remove()
+        self.suggestThemeButton = nil
     end
 
     if not self.serverTheme or self.serverTheme == "" then
         return
     end
 
+    -- if we have not imported a theme (is using the default)
+    -- apply the server theme right away
     if not Theme.imported then
-        local success, errMsg = Theme:Import( self.serverTheme )
+        local success, errorMessage = Theme:Import( self.serverTheme )
+
         if success then
             self.usingServerTheme = true
             self:ApplyTheme( true )
         else
-            SChat.PrintF( "Failed to apply the server theme: " .. errMsg )
+            SChat.PrintF( "Failed to apply the server theme: " .. errorMessage )
         end
 
         return
@@ -260,24 +263,25 @@ function SChat:SuggestServerTheme()
 
     self:CloseExtraPanels()
 
-    self.btnSuggest = vgui.Create( "DImageButton", self.entryDock )
-    self.btnSuggest:SetImage( "icon16/asterisk_yellow.png" )
-    self.btnSuggest:SetTooltip( "Server Theme" )
-    self.btnSuggest:SetStretchToFit( false )
-    self.btnSuggest:SetWide( 22 )
-    self.btnSuggest:Dock( RIGHT )
+    self.suggestThemeButton = vgui.Create( "DImageButton", self.entryDock )
+    self.suggestThemeButton:SetImage( "icon16/asterisk_yellow.png" )
+    self.suggestThemeButton:SetTooltip( "Server Theme" )
+    self.suggestThemeButton:SetStretchToFit( false )
+    self.suggestThemeButton:SetWide( 22 )
+    self.suggestThemeButton:Dock( RIGHT )
 
-    self.btnSuggest.DoClick = function()
+    self.suggestThemeButton.DoClick = function()
         Derma_Query( "This server has a custom theme.\nDo you want to try it out?", "Server Theme", "Yes", function()
-            local success, errMsg = Theme:Import( self.serverTheme )
+            local success, errorMessage = Theme:Import( self.serverTheme )
+
             if success then
                 self.usingServerTheme = true
                 self:ApplyTheme( true )
 
-                self.btnSuggest:Remove()
-                self.btnSuggest = nil
+                self.suggestThemeButton:Remove()
+                self.suggestThemeButton = nil
             else
-                Derma_Message( "Error: " .. errMsg, "Failed to apply the server theme", "OK" )
+                Derma_Message( "Error: " .. errorMessage, "Failed to apply the server theme", "OK" )
             end
         end, "No" )
     end
@@ -320,19 +324,19 @@ function SChat:OpenContextMenu( data, isLink, steamId64 )
     panelSettings:SetBackgroundColor( Color( 0, 0, 0, 200 ) )
     panelSettings:DockPadding( 8, -4, -22, 0 )
 
-    local slidFontSize = vgui.Create( "DNumSlider", panelSettings )
-    slidFontSize:Dock( TOP )
-    slidFontSize:SetMin( 12 )
-    slidFontSize:SetMax( 48 )
-    slidFontSize:SetDecimals( 0 )
-    slidFontSize:SetDefaultValue( 16 )
-    slidFontSize:SetValue( Settings.font_size )
-    slidFontSize:SetText( "Font size" )
-    slidFontSize.Label:SetTextColor(  Color(  255, 255, 255 ) )
+    local sliderFontSize = vgui.Create( "DNumSlider", panelSettings )
+    sliderFontSize:Dock( TOP )
+    sliderFontSize:SetMin( 12 )
+    sliderFontSize:SetMax( 48 )
+    sliderFontSize:SetDecimals( 0 )
+    sliderFontSize:SetDefaultValue( 16 )
+    sliderFontSize:SetValue( Settings.fontSize )
+    sliderFontSize:SetText( "Font size" )
+    sliderFontSize.Label:SetTextColor( color_white )
 
-    slidFontSize.OnValueChanged = function( _, value )
-        Settings.font_size = math.floor( math.Clamp( value, 12, 48 ) )
-        self.chatBox:SetFontSize( Settings.font_size )
+    sliderFontSize.OnValueChanged = function( _, value )
+        Settings.fontSize = math.floor( math.Clamp( value, 12, 48 ) )
+        self.chatBox:SetFontSize( Settings.fontSize )
         Settings:Save()
     end
 
@@ -344,7 +348,7 @@ function SChat:OpenContextMenu( data, isLink, steamId64 )
         Settings:Save()
     end ):SetIcon( Settings.timestamps and "icon16/time_delete.png" or "icon16/time_add.png" )
 
-    if Settings.allow_any_url then
+    if Settings.allowAnyURL then
         optionsMenu:AddOption( "Block images from unknown URLs", function()
             Settings:SetWhitelistEnabled( true )
         end ):SetIcon( "icon16/picture_delete.png" )
@@ -365,7 +369,7 @@ This means that no matter which site they come from, you will load it, and it CA
 
     optionsMenu:AddOption( "Customize...", function()
         if self.usingServerTheme then
-            Derma_Query( "You\"re using a server theme. What to do want to do with it?", "Customize Theme",
+            Derma_Query( "You're using a server theme. What to do want to do with it?", "Customize Theme",
             "Customize it (Your old theme will be lost)", function()
                 Theme:Save()
                 Theme:ShowCustomizePanel()
@@ -450,8 +454,8 @@ end
 function SChat:CloseExtraPanels()
     CloseDermaMenus()
 
-    if IsValid( Theme.customFrame ) then
-        Theme.customFrame:Close()
+    if IsValid( Theme.customizeFrame ) then
+        Theme.customizeFrame:Close()
     end
 end
 
@@ -461,10 +465,10 @@ function SChat:ApplyTheme( invalidate )
     self.entry:SetTextColor( Theme.input )
     self.entry:SetCursorColor( Theme.input )
     self.entry:SetHighlightColor( Theme.highlight )
-    self.entryDock._backgroundColor = Theme.input_background
+    self.entryDock._backgroundColor = Theme.inputBackground
 
     self.chatBox:SetHighlightColor( Theme.highlight )
-    self.chatBox:SetBackgroundColor( Theme.input_background )
+    self.chatBox:SetBackgroundColor( Theme.inputBackground )
 
     self.chatBox:SetDefaultFont( Theme.fontName )
     self.chatBox:SetFontShadowEnabled( Theme.fontShadow )
@@ -476,7 +480,7 @@ function SChat:ApplyTheme( invalidate )
         self.frame:InvalidateChildren( false )
     end
 
-    self.wasThemeChanged = true
+    Theme.hasChanged = true
 end
 
 function SChat:SetInputEnabled( enable )
@@ -501,35 +505,12 @@ function SChat:AppendMessage( contents )
     self.chatBox:AppendContents( contents )
 end
 
-local schatAddText = function( ... )
+local function SChatAddText( ... )
     SChat:AppendMessage( { ... } )
     chat.DefaultAddText( ... )
 end
 
-local schatClose = function()
-    if not IsValid( SChat.frame ) then return end
-
-    SChat:CloseExtraPanels()
-    SChat:SetInputEnabled( false )
-    SChat.isOpen = false
-
-    SChat.frame:SetMouseInputEnabled( false )
-    SChat.frame:SetKeyboardInputEnabled( false )
-    SChat.chatBox:ClearSelection()
-    SChat.entry:SetText( "" )
-    SChat.entry.HistoryPos = 0
-
-    gui.EnableScreenClicker( false )
-
-    hook.Run( "FinishChat" )
-    hook.Run( "ChatTextChanged", "" )
-
-    net.Start( "schat.is_typing", false )
-    net.WriteBool( false )
-    net.SendToServer()
-end
-
-local schatOpen = function()
+local function SChatOpen()
     if not IsValid( SChat.frame ) then
         SChat:CreatePanels()
     end
@@ -541,12 +522,12 @@ local schatOpen = function()
         teamColor.r = teamColor.r * 0.3
         teamColor.g = teamColor.g * 0.3
         teamColor.b = teamColor.b * 0.3
-        teamColor.a = Theme.input_background.a
+        teamColor.a = Theme.inputBackground.a
 
         SChat.entryDock._backgroundColor = teamColor
         SChat.entry:SetPlaceholderText( "Say (TEAM)..." )
     else
-        SChat.entryDock._backgroundColor = Theme.input_background
+        SChat.entryDock._backgroundColor = Theme.inputBackground
         SChat.entry:SetPlaceholderText( "Say..." )
     end
 
@@ -568,7 +549,31 @@ local schatOpen = function()
     net.SendToServer()
 end
 
-local function schat_ChatText( _, _, text, textType )
+local function SChatClose()
+    if not IsValid( SChat.frame ) then return end
+
+    SChat:CloseExtraPanels()
+    SChat:SetInputEnabled( false )
+    SChat.isOpen = false
+
+    SChat.frame:SetMouseInputEnabled( false )
+    SChat.frame:SetKeyboardInputEnabled( false )
+    SChat.chatBox:ClearSelection()
+    SChat.entry:SetText( "" )
+    SChat.entry.HistoryPos = 0
+    SChat.entry._multilineMode = false
+
+    gui.EnableScreenClicker( false )
+
+    hook.Run( "FinishChat" )
+    hook.Run( "ChatTextChanged", "" )
+
+    net.Start( "schat.is_typing", false )
+    net.WriteBool( false )
+    net.SendToServer()
+end
+
+local function SChat_OnChatText( _, _, text, textType )
     if textType == "chat" then return end
 
     local canShowJoinLeave = not ( SChat.Tags.connection.showConnect or SChat.Tags.connection.showDisconnect )
@@ -579,7 +584,7 @@ local function schat_ChatText( _, _, text, textType )
     return true
 end
 
-local function schat_PlayerBindPress( _, bind, pressed )
+local function SChat_OnPlayerBindPress( _, bind, pressed )
     if not pressed then return end
     if bind ~= "messagemode" and bind ~= "messagemode2" then return end
 
@@ -600,11 +605,11 @@ local function schat_PlayerBindPress( _, bind, pressed )
     return true
 end
 
-local function schat_HUDShouldDraw( name )
+local function SChat_HUDShouldDraw( name )
     if name == "CHudChat" then return false end
 end
 
-local function schat_Think()
+local function SChat_Think()
     if not SChat.chatBox then return end
 
     -- hide the chat box if the game is paused
@@ -626,29 +631,39 @@ local function schat_Think()
 end
 
 function SChat:Enable()
-    chat.AddText = schatAddText
-    chat.Close = schatClose
-    chat.Open = schatOpen
+    chat.AddText = SChatAddText
+    chat.Close = SChatClose
+    chat.Open = SChatOpen
 
-    hook.Add( "ChatText", "schat_ChatText", schat_ChatText )
-    hook.Add( "PlayerBindPress", "schat_PlayerBindPress", schat_PlayerBindPress )
-    hook.Add( "HUDShouldDraw", "schat_HUDShouldDraw", schat_HUDShouldDraw )
-    hook.Add( "Think", "schat_Think", schat_Think )
+    hook.Add( "ChatText", "SChat.OnChatText", SChat_OnChatText )
+    hook.Add( "PlayerBindPress", "SChat.OnPlayerBindPress", SChat_OnPlayerBindPress )
+    hook.Add( "HUDShouldDraw", "SChat.HUDShouldDraw", SChat_HUDShouldDraw )
+    hook.Add( "Think", "SChat.Think", SChat_Think )
 
     if SChat.chatBox then
         SChat.chatBox:SetVisible( true )
+
+        chat.GetChatBoxPos = function()
+            return self.frame:GetPos()
+        end
+
+        chat.GetChatBoxSize = function()
+            return self.frame:GetSize()
+        end
     end
 end
 
 function SChat:Disable()
-    hook.Remove( "ChatText", "schat_ChatText" )
-    hook.Remove( "PlayerBindPress", "schat_PlayerBindPress" )
-    hook.Remove( "HUDShouldDraw", "schat_HUDShouldDraw" )
-    hook.Remove( "Think", "schat_Think" )
+    hook.Remove( "ChatText", "SChat.OnChatText" )
+    hook.Remove( "PlayerBindPress", "SChat.OnPlayerBindPress" )
+    hook.Remove( "HUDShouldDraw", "SChat.HUDShouldDraw" )
+    hook.Remove( "Think", "SChat.Think" )
 
     chat.AddText = chat.DefaultAddText
     chat.Close = chat.DefaultClose
     chat.Open = chat.DefaultOpen
+    chat.GetChatBoxPos = chat.DefaultGetChatBoxPos
+    chat.GetChatBoxSize = chat.DefaultGetChatBoxSize
 
     if self.chatBox then
         self.chatBox:SetVisible( false )
@@ -675,15 +690,6 @@ cvars.AddChangeCallback( "cl_drawhud", function( _, _, new )
         SChat.chatBox:ClearTempMessages()
     end
 end, "schat_cl_drawhud_changed" )
-
--- custom "IsTyping" behavior
-local PLY = FindMetaTable( "Player" )
-
-PLY.DefaultIsTyping = PLY.DefaultIsTyping or PLY.IsTyping
-
-function PLY:IsTyping()
-    return self:GetNWBool( "IsTyping", false )
-end
 
 -- received server theme
 net.Receive( "schat.set_theme", function()
@@ -727,6 +733,6 @@ net.Receive( "schat.say", function()
 
     local isDead = not ply:Alive()
 
-    SChat._lastPlayer = ply
-    hook.Run( "OnPlayerChat", ply, text, channel ~= SChat.EVERYONE, isDead )
+    SChat.lastSpeaker = ply
+    hook.Run( "OnPlayerChat", ply, text, channel ~= SChat.channels.everyone, isDead )
 end )

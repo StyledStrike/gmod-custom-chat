@@ -28,8 +28,8 @@ local rangeTypes = {
 -- A "range" is where a pattern starts/ends on a string.
 -- This function searches for all ranges of one type
 -- on this str, then returns them in a table.
-local function FindAllRangesOfType( r, str )
-    if r.ignoreCase then
+local function FindAllRangesOfType( rangeType, str )
+    if rangeType.ignoreCase then
         str = string.lower( str )
     end
 
@@ -37,10 +37,10 @@ local function FindAllRangesOfType( r, str )
     local pStart, pEnd = 1, 0
 
     while pStart do
-        pStart, pEnd = string.find( str, r.pattern, pStart )
+        pStart, pEnd = string.find( str, rangeType.pattern, pStart )
 
         if pStart then
-            table_insert( ranges, { s = pStart, e = pEnd, type = r.type } )
+            table_insert( ranges, { s = pStart, e = pEnd, type = rangeType.type } )
             pStart = pEnd
         end
     end
@@ -48,31 +48,31 @@ local function FindAllRangesOfType( r, str )
     return ranges
 end
 
--- Merges a new range into a table of ranges
+-- Merges a range into a table of ranges
 -- in a way that overrides existing ranges.
-local function MergeRangeInto( tbl, newr )
+local function MergeRangeInto( tbl, range )
     local newTbl = {}
 
     for _, other in ipairs( tbl ) do
         -- only include other ranges that do not overlap with the new range
-        if other.s > newr.e or other.e < newr.s then
+        if other.s > range.e or other.e < range.s then
             newTbl[#newTbl + 1] = other
         end
     end
 
-    -- finally, include the new range
-    newTbl[#newTbl + 1] = { s = newr.s, e = newr.e, type = newr.type }
+    -- include the new range
+    newTbl[#newTbl + 1] = { s = range.s, e = range.e, type = range.type }
 
     return newTbl
 end
 
-function SChat:ParseString( inputStr, outFunc )
+function SChat:ParseString( str, outFunc )
     local ranges = {}
 
     -- for each range type...
     for _, rangeType in ipairs( rangeTypes ) do
         -- find all ranges (start-end) of this type
-        local newRanges = FindAllRangesOfType( rangeType, inputStr )
+        local newRanges = FindAllRangesOfType( rangeType, str )
 
         -- then merge them into the ranges table
         for _, r in ipairs( newRanges ) do
@@ -82,7 +82,7 @@ function SChat:ParseString( inputStr, outFunc )
 
     -- if no ranges were found, simply output a string block
     if #ranges == 0 then
-        outFunc( "string", inputStr )
+        outFunc( "string", str )
         return
     end
 
@@ -96,15 +96,15 @@ function SChat:ParseString( inputStr, outFunc )
     for _, r in ipairs( ranges ) do
         -- output any text before this range
         if r.s > lastRangeEnd then
-            outFunc( "string", string_sub( inputStr, lastRangeEnd, r.s - 1 ) )
+            outFunc( "string", string_sub( str, lastRangeEnd, r.s - 1 ) )
         end
 
         -- remeber where this range ended at
         lastRangeEnd = r.e + 1
 
         -- output a block with the type of this range, and
-        -- where (on the string) it starts/ends as a value
-        local value = string_sub( inputStr, r.s, r.e )
+        -- use where it starts/ends on the string as the value
+        local value = string_sub( str, r.s, r.e )
 
         if value ~= "" then
             outFunc( r.type, value )
@@ -112,7 +112,7 @@ function SChat:ParseString( inputStr, outFunc )
     end
 
     -- output any leftover text after the last range
-    if lastRangeEnd - 1 < string.len( inputStr ) then
-        outFunc( "string", string_sub( inputStr, lastRangeEnd ) )
+    if lastRangeEnd - 1 < string.len( str ) then
+        outFunc( "string", string_sub( str, lastRangeEnd ) )
     end
 end

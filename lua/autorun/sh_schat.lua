@@ -1,7 +1,10 @@
 SChat = {
-    MAX_MESSAGE_LEN = 500,
-    EVERYONE = 0,
-    TEAM = 1
+    maxMessageLength = 500
+}
+
+SChat.channels = {
+    everyone = 0,
+    team = 1
 }
 
 CreateConVar(
@@ -75,20 +78,13 @@ function SChat.CleanupString( str )
         str = str:gsub( unicode, replacement )
     end
 
-    -- join consecutive line breaks
-    -- str = str:gsub("[\n]+", "\n")
-
     -- limit the number of line breaks
-    local nBreaks = 0
+    local breaks = 0
 
     str = str:gsub( "\n", function()
-        nBreaks = nBreaks + 1
+        breaks = breaks + 1
 
-        if nBreaks > 8 then
-            return ""
-        else
-            return "\n"
-        end
+        return breaks > 8 and "" or "\n"
     end )
 
     return str:Trim()
@@ -96,6 +92,7 @@ end
 
 if SERVER then
     include( "schat/sv_main.lua" )
+    include( "schat/sh_istyping_override.lua" )
 
     AddCSLuaFile( "schat/cl_js.lua" )
     AddCSLuaFile( "schat/cl_highlighter.lua" )
@@ -106,6 +103,7 @@ if SERVER then
     AddCSLuaFile( "schat/cl_whitelist.lua" )
     AddCSLuaFile( "schat/cl_chatbox.lua" )
     AddCSLuaFile( "schat/cl_interface.lua" )
+    AddCSLuaFile( "schat/sh_istyping_override.lua" )
 end
 
 if CLIENT then
@@ -122,4 +120,5 @@ if CLIENT then
     include( "schat/cl_whitelist.lua" )
     include( "schat/cl_chatbox.lua" )
     include( "schat/cl_interface.lua" )
+    include( "schat/sh_istyping_override.lua" )
 end

@@ -127,7 +127,7 @@ local whitelist = {
 }
 
 function SChat:IsWhitelisted( url )
-    if self.Settings.allow_any_url then
+    if self.Settings.allowAnyURL then
         return true
     end
 

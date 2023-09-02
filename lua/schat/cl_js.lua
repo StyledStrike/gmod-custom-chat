@@ -1,6 +1,3 @@
-local SafeString = string.JavascriptSafe
-local ChopEnds = function( s, n ) return string.sub( s, n, -n ) end
-
 local JSBuilder = {
     -- list of functions that convert blocks into JS code
     builders = {},
@@ -45,6 +42,9 @@ local fontNames = {
     ["sugoe"] = "Sugoe Script",
     ["roboto"] = "Roboto"
 }
+
+local SafeString = string.JavascriptSafe
+local ChopEnds = function( str, n ) return str:sub( n, -n ) end
 
 -- Generates JS code that creates a message element based on "contents".
 -- "contents" must be a sequential table, containing strings, colors, and/or player entities.
@@ -206,7 +206,7 @@ end
 
 local IsStringValid = function( s ) return s and s ~= "" end
 local ColorToJs = function( c ) return string.format( "rgb(%d,%d,%d)", c.r, c.g, c.b ) end
-local AddLine = function( t, line, ... ) t[#t + 1] = string.format( line, ... ) end
+local AddLine = function( t, line, ... ) t[#t + 1] = line:format( ... ) end
 
 -- used to test if a URL probably points to a image
 local imageExtensions = { "png", "jpg", "jpeg", "gif", "webp", "svg" }
@@ -243,23 +243,23 @@ local function GetURLType( url )
     return "url"
 end
 
-JSBuilder.builders["string"] = function( val, color, font )
-    return JSBuilder:CreateText( val, font, nil, color )
+JSBuilder.builders["string"] = function( str, color, font )
+    return JSBuilder:CreateText( str, font, nil, color )
 end
 
-JSBuilder.builders["player"] = function( val, color, font )
+JSBuilder.builders["player"] = function( data, color, font )
     local lines = {}
 
-    if not val.isBot then
-        lines[#lines + 1] = JSBuilder:CreateImage( JSBuilder:FetchUserAvatarURL( val.id64 ), nil, "avatar ply-" .. val.id64 )
+    if not data.isBot then
+        lines[#lines + 1] = JSBuilder:CreateImage( JSBuilder:FetchUserAvatarURL( data.id64 ), nil, "avatar ply-" .. data.id64 )
     end
 
     lines[#lines + 1] = JSBuilder:CreateElement( "span", "elPlayer" )
-    AddLine( lines, "elPlayer.textContent = '%s';", SafeString( val.name ) )
+    AddLine( lines, "elPlayer.textContent = '%s';", SafeString( data.name ) )
 
-    if not val.isBot then
-        AddLine( lines, "elPlayer.steamId = '%s';", val.id )
-        AddLine( lines, "elPlayer.steamId64 = '%s';", val.id64 )
+    if not data.isBot then
+        AddLine( lines, "elPlayer.steamId = '%s';", data.id )
+        AddLine( lines, "elPlayer.steamId64 = '%s';", data.id64 )
         AddLine( lines, "elPlayer.style.cursor = 'pointer';" )
         AddLine( lines, "elPlayer.clickableText = true;" )
     end
@@ -268,14 +268,14 @@ JSBuilder.builders["player"] = function( val, color, font )
         AddLine( lines, "elPlayer.style.fontFamily = '%s';", font )
     end
 
-    if IsValid( val.ply ) then
+    if IsValid( data.ply ) then
         if SChat.USE_TAGS then
-            local nameColor = SChat.Tags:GetNameColor( val.ply )
+            local nameColor = SChat.Tags:GetNameColor( data.ply )
             if nameColor then color = nameColor end
 
-        elseif val.ply.getChatTag then
+        elseif data.ply.getChatTag then
             -- aTags support
-            local _, _, nameColor = val.ply:getChatTag()
+            local _, _, nameColor = data.ply:getChatTag()
             if nameColor then color = nameColor end
         end
     end
@@ -288,60 +288,60 @@ JSBuilder.builders["player"] = function( val, color, font )
     return table.concat( lines, "\n" )
 end
 
-JSBuilder.builders["emoji"] = function( val, color, font )
-    local path, isOnline = SChat.Settings:GetEmojiInfo( val:sub( 2, -2 ) )
+JSBuilder.builders["emoji"] = function( id, color, font )
+    local path, isOnline = SChat.Settings:GetEmojiInfo( id:sub( 2, -2 ) )
 
     if path then
         if not isOnline then
             path = "asset://garrysmod/" .. path
         end
 
-        return JSBuilder:CreateImage( path, nil, "emoji", val )
+        return JSBuilder:CreateImage( path, nil, "emoji", id )
     end
 
-    return JSBuilder:CreateText( val, font, nil, color )
+    return JSBuilder:CreateText( id, font, nil, color )
 end
 
-JSBuilder.builders["model"] = function( val, color, font )
+JSBuilder.builders["model"] = function( path, color, font )
     local js = ""
-    local prevPath = "materials/spawnicons/" .. string.Replace( val, ".mdl", ".png" )
+    local iconPath = "materials/spawnicons/" .. string.Replace( path, ".mdl", ".png" )
 
-    if file.Exists( prevPath, "GAME" ) then
-        js = JSBuilder:CreateImage( "asset://garrysmod/" .. prevPath, nil, "emoji" )
+    if file.Exists( iconPath, "GAME" ) then
+        js = JSBuilder:CreateImage( "asset://garrysmod/" .. iconPath, nil, "emoji" )
     end
 
-    return js .. JSBuilder:CreateText( val, font, nil, color )
+    return js .. JSBuilder:CreateText( path, font, nil, color )
 end
 
-JSBuilder.builders["url"] = function( val, _, font )
-    local urlType = GetURLType( val )
+JSBuilder.builders["url"] = function( url, _, font )
+    local urlType = GetURLType( url )
     local canEmbed = false
 
-    if IsValid( SChat._lastPlayer ) then
-        canEmbed = hook.Run( "CanEmbedCustomChat", SChat._lastPlayer, val, urlType ) ~= false
+    if IsValid( SChat.lastSpeaker ) then
+        canEmbed = hook.Run( "CanEmbedCustomChat", SChat.lastSpeaker, url, urlType ) ~= false
     end
 
-    if canEmbed and SChat:IsWhitelisted( val ) then
+    if canEmbed and SChat:IsWhitelisted( url ) then
         if urlType == "image" then
             local cvarSafeMode = GetConVar( "custom_chat_safe_mode" )
             local safeFilter = ( cvarSafeMode and cvarSafeMode:GetInt() or 0 ) > 0
 
-            return JSBuilder:CreateImage( val, val, nil, val, safeFilter )
+            return JSBuilder:CreateImage( url, url, nil, url, safeFilter )
 
         elseif urlType == "audio" and SChat.chatBox then
-            return JSBuilder:CreateAudioPlayer( val, font )
+            return JSBuilder:CreateAudioPlayer( url, font )
 
         else
-            return JSBuilder:CreateEmbed( val )
+            return JSBuilder:CreateEmbed( url )
         end
     end
 
-    return JSBuilder:CreateText( val, font, val, Color( 50, 100, 255 ) )
+    return JSBuilder:CreateText( url, font, url, Color( 50, 100, 255 ) )
 end
 
-JSBuilder.builders["hyperlink"] = function( val, color, font )
-    local label = string.match( val, "%[[%s%g]+%]" )
-    local url = string.match( val, "%(https?://[^'\">%s]+%)" )
+JSBuilder.builders["hyperlink"] = function( text, color, font )
+    local label = string.match( text, "%[[%s%g]+%]" )
+    local url = string.match( text, "%(https?://[^'\">%s]+%)" )
 
     label = ChopEnds( label, 2 )
     url = ChopEnds( url, 2 )
@@ -349,38 +349,41 @@ JSBuilder.builders["hyperlink"] = function( val, color, font )
     return JSBuilder:CreateText( label, font, url, color, nil, "hyperlink" )
 end
 
-JSBuilder.builders["spoiler"] = function( val, _, font )
-    return JSBuilder:CreateText( ChopEnds( val, 3 ), font, nil, nil, nil, "spoiler" )
+JSBuilder.builders["spoiler"] = function( text, _, font )
+    return JSBuilder:CreateText( ChopEnds( text, 3 ), font, nil, nil, nil, "spoiler" )
 end
 
-JSBuilder.builders["italic"] = function( val, color, font )
-    return JSBuilder:CreateText( ChopEnds( val, 2 ), font, nil, color, nil, "i-text" )
+JSBuilder.builders["italic"] = function( text, color, font )
+    return JSBuilder:CreateText( ChopEnds( text, 2 ), font, nil, color, nil, "i-text" )
 end
 
-JSBuilder.builders["bold"] = function( val, color, font )
-    return JSBuilder:CreateText( ChopEnds( val, 3 ), font, nil, color, nil, "b-text" )
+JSBuilder.builders["bold"] = function( text, color, font )
+    return JSBuilder:CreateText( ChopEnds( text, 3 ), font, nil, color, nil, "b-text" )
 end
 
-JSBuilder.builders["bold_italic"] = function( val, color, font )
-    return JSBuilder:CreateText( ChopEnds( val, 4 ), font, nil, color, nil, "b-text i-text" )
+JSBuilder.builders["bold_italic"] = function( text, color, font )
+    return JSBuilder:CreateText( ChopEnds( text, 4 ), font, nil, color, nil, "b-text i-text" )
 end
 
-JSBuilder.builders["code_line"] = function( val, _, font )
-    return JSBuilder:CreateCode( ChopEnds( val, 2 ), font, true )
+JSBuilder.builders["code_line"] = function( text, _, font )
+    return JSBuilder:CreateCode( ChopEnds( text, 2 ), font, true )
 end
 
-JSBuilder.builders["code"] = function( val, _, font )
-    val = string.Replace( val, "\\n", "\n" )
-    local chopAmount = val[1] == "{" and 3 or 4
-    return JSBuilder:CreateCode( ChopEnds( val, chopAmount ), font, false )
+JSBuilder.builders["code"] = function( text, _, font )
+    local code = ChopEnds( text, text[1] == "{" and 3 or 4 )
+
+    -- trim line breaks from the beginning
+    code = code:gsub( "[\n\r]-", "" )
+
+    return JSBuilder:CreateCode( code:Trim(), font, false )
 end
 
-JSBuilder.builders["rainbow"] = function( val, _, font )
-    return JSBuilder:CreateText( ChopEnds( val, 3 ), font, nil, nil, nil, "tef-rainbow" )
+JSBuilder.builders["rainbow"] = function( text, _, font )
+    return JSBuilder:CreateText( ChopEnds( text, 3 ), font, nil, nil, nil, "tef-rainbow" )
 end
 
-JSBuilder.builders["advert"] = function( val, color )
-    return JSBuilder:CreateAdvert( ChopEnds( val, 3 ), color )
+JSBuilder.builders["advert"] = function( text, color )
+    return JSBuilder:CreateAdvert( ChopEnds( text, 3 ), color )
 end
 
 --

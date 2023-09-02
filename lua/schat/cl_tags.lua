@@ -120,7 +120,7 @@ end, HOOK_LOW )
 gameevent.Listen( "player_connect_client" )
 gameevent.Listen( "player_disconnect" )
 
-hook.Add( "player_connect_client", "schat_PlayerConnect", function( data )
+hook.Add( "player_connect_client", "SChat.ShowConnectMessages", function( data )
     if not Tags.connection.showConnect then return end
 
     local c = Tags.connection.joinColor
@@ -147,7 +147,7 @@ hook.Add( "player_connect_client", "schat_PlayerConnect", function( data )
     } )
 end, HOOK_LOW )
 
-hook.Add( "player_disconnect", "schat_PlayerDisconnect", function( data )
+hook.Add( "player_disconnect", "SChat.ShowDisconnectMessages", function( data )
     if not Tags.connection.showDisconnect then return end
 
     local c = Tags.connection.leaveColor
@@ -188,22 +188,22 @@ function PARTS_PANEL:Init()
     self.list:SetHideHeaders( true )
     self.list:AddColumn( "-" )
 
-    local pnlOptions = vgui.Create( "DPanel", self )
-    pnlOptions:Dock( RIGHT )
-    pnlOptions:SetWide( 200 )
+    local panelOptions = vgui.Create( "DPanel", self )
+    panelOptions:Dock( RIGHT )
+    panelOptions:SetWide( 200 )
 
-    local labelHint = vgui.Create( "DLabel", pnlOptions )
+    local labelHint = vgui.Create( "DLabel", panelOptions )
     labelHint:SetText( "Use NAME_COL and MESSAGE_COL\nto change the name/message\ncolors respectively." )
     labelHint:SizeToContents()
     labelHint:SetColor( Color( 100, 100, 255 ) )
     labelHint:Dock( TOP )
 
-    self.textEntry = vgui.Create( "DTextEntry", pnlOptions )
+    self.textEntry = vgui.Create( "DTextEntry", panelOptions )
     self.textEntry:Dock( TOP )
     self.textEntry:DockMargin( 0, 5, 0, 0 )
     self.textEntry:SetPlaceholderText( "Add a piece of text..." )
 
-    local colorPicker = vgui.Create( "DColorMixer", pnlOptions )
+    local colorPicker = vgui.Create( "DColorMixer", panelOptions )
     colorPicker:Dock( FILL )
     colorPicker:DockMargin( 0, 8, 0, 8 )
     colorPicker:SetPalette( true )
@@ -211,19 +211,19 @@ function PARTS_PANEL:Init()
     colorPicker:SetWangs( true )
     colorPicker:SetColor( Color( 255, 0, 0 ) )
 
-    self.btnRemove = vgui.Create( "DButton", pnlOptions )
-    self.btnRemove:SetIcon( "icon16/delete.png" )
-    self.btnRemove:SetText( " Remove piece" )
-    self.btnRemove:Dock( BOTTOM )
-    self.btnRemove:SetEnabled( false )
+    self.buttonRemove = vgui.Create( "DButton", panelOptions )
+    self.buttonRemove:SetIcon( "icon16/delete.png" )
+    self.buttonRemove:SetText( " Remove piece" )
+    self.buttonRemove:Dock( BOTTOM )
+    self.buttonRemove:SetEnabled( false )
 
-    self.btnAdd = vgui.Create( "DButton", pnlOptions )
-    self.btnAdd:SetIcon( "icon16/arrow_left.png" )
-    self.btnAdd:SetText( " Add piece" )
-    self.btnAdd:Dock( BOTTOM )
-    self.btnAdd:SetEnabled( false )
+    self.buttonAdd = vgui.Create( "DButton", panelOptions )
+    self.buttonAdd:SetIcon( "icon16/arrow_left.png" )
+    self.buttonAdd:SetText( " Add piece" )
+    self.buttonAdd:Dock( BOTTOM )
+    self.buttonAdd:SetEnabled( false )
 
-    self.btnAdd.DoClick = function()
+    self.buttonAdd.DoClick = function()
         local text = self.textEntry:GetValue()
         local color = colorPicker:GetColor()
 
@@ -254,9 +254,9 @@ function PARTS_PANEL:Init()
         self.textEntry:SetValue( part[1] )
         colorPicker:SetColor( Color( part[2], part[3], part[4] ) )
 
-        self.btnAdd:SetText( " Update piece" )
-        self.btnAdd:SetEnabled( true )
-        self.btnRemove:SetEnabled( true )
+        self.buttonAdd:SetText( " Update piece" )
+        self.buttonAdd:SetEnabled( true )
+        self.buttonRemove:SetEnabled( true )
     end
 
     self.list.OnRowRightClick = function( _, index )
@@ -268,13 +268,13 @@ function PARTS_PANEL:Init()
         end ):SetIcon( "icon16/delete.png" )
     end
 
-    self.btnRemove.DoClick = function()
+    self.buttonRemove.DoClick = function()
         table.remove( self.parts, self.selectedIndex )
         self:RefreshList()
     end
 
     self.textEntry.OnChange = function()
-        self.btnAdd:SetEnabled( self.textEntry:GetValue() ~= "" )
+        self.buttonAdd:SetEnabled( self.textEntry:GetValue() ~= "" )
     end
 end
 
@@ -284,9 +284,9 @@ function PARTS_PANEL:SetParts( parts )
 end
 
 function PARTS_PANEL:RefreshList()
-    self.btnAdd:SetText( " Add piece" )
-    self.btnAdd:SetEnabled( false )
-    self.btnRemove:SetEnabled( false )
+    self.buttonAdd:SetText( " Add piece" )
+    self.buttonAdd:SetEnabled( false )
+    self.buttonRemove:SetEnabled( false )
     self.textEntry:SetValue( "" )
 
     self.selectedIndex = nil
@@ -386,24 +386,24 @@ function Tags:ShowChatTagsPanel()
     listIds:SetMultiSelect( false )
     listIds:AddColumn( "SteamID" )
 
-    local btnRemoveUser = vgui.Create( "DButton", pnlSteamIdOptions )
-    btnRemoveUser:SetIcon( "icon16/user_delete.png" )
-    btnRemoveUser:SetText( " Remove SteamID" )
-    btnRemoveUser:SetEnabled( false )
-    btnRemoveUser:Dock( BOTTOM )
+    local buttonRemoveUser = vgui.Create( "DButton", pnlSteamIdOptions )
+    buttonRemoveUser:SetIcon( "icon16/user_delete.png" )
+    buttonRemoveUser:SetText( " Remove SteamID" )
+    buttonRemoveUser:SetEnabled( false )
+    buttonRemoveUser:Dock( BOTTOM )
 
-    local btnAddUser = vgui.Create( "DButton", pnlSteamIdOptions )
-    btnAddUser:SetIcon( "icon16/user_add.png" )
-    btnAddUser:SetText( " Add SteamID" )
-    btnAddUser:SetEnabled( false )
-    btnAddUser:Dock( BOTTOM )
+    local buttonAddUser = vgui.Create( "DButton", pnlSteamIdOptions )
+    buttonAddUser:SetIcon( "icon16/user_add.png" )
+    buttonAddUser:SetText( " Add SteamID" )
+    buttonAddUser:SetEnabled( false )
+    buttonAddUser:Dock( BOTTOM )
 
     local entrySteamId = vgui.Create( "DTextEntry", pnlSteamIdOptions )
     entrySteamId:Dock( BOTTOM )
     entrySteamId:SetPlaceholderText( "SteamID..." )
 
     entrySteamId.OnChange = function()
-        btnAddUser:SetEnabled( entrySteamId:GetValue() ~= "" )
+        buttonAddUser:SetEnabled( entrySteamId:GetValue() ~= "" )
     end
 
     local steamIdParts = vgui.Create( "SChatTagEditor", pnlSteamIdTags )
@@ -430,13 +430,13 @@ function Tags:ShowChatTagsPanel()
     listIds.OnRowSelected = function( _, _, row )
         currentSteamId = row:GetValue( 1 )
         steamIdParts:SetParts( byId[currentSteamId] )
-        btnRemoveUser:SetEnabled( true )
+        buttonRemoveUser:SetEnabled( true )
     end
 
     UpdateSteamIdsList()
     listIds:SelectFirstItem()
 
-    btnAddUser.DoClick = function()
+    buttonAddUser.DoClick = function()
         local id = string.Trim( entrySteamId:GetValue() )
 
         if util.SteamIDTo64( id ) == "0" then
@@ -453,14 +453,14 @@ function Tags:ShowChatTagsPanel()
 
         byId[id] = {}
 
-        btnAddUser:SetEnabled( false )
+        buttonAddUser:SetEnabled( false )
         listIds:ClearSelection()
 
         local line = listIds:AddLine( id )
         listIds:SelectItem( line )
     end
 
-    btnRemoveUser.DoClick = function()
+    buttonRemoveUser.DoClick = function()
         byId[currentSteamId] = nil
         UpdateSteamIdsList()
         listIds:SelectFirstItem()
@@ -624,12 +624,12 @@ function Tags:ShowChatTagsPanel()
 
     -------- Apply the settings --------
 
-    local btnApply = vgui.Create( "DButton", frame )
-    btnApply:SetIcon( "icon16/accept.png" )
-    btnApply:SetText( " Apply all changes" )
-    btnApply:Dock( BOTTOM )
+    local buttonApply = vgui.Create( "DButton", frame )
+    buttonApply:SetIcon( "icon16/accept.png" )
+    buttonApply:SetText( " Apply all changes" )
+    buttonApply:Dock( BOTTOM )
 
-    btnApply.DoClick = function()
+    buttonApply.DoClick = function()
         local data = {
             connection = byConnection
         }

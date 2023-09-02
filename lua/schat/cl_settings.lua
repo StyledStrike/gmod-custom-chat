@@ -1,15 +1,17 @@
-local Settings = {
+local Settings = SChat.Settings or {
     filePath = "schat.json",
 
     width = 550,
     height = 260,
-    offset_left = -1,
-    offset_bottom = -1,
+    offsetLeft = -1,
+    offsetBottom = -1,
 
-    font_size = 18,
-    allow_any_url = false,
+    fontSize = 18,
+    allowAnyURL = false,
     timestamps = false
 }
+
+SChat.Settings = Settings
 
 function Settings:ValidateInteger( n, min, max )
     return math.Round( math.Clamp( tonumber( n ), min, max ) )
@@ -28,11 +30,11 @@ function Settings:Save()
     file.Write( self.filePath, util.TableToJSON( {
         width			= self.width,
         height			= self.height,
-        font_size		= self.font_size,
-        allow_any_url 	= self.allow_any_url,
+        font_size		= self.fontSize,
+        allow_any_url 	= self.allowAnyURL,
         timestamps      = self.timestamps,
-        offset_left		= self.offset_left,
-        offset_bottom	= self.offset_bottom
+        offset_left		= self.offsetLeft,
+        offset_bottom	= self.offsetBottom
     }, true ) )
 end
 
@@ -52,31 +54,31 @@ function Settings:Load()
     end
 
     if data.font_size then
-        self.font_size = self:ValidateInteger( data.font_size, 10, 64 )
+        self.fontSize = self:ValidateInteger( data.font_size, 10, 64 )
     end
 
     if data.offset_left then
-        self.offset_left = self:ValidateInteger( data.offset_left, -1, 1000 )
+        self.offsetLeft = self:ValidateInteger( data.offset_left, -1, 1000 )
     end
 
     if data.offset_bottom then
-        self.offset_bottom = self:ValidateInteger( data.offset_bottom, -1, 1000 )
+        self.offsetBottom = self:ValidateInteger( data.offset_bottom, -1, 1000 )
     end
 
     self.timestamps = tobool( data.timestamps )
-    self.allow_any_url = tobool( data.allow_any_url )
+    self.allowAnyURL = tobool( data.allow_any_url )
 end
 
 function Settings:ResetDefaultPosition()
-    self.offset_left = -1
-    self.offset_bottom = -1
+    self.offsetLeft = -1
+    self.offsetBottom = -1
 end
 
 function Settings:GetDefaultPosition()
     local bottomY = ( ScrH() - self.height )
     return
-        Either( self.offset_left > 0, self.offset_left, ScrW() * 0.032 ),
-        Either( self.offset_bottom > 0, bottomY - self.offset_bottom, bottomY - ScrH() * 0.2 )
+        Either( self.offsetLeft > 0, self.offsetLeft, ScrW() * 0.032 ),
+        Either( self.offsetBottom > 0, bottomY - self.offsetBottom, bottomY - ScrH() * 0.2 )
 end
 
 function Settings:GetDefaultSize()
@@ -84,7 +86,7 @@ function Settings:GetDefaultSize()
 end
 
 function Settings:SetWhitelistEnabled( enabled )
-    self.allow_any_url = not enabled
+    self.allowAnyURL = not enabled
 
     if enabled then
         SChat.InternalMessage( "Whitelist", "Only load images from trusted websites." )
@@ -138,33 +140,33 @@ function Settings:ShowServerEmojisPanel()
     pnl:MakePopup()
 
     local emojis = table.Copy( self.emojiCategories[1].emojis )
-    local refreshListFunc
+    local RefreshList
 
     local scrollEmojis = vgui.Create( "DScrollPanel", pnl )
     scrollEmojis:Dock( FILL )
 
-    local function removeEmoji( index )
+    local function RemoveEmoji( index )
         table.remove( emojis, index )
-        refreshListFunc()
+        RefreshList()
     end
 
-    local function updateEmoji( index, id, url )
+    local function UpdateEmoji( index, id, url )
         emojis[index][1] = id
         emojis[index][2] = url
     end
 
-    local function markEntryAsInvalid( entry, reason )
+    local function MarkEntryAsValid( entry )
+        entry._invalidReason = nil
+        entry:SetPaintBackgroundEnabled( false )
+    end
+
+    local function MarkEntryAsInvalid( entry, reason )
         entry._invalidReason = reason
         entry:SetBGColor( Color( 120, 20, 20, 255 ) )
         entry:SetPaintBackgroundEnabled( true )
     end
 
-    local function markEntryAsValid( entry )
-        entry._invalidReason = nil
-        entry:SetPaintBackgroundEnabled( false )
-    end
-
-    local function findEmojiIndexById( id )
+    local function FindEmojiIndexById( id )
         for k, v in ipairs( emojis ) do
             if v[1] == id then
                 return k
@@ -172,14 +174,14 @@ function Settings:ShowServerEmojisPanel()
         end
     end
 
-    local function isBuiltinEmoji( id )
+    local function IsBuiltinEmoji( id )
         local existingId, isOnline = self:GetEmojiInfo( id )
         if existingId then
             return not isOnline
         end
     end
 
-    local function addListItem( index, id, url, scroll )
+    local function AddListItem( index, id, url, scroll )
         if index == 1 then
             -- remove "no emojis yet"
             scrollEmojis:Clear()
@@ -190,78 +192,79 @@ function Settings:ShowServerEmojisPanel()
         item:DockMargin( 0, 2, 0, 2 )
         item:DockPadding( 2, 2, 2, 2 )
 
-        local lblIndex = vgui.Create( "DLabel", item )
-        lblIndex:SetText( index )
-        lblIndex:SizeToContents()
-        lblIndex:Dock( LEFT )
-        lblIndex:DockMargin( 2, 0, 4, 0 )
+        local labelIndex = vgui.Create( "DLabel", item )
+        labelIndex:SetText( index )
+        labelIndex:SizeToContents()
+        labelIndex:Dock( LEFT )
+        labelIndex:DockMargin( 2, 0, 4, 0 )
+        labelIndex:SetColor( Color( 0, 0, 0, 255 ) )
 
-        local editId = vgui.Create( "DTextEntry", item )
-        editId:SetWide( 100 )
-        editId:Dock( LEFT )
-        editId:SetHistoryEnabled( false )
-        editId:SetMultiline( false )
-        editId:SetMaximumCharCount( 32 )
-        editId:SetUpdateOnType( true )
-        editId:SetPlaceholderText( "<emoji id>" )
+        local entryId = vgui.Create( "DTextEntry", item )
+        entryId:SetWide( 100 )
+        entryId:Dock( LEFT )
+        entryId:SetHistoryEnabled( false )
+        entryId:SetMultiline( false )
+        entryId:SetMaximumCharCount( 32 )
+        entryId:SetUpdateOnType( true )
+        entryId:SetPlaceholderText( "<emoji id>" )
 
-        editId.OnValueChange = function( s, value )
+        entryId.OnValueChange = function( s, value )
             local newId = string.Trim( value )
-            local existingIndex = findEmojiIndexById( newId )
+            local existingIndex = FindEmojiIndexById( newId )
 
             if string.len( newId ) == 0 then
-                markEntryAsInvalid( s, "The ID is empty" )
+                MarkEntryAsInvalid( s, "The ID is empty" )
 
             elseif string.find( newId, "[^%w_%-]" ) then
-                markEntryAsInvalid( s, "Only _, -, characters between 0-9 and A-Z are allowed" )
+                MarkEntryAsInvalid( s, "Only _, -, characters between 0-9 and A-Z are allowed" )
 
             elseif existingIndex and existingIndex ~= index then
-                markEntryAsInvalid( s, "Emoji #" .. existingIndex .. " has the same ID" )
+                MarkEntryAsInvalid( s, "Emoji #" .. existingIndex .. " has the same ID" )
 
-            elseif isBuiltinEmoji( newId ) then
-                markEntryAsInvalid( s, "The ID \"" .. newId .. "\" is reserved for a builtin emoji" )
+            elseif IsBuiltinEmoji( newId ) then
+                MarkEntryAsInvalid( s, "The ID \"" .. newId .. "\" is reserved for a builtin emoji" )
 
             else
-                markEntryAsValid( s )
+                MarkEntryAsValid( s )
             end
 
-            updateEmoji( index, newId, emojis[index][2] )
+            UpdateEmoji( index, newId, emojis[index][2] )
         end
 
-        local editURL = vgui.Create( "DTextEntry", item )
-        editURL:Dock( FILL )
-        editURL:DockMargin( 4, 0, 4, 0 )
-        editURL:SetHistoryEnabled( false )
-        editURL:SetMultiline( false )
-        editURL:SetMaximumCharCount( 256 )
-        editURL:SetUpdateOnType( true )
-        editURL:SetPlaceholderText( "<link to a image>" )
-        editURL._branchWarning = true
+        local entryURL = vgui.Create( "DTextEntry", item )
+        entryURL:Dock( FILL )
+        entryURL:DockMargin( 4, 0, 4, 0 )
+        entryURL:SetHistoryEnabled( false )
+        entryURL:SetMultiline( false )
+        entryURL:SetMaximumCharCount( 256 )
+        entryURL:SetUpdateOnType( true )
+        entryURL:SetPlaceholderText( "<link to a image>" )
+        entryURL._branchWarning = true
 
-        editURL.OnValueChange = function( s, value )
+        entryURL.OnValueChange = function( s, value )
             local newURL = string.Trim( value )
 
             if string.len( newURL ) == 0 then
-                markEntryAsInvalid( s, "The URL is empty" )
+                MarkEntryAsInvalid( s, "The URL is empty" )
             else
                 if not s._branchWarning and BRANCH == "unknown" and newURL:sub( 1, 5 ) == "https" then
                     s._branchWarning = true
                     Derma_Message( "Some websites using the TLS protocol (https) will not work without the Chromium beta for Garry's Mod.", "Warning", "OK" )
                 end
 
-                markEntryAsValid( s )
+                MarkEntryAsValid( s )
             end
 
-            updateEmoji( index, emojis[index][1], newURL )
+            UpdateEmoji( index, emojis[index][1], newURL )
         end
 
         timer.Simple( 0, function()
-            editId:SetValue( id )
-            editURL:SetValue( url )
+            entryId:SetValue( id )
+            entryURL:SetValue( url )
 
             -- we only want to show branch warnings
             -- when the user edits this field
-            editURL._branchWarning = nil
+            entryURL._branchWarning = nil
         end )
 
         local btnRemove = vgui.Create( "DButton", item )
@@ -272,18 +275,18 @@ function Settings:ShowServerEmojisPanel()
         btnRemove:Dock( RIGHT )
 
         btnRemove.DoClick = function()
-            removeEmoji( index )
+            RemoveEmoji( index )
         end
 
-        emojis[index][3] = editId
-        emojis[index][4] = editURL
+        emojis[index][3] = entryId
+        emojis[index][4] = entryURL
 
         if scroll then
             scrollEmojis:ScrollToChild( item )
         end
     end
 
-    refreshListFunc = function()
+    RefreshList = function()
         scrollEmojis:Clear()
 
         if #emojis == 0 then
@@ -297,35 +300,35 @@ function Settings:ShowServerEmojisPanel()
         end
 
         for index, v in ipairs( emojis ) do
-            addListItem( index, v[1], v[2] )
+            AddListItem( index, v[1], v[2] )
         end
     end
 
-    refreshListFunc()
+    RefreshList()
 
-    local pnlOptions = vgui.Create( "DPanel", pnl )
-    pnlOptions:Dock( BOTTOM )
+    local panelOptions = vgui.Create( "DPanel", pnl )
+    panelOptions:Dock( BOTTOM )
 
-    local btnAdd = vgui.Create( "DButton", pnlOptions )
-    btnAdd:SetIcon( "icon16/add.png" )
-    btnAdd:SetText( " Add" )
-    btnAdd:SetWide( 100 )
-    btnAdd:Dock( LEFT )
+    local buttonAdd = vgui.Create( "DButton", panelOptions )
+    buttonAdd:SetIcon( "icon16/add.png" )
+    buttonAdd:SetText( " Add" )
+    buttonAdd:SetWide( 100 )
+    buttonAdd:Dock( LEFT )
 
-    btnAdd.DoClick = function()
+    buttonAdd.DoClick = function()
         local newIndex = #emojis + 1
         local newId = "emoji-" .. newIndex
 
         table.insert( emojis, { newId, "" } )
-        addListItem( newIndex, newId, "", true )
+        AddListItem( newIndex, newId, "", true )
     end
 
-    local btnAddSilk = vgui.Create( "DButton", pnlOptions )
-    btnAddSilk:SetIcon( "icon16/emoticon_evilgrin.png" )
-    btnAddSilk:SetText( " Add Silkicon" )
-    btnAddSilk:SetTooltip( "Add one of the icons bundled with Garry's Mod" )
-    btnAddSilk:SetWide( 95 )
-    btnAddSilk:Dock( LEFT )
+    local buttonAddSilk = vgui.Create( "DButton", panelOptions )
+    buttonAddSilk:SetIcon( "icon16/emoticon_evilgrin.png" )
+    buttonAddSilk:SetText( " Add Silkicon" )
+    buttonAddSilk:SetTooltip( "Add one of the icons bundled with Garry's Mod" )
+    buttonAddSilk:SetWide( 95 )
+    buttonAddSilk:Dock( LEFT )
 
     local silkPanel
 
@@ -335,7 +338,7 @@ function Settings:ShowServerEmojisPanel()
         end
     end
 
-    btnAddSilk.DoClick = function()
+    buttonAddSilk.DoClick = function()
         if IsValid( silkPanel ) then
             silkPanel:MakePopup()
             return
@@ -358,7 +361,7 @@ function Settings:ShowServerEmojisPanel()
             local newUrl = "asset://garrysmod/materials/" .. iconPath
 
             table.insert( emojis, { newId, newUrl } )
-            addListItem( newIndex, newId, newUrl, true )
+            AddListItem( newIndex, newId, newUrl, true )
 
             silkPanel:Close()
         end
@@ -376,12 +379,12 @@ function Settings:ShowServerEmojisPanel()
         end
     end
 
-    local btnApply = vgui.Create( "DButton", pnlOptions )
-    btnApply:SetIcon( "icon16/accept.png" )
-    btnApply:SetText( " Apply" )
-    btnApply:Dock( RIGHT )
+    local buttonApply = vgui.Create( "DButton", panelOptions )
+    buttonApply:SetIcon( "icon16/accept.png" )
+    buttonApply:SetText( " Apply" )
+    buttonApply:Dock( RIGHT )
 
-    btnApply.DoClick = function()
+    buttonApply.DoClick = function()
         local data = {}
 
         for k, v in ipairs( emojis ) do
@@ -773,5 +776,3 @@ Settings.emojiCategories = {
         "regional_indicator_z"
     } }
 }
-
-SChat.Settings = Settings
