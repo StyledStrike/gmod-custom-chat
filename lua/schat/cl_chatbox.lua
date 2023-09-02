@@ -87,14 +87,6 @@ function filterTempElements(elm) {
 }
 
 function appendMessage(message, showTemporary, animate) {
-    // only allow the existance of one media player at a time
-    var mediaElements = document.getElementsByClassName("media-player");
-
-    for (var i = 0; i < mediaElements.length; i++) {
-        var parent = mediaElements[i].parentElement;
-        parent.removeChild(mediaElements[i]);
-    }
-
     var wasAtBottom = isScrollAtBottom();
     var copy;
 

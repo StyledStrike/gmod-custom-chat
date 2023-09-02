@@ -513,9 +513,10 @@ function JSBuilder:CreateAudioPlayer( url, font )
         self:CreateElement( "audio", "elAudio" ),
         [[elAudio.className = 'media-player';
         elAudio.volume = 0.5;
-        elAudio.setAttribute('preload', 'none');
+        elAudio.setAttribute('preload', 'metadata');
         elAudio.setAttribute('controls', 'controls');
-        elAudio.setAttribute('controlsList', 'nodownload noremoteplayback');]]
+        elAudio.setAttribute('controlsList', 'nodownload noremoteplayback');
+        elAudio.src = ']] .. url .. "';"
     }
 
     return table.concat( lines, "\n" )
