@@ -481,15 +481,13 @@ end
 
 function SChat:SetInputEnabled( enable )
     for _, pnl in ipairs( self.frame:GetChildren() ) do
-        if pnl == self.chatBox or
-            pnl == self.frame.btnMaxim or
-            pnl == self.frame.btnClose or
-            pnl == self.frame.btnMinim
+        if pnl ~= self.chatBox and
+            pnl ~= self.frame.btnMaxim and
+            pnl ~= self.frame.btnClose and
+            pnl ~= self.frame.btnMinim
         then
-            continue
+            pnl:SetVisible( enable )
         end
-
-        pnl:SetVisible( enable )
     end
 
     self.chatBox:SetDisplayMode( enable and "main" or "temp" )
