@@ -1,4 +1,17 @@
 # Custom Chat
+
+### ⚠ A major refactor is coming in the next week
+
+- Replace all references of `SChat` with `CustomChat`
+- Make all functions from the `CustomChat` global table use `:` only when necessary
+- Make use of the NetPrefs library for saving/syncing server theme/emojis/tags
+- Use new settings data folder on the client side
+- Make the `CustomChat_ChatHistory` panel able to be used separately
+- Store emoji data in a more readable format
+- Theme editor & the ability to save multiple themes
+
+---
+
 A simple and customizable chat box that can format text, display images and emojis.
 
 [![GLuaLint](https://github.com/StyledStrike/gmod-custom-chat/actions/workflows/glualint.yml/badge.svg)](https://github.com/FPtje/GLuaFixer)
@@ -7,16 +20,17 @@ A simple and customizable chat box that can format text, display images and emoj
 ### Features
 
 * Customizable
-* Supports embeds
-* Code blocks
+* Has built-in emojis
+* Supports text formatting (bold, italic, fonts, code blocks, etc.)
+* Embed image/audio files (Only loads from trusted websites by default)
 * Find text with _Ctrl+F_
-* Pre-added emojis
-* Display icons for prop models
-* Show images from URLs (Only loads images from trusted websites by default)
-* Keeps the default "hands on the ear" behaviour
+* Shows icons for prop models
+* Keeps the default "hands on ear when the chat is open" behaviour
 * Can be enabled/disabled at any time *(Using the `customchat_disable` console variable)*
 * _(Admin Only)_ Suggest a theme to be used on your server
-* _(Admin Only)_ Set custom emojis to be used on your server
+* _(Admin Only)_ Set custom emojis
+* _(Admin Only)_ Set custom chat tags
+* _(Admin Only)_ Set custom join/leave messages
 
 ---
 
