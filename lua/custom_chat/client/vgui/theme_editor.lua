@@ -162,7 +162,7 @@ function PANEL:Init()
         self:ColorChanged( "inputBackgroundColor", color )
     end
 
-    -- Scroll Bar Color
+    -- Scrollbar Color
     self.mixerScrollBar = AddProperty( "theme.color.scroll_bar", "DColorMixer", panelProperties )
     self.mixerScrollBar.ValueChanged = function( _, color )
         self:ColorChanged( "scrollBarColor", color )
