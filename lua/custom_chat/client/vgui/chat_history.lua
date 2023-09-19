@@ -1063,7 +1063,7 @@ function PANEL:OnHTTPResponse( embedId, body, url )
 
     if props["site_name"] then
         AddLine( lines, self:CreateElement( "h1", "elName", "elEmbedBody" ) )
-        AddLine( lines, "elName.textContent = '%s';", SafeString( props["site_name"] ) )
+        AddLine( lines, "elName.innerHTML = '%s';", SafeString( props["site_name"] ) )
     end
 
     local title = props["title"] or site
@@ -1073,7 +1073,7 @@ function PANEL:OnHTTPResponse( embedId, body, url )
     end
 
     AddLine( lines, self:CreateElement( "h2", "elTitle", "elEmbedBody" ) )
-    AddLine( lines, "elTitle.textContent = '%s';", SafeString( title ) )
+    AddLine( lines, "elTitle.innerHTML = '%s';", SafeString( title ) )
 
     local desc = props["description"] or url
 
@@ -1082,7 +1082,7 @@ function PANEL:OnHTTPResponse( embedId, body, url )
     end
 
     AddLine( lines, self:CreateElement( "i", "elDesc", "elEmbedBody" ) )
-    AddLine( lines, "elDesc.textContent = '%s';", SafeString( desc ) )
+    AddLine( lines, "elDesc.innerHTML = '%s';", SafeString( desc ) )
     AddLine( lines, "}" )
 
     self:QueueJavascript( table.concat( lines, "\n" ) )
