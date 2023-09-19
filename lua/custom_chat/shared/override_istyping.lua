@@ -1,4 +1,4 @@
--- lets restore the "hands on the ear"
+-- Restore the "hands on the ear"
 -- behaviour from the default chat.
 local PLAYER = FindMetaTable( "Player" )
 
@@ -9,7 +9,9 @@ function PLAYER:IsTyping()
 end
 
 if SERVER then
-    net.Receive( "schat.is_typing", function( _, ply )
+    util.AddNetworkString( "customchat.is_typing" )
+
+    net.Receive( "customchat.is_typing", function( _, ply )
         ply:SetNWBool( "IsTyping", net.ReadBool() )
     end )
 end

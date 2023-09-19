@@ -126,8 +126,8 @@ local whitelist = {
     pattern [[([%w-_]*)([%.]-)twitch%.tv/(.+)]]
 }
 
-function SChat:IsWhitelisted( url )
-    if self.Settings.allowAnyURL then
+function CustomChat.IsWhitelisted( url )
+    if CustomChat.Config.allowAnyURL then
         return true
     end
 
@@ -138,7 +138,7 @@ function SChat:IsWhitelisted( url )
     local prefix, site, data = string.match( url, "^(%w-)://([^/]*)/?(.*)" )
 
     if not prefix or not site then
-        SChat.PrintF( "Malformed URL: %s", url )
+        CustomChat.PrintF( "Malformed URL: %s", url )
         return false
     end
 

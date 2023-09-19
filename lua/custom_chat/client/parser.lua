@@ -27,7 +27,7 @@ local rangeTypes = {
 
 -- A "range" is where a pattern starts/ends on a string.
 -- This function searches for all ranges of one type
--- on this str, then returns them in a table.
+-- on this str, then returns them in a array.
 local function FindAllRangesOfType( rangeType, str )
     if rangeType.ignoreCase then
         str = string.lower( str )
@@ -48,8 +48,8 @@ local function FindAllRangesOfType( rangeType, str )
     return ranges
 end
 
--- Merges a range into a table of ranges
--- in a way that overrides existing ranges.
+-- Merges a range into a array of ranges
+-- in a way that overrides overlapping ranges.
 local function MergeRangeInto( tbl, range )
     local newTbl = {}
 
@@ -66,7 +66,11 @@ local function MergeRangeInto( tbl, range )
     return newTbl
 end
 
-function SChat:ParseString( str, outFunc )
+local function RangeSorter( a, b )
+    return a.s < b.s -- heh, get it
+end
+
+function CustomChat.ParseString( str, outFunc )
     local ranges = {}
 
     -- for each range type...
@@ -87,9 +91,7 @@ function SChat:ParseString( str, outFunc )
     end
 
     -- sort ranges by their starting position
-    table.sort( ranges, function( a, b )
-        return a.s < b.s
-    end )
+    table.sort( ranges, RangeSorter )
 
     local lastRangeEnd = 1
 

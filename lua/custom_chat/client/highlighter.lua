@@ -1,7 +1,7 @@
 -- Very basic and generalized syntax highlighter.
 -- Only deals with (, ), {, }, [, ], strings,
--- numbers and a few functions that may apply
--- to many languages (especially SF/E2/Lua)
+-- numbers and a few keywords that may exist
+-- in many languages (especially SF/E2/Lua)
 
 local punctuation = {
     ["["] = "bracket",
@@ -29,6 +29,8 @@ local keywords = {
     ["const"] = "keyword",
     ["for"] = "keyword",
     ["while"] = "keyword",
+    ["repeat"] = "keyword",
+    ["until"] = "keyword",
     ["continue"] = "keyword",
     ["function"] = "keyword",
     ["return"] = "keyword",
@@ -62,7 +64,7 @@ local colors = {
 
 local string_sub = string.sub
 
-function SChat:GenerateHighlightTokens( inputStr )
+function CustomChat.TokenizeCode( inputStr )
     local inputLen = string.len( inputStr ) + 1
     local tokens = {}
     local buffer = ""

@@ -1,4 +1,4 @@
-local Tags = SChat.Tags or {
+local Tags = CustomChat.Tags or {
     -- tags by steam id
     byId = {},
 
@@ -20,30 +20,7 @@ local Tags = SChat.Tags or {
     }
 }
 
-SChat.Tags = Tags
-
-hook.Add( "InitPostEntity", "SChat.PreventChatTagsConflict", function()
-    hook.Remove( "InitPostEntity", "SChat.PreventChatTagsConflict" )
-
-    if not aTags then
-        SChat.USE_TAGS = true
-    end
-end )
-
-net.Receive( "schat.set_tags", function()
-    SChat.PrintF( "Received chat tags from the server." )
-
-    local data = net.ReadString()
-    data = util.JSONToTable( data )
-
-    if data then
-        Tags.byId = data.byId or {}
-        Tags.byTeam = data.byTeam or {}
-        Tags.connection = data.connection or Tags.connection
-    else
-        SChat.PrintF( "Failed to parse tags from the server!" )
-    end
-end )
+CustomChat.Tags = Tags
 
 function Tags:GetParts( ply )
     if self.byId[ply:SteamID()] then
@@ -69,8 +46,7 @@ function Tags:GetNameColor( ply )
     return GAMEMODE:GetTeamColor( ply )
 end
 
-hook.Add( "OnPlayerChat", "SChat.AddCustomTags", function( ply, text, isTeam, isDead )
-    if not SChat.USE_TAGS then return end
+local function CustomChat_AddCustomTags( ply, text, isTeam, isDead )
     if not IsValid( ply ) or not ply:IsPlayer() then return end
 
     local parts = Tags:GetParts( ply )
@@ -115,18 +91,25 @@ hook.Add( "OnPlayerChat", "SChat.AddCustomTags", function( ply, text, isTeam, is
     chat.AddText( unpack( message ) )
 
     return true
-end, HOOK_LOW )
+end
+
+hook.Add( "InitPostEntity", "CustomChat.PreventChatTagsConflict", function()
+    if aTags then return end
+
+    CustomChat.USE_TAGS = true
+    hook.Add( "OnPlayerChat", "CustomChat.AddCustomTags", CustomChat_AddCustomTags, HOOK_LOW )
+end )
 
 gameevent.Listen( "player_connect_client" )
 gameevent.Listen( "player_disconnect" )
 
-hook.Add( "player_connect_client", "SChat.ShowConnectMessages", function( data )
+hook.Add( "player_connect_client", "CustomChat.ShowConnectMessages", function( data )
     if not Tags.connection.showConnect then return end
 
     local c = Tags.connection.joinColor
     local name = data.name
 
-    -- only use custom player block if schat is enabled
+    -- only force a player block if custom chat is enabled
     if GetConVar( "customchat_disable" ):GetInt() == 0 then
         name = {
             blockType = "player",
@@ -139,21 +122,21 @@ hook.Add( "player_connect_client", "SChat.ShowConnectMessages", function( data )
         }
     end
 
-    SChat:AppendMessage( {
+    chat.AddText(
         Color( 255, 255, 255 ), Tags.connection.joinPrefix,
         Color( c[1], c[2], c[3] ), name,
         Color( 150, 150, 150 ), " <" .. data.networkid .. "> ",
         Color( 255, 255, 255 ), Tags.connection.joinSuffix
-    } )
+    )
 end, HOOK_LOW )
 
-hook.Add( "player_disconnect", "SChat.ShowDisconnectMessages", function( data )
+hook.Add( "player_disconnect", "CustomChat.ShowDisconnectMessages", function( data )
     if not Tags.connection.showDisconnect then return end
 
     local c = Tags.connection.leaveColor
     local name = data.name
 
-    -- only use custom player block if schat is enabled
+    -- only force a player block if custom chat is enabled
     if GetConVar( "customchat_disable" ):GetInt() == 0 then
         name = {
             blockType = "player",
@@ -166,162 +149,21 @@ hook.Add( "player_disconnect", "SChat.ShowDisconnectMessages", function( data )
         }
     end
 
-    SChat:AppendMessage( {
+    chat.AddText(
         Color( 255, 255, 255 ), Tags.connection.leavePrefix,
         Color( c[1], c[2], c[3] ), name,
         Color( 150, 150, 150 ), " <" .. data.networkid .. "> ",
         Color( 255, 255, 255 ), Tags.connection.leaveSuffix,
         Color( 150, 150, 150 ), " (" .. data.reason .. ")"
-    } )
+    )
 end, HOOK_LOW )
 
-local PARTS_PANEL = {}
-
-function PARTS_PANEL:Init()
-    self.parts = {}
-    self:DockPadding( 8, 8, 8, 8 )
-
-    self.list = vgui.Create( "DListView", self )
-    self.list:Dock( FILL )
-    self.list:DockMargin( 0, 0, 8, 0 )
-    self.list:SetMultiSelect( false )
-    self.list:SetHideHeaders( true )
-    self.list:AddColumn( "-" )
-
-    local panelOptions = vgui.Create( "DPanel", self )
-    panelOptions:Dock( RIGHT )
-    panelOptions:SetWide( 200 )
-
-    local labelHint = vgui.Create( "DLabel", panelOptions )
-    labelHint:SetText( "Use NAME_COL and MESSAGE_COL\nto change the name/message\ncolors respectively." )
-    labelHint:SizeToContents()
-    labelHint:SetColor( Color( 100, 100, 255 ) )
-    labelHint:Dock( TOP )
-
-    self.textEntry = vgui.Create( "DTextEntry", panelOptions )
-    self.textEntry:Dock( TOP )
-    self.textEntry:DockMargin( 0, 5, 0, 0 )
-    self.textEntry:SetPlaceholderText( "Add a piece of text..." )
-
-    local colorPicker = vgui.Create( "DColorMixer", panelOptions )
-    colorPicker:Dock( FILL )
-    colorPicker:DockMargin( 0, 8, 0, 8 )
-    colorPicker:SetPalette( true )
-    colorPicker:SetAlphaBar( false )
-    colorPicker:SetWangs( true )
-    colorPicker:SetColor( Color( 255, 0, 0 ) )
-
-    self.buttonRemove = vgui.Create( "DButton", panelOptions )
-    self.buttonRemove:SetIcon( "icon16/delete.png" )
-    self.buttonRemove:SetText( " Remove piece" )
-    self.buttonRemove:Dock( BOTTOM )
-    self.buttonRemove:SetEnabled( false )
-
-    self.buttonAdd = vgui.Create( "DButton", panelOptions )
-    self.buttonAdd:SetIcon( "icon16/arrow_left.png" )
-    self.buttonAdd:SetText( " Add piece" )
-    self.buttonAdd:Dock( BOTTOM )
-    self.buttonAdd:SetEnabled( false )
-
-    self.buttonAdd.DoClick = function()
-        local text = self.textEntry:GetValue()
-        local color = colorPicker:GetColor()
-
-        self.textEntry:SetValue( "" )
-
-        if self.selectedIndex then
-            self.parts[self.selectedIndex] = { text, color.r, color.g, color.b }
-            self:RefreshList()
-
-            return
-        end
-
-        self.parts[#self.parts + 1] = { text, color.r, color.g, color.b }
-        self:RefreshList()
-    end
-
-    self.list.OnRowSelected = function( _, index )
-        if self.selectedIndex == index then
-            self:RefreshList()
-
-            return
-        end
-
-        self.selectedIndex = index
-
-        local part = self.parts[index]
-
-        self.textEntry:SetValue( part[1] )
-        colorPicker:SetColor( Color( part[2], part[3], part[4] ) )
-
-        self.buttonAdd:SetText( " Update piece" )
-        self.buttonAdd:SetEnabled( true )
-        self.buttonRemove:SetEnabled( true )
-    end
-
-    self.list.OnRowRightClick = function( _, index )
-        local optionsMenu = DermaMenu( false, self )
-
-        optionsMenu:AddOption( "Remove", function()
-            table.remove( self.parts, index )
-            self:RefreshList()
-        end ):SetIcon( "icon16/delete.png" )
-    end
-
-    self.buttonRemove.DoClick = function()
-        table.remove( self.parts, self.selectedIndex )
-        self:RefreshList()
-    end
-
-    self.textEntry.OnChange = function()
-        self.buttonAdd:SetEnabled( self.textEntry:GetValue() ~= "" )
-    end
-end
-
-function PARTS_PANEL:SetParts( parts )
-    self.parts = table.Copy( parts )
-    self:RefreshList()
-end
-
-function PARTS_PANEL:RefreshList()
-    self.buttonAdd:SetText( " Add piece" )
-    self.buttonAdd:SetEnabled( false )
-    self.buttonRemove:SetEnabled( false )
-    self.textEntry:SetValue( "" )
-
-    self.selectedIndex = nil
-    self.list:ClearSelection()
-    self.list:Clear()
-
-    local function PaintLine( s, w, h )
-        surface.SetDrawColor( 0, 0, 0 )
-        surface.DrawRect( w - 21, 1, 18, h - 2 )
-
-        surface.SetDrawColor( s._partR, s._partG, s._partB )
-        surface.DrawRect( w - 20, 2, 16, h - 4 )
-    end
-
-    for _, part in ipairs( self.parts ) do
-        local line = self.list:AddLine( part[1] )
-        line._partR = part[2]
-        line._partG = part[3]
-        line._partB = part[4]
-        line.PaintOver = PaintLine
-    end
-
-    if self.OnPartsChange then
-        self.OnPartsChange( self.parts )
-    end
-end
-
-vgui.Register( "SChatTagEditor", PARTS_PANEL, "DPanel" )
-
-function Tags:ShowChatTagsPanel()
-    chat.Close()
+function Tags:OpenEditor()
+    local L = CustomChat.GetLanguageText
 
     local frame = vgui.Create( "DFrame" )
     frame:SetSize( 600, 400 )
-    frame:SetTitle( "Server Chat Tags" )
+    frame:SetTitle( L"tags.title" )
     frame:ShowCloseButton( true )
     frame:SetDeleteOnClose( true )
     frame:Center()
@@ -336,16 +178,16 @@ function Tags:ShowChatTagsPanel()
     local currentTeamId
 
     local pnlTeamTags = vgui.Create( "DPanel", sheet )
-    sheet:AddSheet( "Tags for teams", pnlTeamTags, "icon16/group.png" )
+    sheet:AddSheet( L"tab.team_tags", pnlTeamTags, "icon16/group.png" )
 
     local listTeams = vgui.Create( "DListView", pnlTeamTags )
     listTeams:Dock( LEFT )
     listTeams:SetWide( 150 )
     listTeams:SetMultiSelect( false )
-    listTeams:AddColumn( "ID" )
-    listTeams:AddColumn( "Team" )
+    listTeams:AddColumn( L"id" )
+    listTeams:AddColumn( L"team" )
 
-    local teamParts = vgui.Create( "SChatTagEditor", pnlTeamTags )
+    local teamParts = vgui.Create( "CustomChatTagPartsEditor", pnlTeamTags )
     teamParts:Dock( FILL )
 
     for id, t in pairs( team.GetAllTeams() ) do
@@ -375,7 +217,7 @@ function Tags:ShowChatTagsPanel()
     local currentSteamId
 
     local pnlSteamIdTags = vgui.Create( "DPanel", sheet )
-    sheet:AddSheet( "Tags for specific players", pnlSteamIdTags, "icon16/user.png" )
+    sheet:AddSheet( L"tab.player_tags", pnlSteamIdTags, "icon16/user.png" )
 
     local pnlSteamIdOptions = vgui.Create( "DPanel", pnlSteamIdTags )
     pnlSteamIdOptions:Dock( LEFT )
@@ -384,29 +226,34 @@ function Tags:ShowChatTagsPanel()
     local listIds = vgui.Create( "DListView", pnlSteamIdOptions )
     listIds:Dock( FILL )
     listIds:SetMultiSelect( false )
-    listIds:AddColumn( "SteamID" )
+    listIds:AddColumn( L"steamid" )
+
+    local buttonAddPlayer = vgui.Create( "DButton", pnlSteamIdOptions )
+    buttonAddPlayer:SetIcon( "icon16/user_green.png" )
+    buttonAddPlayer:SetText( L( "tags.add_player" ) )
+    buttonAddPlayer:Dock( BOTTOM )
 
     local buttonRemoveUser = vgui.Create( "DButton", pnlSteamIdOptions )
     buttonRemoveUser:SetIcon( "icon16/user_delete.png" )
-    buttonRemoveUser:SetText( " Remove SteamID" )
+    buttonRemoveUser:SetText( L( "tags.remove_steamid" ) )
     buttonRemoveUser:SetEnabled( false )
     buttonRemoveUser:Dock( BOTTOM )
 
     local buttonAddUser = vgui.Create( "DButton", pnlSteamIdOptions )
     buttonAddUser:SetIcon( "icon16/user_add.png" )
-    buttonAddUser:SetText( " Add SteamID" )
+    buttonAddUser:SetText( L( "tags.add_steamid" ) )
     buttonAddUser:SetEnabled( false )
     buttonAddUser:Dock( BOTTOM )
 
     local entrySteamId = vgui.Create( "DTextEntry", pnlSteamIdOptions )
     entrySteamId:Dock( BOTTOM )
-    entrySteamId:SetPlaceholderText( "SteamID..." )
+    entrySteamId:SetPlaceholderText( L( "steamid" ) .. "..." )
 
     entrySteamId.OnChange = function()
         buttonAddUser:SetEnabled( entrySteamId:GetValue() ~= "" )
     end
 
-    local steamIdParts = vgui.Create( "SChatTagEditor", pnlSteamIdTags )
+    local steamIdParts = vgui.Create( "CustomChatTagPartsEditor", pnlSteamIdTags )
     steamIdParts:Dock( FILL )
 
     local function UpdateSteamIdsList()
@@ -436,17 +283,19 @@ function Tags:ShowChatTagsPanel()
     UpdateSteamIdsList()
     listIds:SelectFirstItem()
 
-    buttonAddUser.DoClick = function()
-        local id = string.Trim( entrySteamId:GetValue() )
+    local function AddSteamID( id )
+        if type( id ) == "Panel" then
+            id = id._steamId
+        end
 
         if util.SteamIDTo64( id ) == "0" then
-            Derma_Message( "Invalid SteamID!", "Input error", "OK" )
+            Derma_Message( L"tags.invalid_steamid", L"invalid_input", L"ok" )
 
             return
         end
 
         if byId[id] then
-            Derma_Message( "Thah SteamID is on the list already!", "Input error", "OK" )
+            Derma_Message( L"tags.steamid_already_in_use", L"invalid_input", L"ok" )
 
             return
         end
@@ -460,19 +309,35 @@ function Tags:ShowChatTagsPanel()
         listIds:SelectItem( line )
     end
 
+    buttonAddPlayer.DoClick = function()
+        local menuPlayers = DermaMenu()
+        menuPlayers:SetMaxHeight( 200 )
+
+        for _, ply in ipairs( player.GetHumans() ) do
+            local item = menuPlayers:AddOption( ply:Nick(), AddSteamID )
+            item._steamId = ply:SteamID()
+        end
+
+        menuPlayers:Open()
+    end
+
+    buttonAddUser.DoClick = function()
+        AddSteamID( string.Trim( entrySteamId:GetValue() ) )
+    end
+
     buttonRemoveUser.DoClick = function()
         byId[currentSteamId] = nil
         UpdateSteamIdsList()
         listIds:SelectFirstItem()
     end
 
-    -------- Tags by steamid --------
+    -------- Connect/disconnect messages --------
 
     local byConnection = table.Copy( Tags.connection )
 
     local pnlConnectionTags = vgui.Create( "DPanel", sheet )
     pnlConnectionTags:SetPaintBackground( false )
-    sheet:AddSheet( "Connect/Disconnect messages", pnlConnectionTags, "icon16/group_go.png" )
+    sheet:AddSheet( L"tab.conn_disconn", pnlConnectionTags, "icon16/group_go.png" )
 
     -- connect messages
     local pnlConnect = vgui.Create( "DPanel", pnlConnectionTags )
@@ -486,7 +351,7 @@ function Tags:ShowChatTagsPanel()
     end
 
     local checkConnect = vgui.Create( "DCheckBoxLabel", pnlConnect )
-    checkConnect:SetText( "Show custom connection messages" )
+    checkConnect:SetText( L"tags.show_join_messages" )
     checkConnect:SetTextColor( Color( 255, 255, 255 ) )
     checkConnect:SetValue( byConnection.showConnect )
     checkConnect:SizeToContents()
@@ -497,13 +362,13 @@ function Tags:ShowChatTagsPanel()
     end
 
     local labelJoinPrefix = vgui.Create( "DLabel", pnlConnect )
-    labelJoinPrefix:SetText( "Join prefix" )
+    labelJoinPrefix:SetText( L"tags.join_prefix" )
     labelJoinPrefix:SizeToContents()
     labelJoinPrefix:Dock( TOP )
     labelJoinPrefix:DockMargin( 0, 12, 0, 4 )
 
     local entryJoinPrefix = vgui.Create( "DTextEntry", pnlConnect )
-    entryJoinPrefix:SetPlaceholderText( "Join prefix..." )
+    entryJoinPrefix:SetPlaceholderText( L( "tags.join_prefix" ) .. "..." )
     entryJoinPrefix:SetValue( byConnection.joinPrefix )
     entryJoinPrefix:Dock( TOP )
 
@@ -512,13 +377,13 @@ function Tags:ShowChatTagsPanel()
     end
 
     local labelJoinSuffix = vgui.Create( "DLabel", pnlConnect )
-    labelJoinSuffix:SetText( "Join suffix" )
+    labelJoinSuffix:SetText( L"tags.join_suffix" )
     labelJoinSuffix:SizeToContents()
     labelJoinSuffix:Dock( TOP )
     labelJoinSuffix:DockMargin( 0, 12, 0, 4 )
 
     local entryJoinSuffix = vgui.Create( "DTextEntry", pnlConnect )
-    entryJoinSuffix:SetPlaceholderText( "Join suffix..." )
+    entryJoinSuffix:SetPlaceholderText( L( "tags.join_suffix" ) .. "..." )
     entryJoinSuffix:SetValue( byConnection.joinSuffix )
     entryJoinSuffix:Dock( TOP )
 
@@ -527,7 +392,7 @@ function Tags:ShowChatTagsPanel()
     end
 
     local labelJoinColor = vgui.Create( "DLabel", pnlConnect )
-    labelJoinColor:SetText( "Connected player color" )
+    labelJoinColor:SetText( L"tags.join_color" )
     labelJoinColor:SizeToContents()
     labelJoinColor:Dock( TOP )
     labelJoinColor:DockMargin( 0, 8, 0, 0 )
@@ -560,7 +425,7 @@ function Tags:ShowChatTagsPanel()
     end
 
     local checkDisconnect = vgui.Create( "DCheckBoxLabel", pnlDisconnect )
-    checkDisconnect:SetText( "Show custom disconnection messages" )
+    checkDisconnect:SetText( L"tags.show_leave_messages" )
     checkDisconnect:SetTextColor( Color( 255, 255, 255 ) )
     checkDisconnect:SetValue( byConnection.showDisconnect )
     checkDisconnect:SizeToContents()
@@ -571,13 +436,13 @@ function Tags:ShowChatTagsPanel()
     end
 
     local labelLeavePrefix = vgui.Create( "DLabel", pnlDisconnect )
-    labelLeavePrefix:SetText( "Leave prefix" )
+    labelLeavePrefix:SetText( L"tags.leave_prefix" )
     labelLeavePrefix:SizeToContents()
     labelLeavePrefix:Dock( TOP )
     labelLeavePrefix:DockMargin( 0, 12, 0, 4 )
 
     local entryLeavePrefix = vgui.Create( "DTextEntry", pnlDisconnect )
-    entryLeavePrefix:SetPlaceholderText( "Leave prefix..." )
+    entryLeavePrefix:SetPlaceholderText( L( "tags.leave_prefix" ) .. "..." )
     entryLeavePrefix:SetValue( byConnection.leavePrefix )
     entryLeavePrefix:Dock( TOP )
 
@@ -586,13 +451,13 @@ function Tags:ShowChatTagsPanel()
     end
 
     local labelLeaveSuffix = vgui.Create( "DLabel", pnlDisconnect )
-    labelLeaveSuffix:SetText( "Leave suffix" )
+    labelLeaveSuffix:SetText( L"tags.leave_suffix" )
     labelLeaveSuffix:SizeToContents()
     labelLeaveSuffix:Dock( TOP )
     labelLeaveSuffix:DockMargin( 0, 12, 0, 4 )
 
     local entryLeaveSuffix = vgui.Create( "DTextEntry", pnlDisconnect )
-    entryLeaveSuffix:SetPlaceholderText( "Join suffix..." )
+    entryLeaveSuffix:SetPlaceholderText( L( "tags.leave_suffix" ) .. "..." )
     entryLeaveSuffix:SetValue( byConnection.leaveSuffix )
     entryLeaveSuffix:Dock( TOP )
 
@@ -601,7 +466,7 @@ function Tags:ShowChatTagsPanel()
     end
 
     local labelLeaveColor = vgui.Create( "DLabel", pnlDisconnect )
-    labelLeaveColor:SetText( "Disconnected player color" )
+    labelLeaveColor:SetText( L"tags.leave_color" )
     labelLeaveColor:SizeToContents()
     labelLeaveColor:Dock( TOP )
     labelLeaveColor:DockMargin( 0, 8, 0, 0 )
@@ -626,8 +491,17 @@ function Tags:ShowChatTagsPanel()
 
     local buttonApply = vgui.Create( "DButton", frame )
     buttonApply:SetIcon( "icon16/accept.png" )
-    buttonApply:SetText( " Apply all changes" )
+    buttonApply:SetText( L( "tags.apply" ) )
     buttonApply:Dock( BOTTOM )
+
+    buttonApply._DefaultPaint = buttonApply.Paint
+
+    buttonApply.Paint = function( s, w, h )
+        s:_DefaultPaint( w, h )
+
+        surface.SetDrawColor( 255, 255, 0, 180 * math.abs( math.sin( RealTime() * 3 ) ) )
+        surface.DrawRect( 0, 0, w, h )
+    end
 
     buttonApply.DoClick = function()
         local data = {
@@ -644,14 +518,17 @@ function Tags:ShowChatTagsPanel()
 
         data = table.IsEmpty( data ) and "{}" or util.TableToJSON( data )
 
-        Derma_Query( "This action will apply the chat tags on this server.\nAre you sure?",
-            "Set Chat Tags", "Yes", function()
-                net.Start( "schat.set_tags", false )
+        Derma_Query( L"tags.apply_query",
+            L"tags.title",
+            L"yes",
+            function()
+                net.Start( "customchat.set_tags", false )
                 net.WriteString( data )
                 net.SendToServer()
 
                 frame:Close()
             end,
-            "No" )
+            L"no"
+        )
     end
 end
