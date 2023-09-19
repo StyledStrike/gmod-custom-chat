@@ -1,22 +1,5 @@
 # Custom Chat
 
-### ⚠ A major refactor is coming in the next week
-
-- [x] Move and renamed files, now using more appropriate names
-- [x] Replaced all references of `SChat` with `CustomChat`
-- [x] Made functions from the `CustomChat` global table use `:` only when necessary
-- [x] Implemented new data save formats, save data to a separate folder
-- [x] Written a data migration script
-- [x] Use a dedicated library to synchonize server theme/emojis/tags across clients
-- [x] Made the chat history panel able to be used separately
-- [x] Store emojis in a more readable format
-- [x] Vastly faster way to get emoji properties
-- [ ] Move the main chat interface to a separate vgui panel
-- [ ] Theme editor & the ability to browse multiple themes
-- [ ] Added translations
-
----
-
 A simple and customizable chat box that can format text, display images and emojis.
 
 [![GLuaLint](https://github.com/StyledStrike/gmod-custom-chat/actions/workflows/glualint.yml/badge.svg)](https://github.com/FPtje/GLuaFixer)
