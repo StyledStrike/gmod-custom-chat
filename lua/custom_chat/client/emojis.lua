@@ -637,7 +637,7 @@ function CustomChat.OpenEmojiEditor()
     local buttonAdd = vgui.Create( "DButton", panelOptions )
     buttonAdd:SetIcon( "icon16/add.png" )
     buttonAdd:SetText( L"emojis.add" )
-    buttonAdd:SetWide( 110 )
+    buttonAdd:SetWide( 130 )
     buttonAdd:Dock( LEFT )
 
     buttonAdd.DoClick = function()
@@ -652,7 +652,7 @@ function CustomChat.OpenEmojiEditor()
     buttonAddSilk:SetIcon( "icon16/emoticon_evilgrin.png" )
     buttonAddSilk:SetText( L"emojis.add_silkicon" )
     buttonAddSilk:SetTooltip( L"emojis.add_silkicon_tip" )
-    buttonAddSilk:SetWide( 110 )
+    buttonAddSilk:SetWide( 130 )
     buttonAddSilk:Dock( LEFT )
 
     local silkPanel
@@ -705,7 +705,8 @@ function CustomChat.OpenEmojiEditor()
 
     local buttonApply = vgui.Create( "DButton", panelOptions )
     buttonApply:SetIcon( "icon16/accept.png" )
-    buttonApply:SetText( " Apply" )
+    buttonApply:SetText( L"emojis.apply" )
+    buttonApply:SetWide( 150 )
     buttonApply:Dock( RIGHT )
 
     buttonApply._DefaultPaint = buttonApply.Paint
@@ -733,7 +734,7 @@ function CustomChat.OpenEmojiEditor()
             data[k] = { id = v.id, url = v.url }
         end
 
-        local action = ( #data > 0 ) and "apply_tip" or "remove_tip"
+        local action = ( #data > 0 ) and "emojis.apply_tip" or "emojis.remove_tip"
 
         data = ( #data > 0 ) and util.TableToJSON( data ) or ""
 
