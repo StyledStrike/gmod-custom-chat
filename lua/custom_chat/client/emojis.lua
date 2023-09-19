@@ -30,7 +30,7 @@ function CustomChat.ClearCustomEmojis()
         emojis[item.id] = nil
     end
 
-    table.Empty( categoryItems )
+    emojiCategories[1].items = {}
 end
 
 --- Adds a emoji to the "Custom" category.
