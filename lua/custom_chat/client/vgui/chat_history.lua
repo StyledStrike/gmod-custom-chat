@@ -893,7 +893,7 @@ function PANEL:CreateImage( url, link, cssClass, altText, safeFilter )
         AddLine( lines, self:CreateElement( "span", "elHint", "elSafeguard" ) )
         AddLine( lines, "elHint.id = '%s';", safeguardId )
         AddLine( lines, "elHint.className = 'safeguard-hint';" )
-        AddLine( lines, "elHint.textContent = 'Click to reveal image';" )
+        AddLine( lines, "elHint.textContent = '%s';", CustomChat.GetLanguageText( "click_to_reveal" ) )
         AddLine( lines, "elHint.onclick = function(){ removeElementById('%s'); };", safeguardId )
     else
         AddLine( lines, self:CreateElement( "img", "elImg" ) )
