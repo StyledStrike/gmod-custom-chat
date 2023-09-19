@@ -57,6 +57,7 @@ local whitelist = {
     simple [[puu.sh]],
 
     -- Steam
+    pattern [[([%w-_%.]*)%.steamstatic.com/(.+)]],
     simple [[images.akamai.steamusercontent.com]],
     simple [[steamuserimages-a.akamaihd.net]],
     simple [[steamcdn-a.akamaihd.net]],
