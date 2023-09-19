@@ -10,7 +10,47 @@ if SERVER then
     migration = {
         {
             oldFile = "schat_server_theme.json",
-            newFile = "server_theme.json"
+            newFile = "server_theme.json",
+            transform = function( data )
+                return {
+                    font = data.font,
+                    font_shadow = data.font_shadow,
+                    animate = data.slide_anim,
+                    blur = data.blur,
+                    corner_radius = data.corner,
+                    padding = data.pad,
+
+                    bg_r = data.background.r,
+                    bg_g = data.background.g,
+                    bg_b = data.background.b,
+                    bg_a = data.background.a,
+
+                    input_r = data.input.r,
+                    input_g = data.input.g,
+                    input_b = data.input.b,
+                    input_a = data.input.a,
+
+                    input_bg_r = data.input_bg.r,
+                    input_bg_g = data.input_bg.g,
+                    input_bg_b = data.input_bg.b,
+                    input_bg_a = data.input_bg.a,
+
+                    scroll_bar_r = data.scroll_thumb.r,
+                    scroll_bar_g = data.scroll_thumb.g,
+                    scroll_bar_b = data.scroll_thumb.b,
+                    scroll_bar_a = data.scroll_thumb.a,
+
+                    scroll_bg_r = data.scroll_bg.r,
+                    scroll_bg_g = data.scroll_bg.g,
+                    scroll_bg_b = data.scroll_bg.b,
+                    scroll_bg_a = data.scroll_bg.a,
+
+                    highlight_r = data.highlight.r,
+                    highlight_g = data.highlight.g,
+                    highlight_b = data.highlight.b,
+                    highlight_a = data.highlight.a
+                }
+            end
         },
         {
             oldFile = "schat_server_emojis.json",
