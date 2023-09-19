@@ -1049,6 +1049,10 @@ function PANEL:OnHTTPResponse( embedId, body, url )
     }
 
     if props["image"] then
+        if string.sub( props["image"], 1, 2 ) == "//" then
+            props["image"] = "https:" .. props["image"]
+        end
+
         AddLine( lines, self:CreateElement( "img", "elImg", "elEmbed" ) )
         AddLine( lines, "elImg.className = 'embed-thumb';" )
         AddLine( lines, "elImg.src = '%s';", SafeString( props["image"] ) )
