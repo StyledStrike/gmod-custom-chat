@@ -223,20 +223,20 @@ local MAT_BLUR = Material( "pp/blurscreen" )
 
 function PANEL:Paint( w, h )
     if self.isChatOpen then
+        if self.backgroundBlur > 0 then
+            surface.SetDrawColor( 255, 255, 255, 255 )
+            surface.SetMaterial( MAT_BLUR )
+
+            MAT_BLUR:SetFloat( "$blur", self.backgroundBlur )
+            MAT_BLUR:Recompute()
+
+            render.UpdateScreenEffectTexture()
+
+            local x, y = self:LocalToScreen( 0, 0 )
+            surface.DrawTexturedRect( -x, -y, ScrW(), ScrH() )
+        end
+
         draw.RoundedBox( self.cornerRadius, 0, 0, w, h, self.backgroundColor )
-
-        if self.backgroundBlur <= 0 then return end
-
-        surface.SetDrawColor( 255, 255, 255, 255 )
-        surface.SetMaterial( MAT_BLUR )
-
-        MAT_BLUR:SetFloat( "$blur", self.backgroundBlur )
-        MAT_BLUR:Recompute()
-
-        render.UpdateScreenEffectTexture()
-
-        local x, y = self:LocalToScreen( 0, 0 )
-        surface.DrawTexturedRect( -x, -y, ScrW(), ScrH() )
     end
 end
 
