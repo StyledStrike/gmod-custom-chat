@@ -123,7 +123,10 @@ local whitelist = {
     simple [[soundcloud.com]],
 
     -- Twitch
-    pattern [[([%w-_]*)([%.]-)twitch%.tv/(.+)]]
+    pattern [[([%w-_]*)([%.]-)twitch%.tv/(.+)]],
+
+    -- Facepunch
+    pattern [[([%w-_]+)%.facepunch%.com/(.+)]]
 }
 
 function CustomChat.IsWhitelisted( url )
