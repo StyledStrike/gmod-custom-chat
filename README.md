@@ -20,6 +20,24 @@ A simple and customizable chat box that can format text, display images and emoj
 * _(Admin Only)_ Set custom chat tags
 * _(Admin Only)_ Set custom join/leave messages
 
+### ⚠ A major refactor was implemented recently.
+
+Heres some of the more notable changes:
+
+- Moved and renamed files, now using more appropriate names
+- Replaced all references of `SChat` with `CustomChat`
+- Made functions from the `CustomChat` global table use `:` only when necessary
+- Implemented new data save formats, save data to a separate folder
+- Written a data migration script
+- Use a dedicated library to synchonize server theme/emojis/tags across clients
+- Made the chat history panel able to be used separately
+- Store emojis in a more readable format
+- Vastly faster way to access emoji properties
+- Moved the main chat interface to a separate vgui panel
+- Made the right-click menu options work independently (so now it can show both "Copy text..." and "Copy link...", for example)
+- Theme editor overhaul & the ability to save multiple themes
+- All text is stored in language files now
+
 ---
 
 ### Text Formatting Options
