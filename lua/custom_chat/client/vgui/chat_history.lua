@@ -666,14 +666,14 @@ function PANEL:UpdateEmojiPanel()
     local lines = { "elEmojiPanel.textContent = '';" }
 
     for _, category in ipairs( CustomChat.emojiCategories ) do
-        lines[#lines + 1] = [[
-            var elCategory = document.createElement('div');
-            elCategory.className = 'emoji-category';
-            elCategory.textContent = ']] .. LangGet( category.name ) .. [[';
-            elEmojiPanel.appendChild(elCategory);
-        ]]
-
         if #category.items > 0 then
+            lines[#lines + 1] = [[
+                var elCategory = document.createElement('div');
+                elCategory.className = 'emoji-category';
+                elCategory.textContent = ']] .. LangGet( category.name ) .. [[';
+                elEmojiPanel.appendChild(elCategory);
+            ]]
+
             for _, emoji in ipairs( category.items ) do
                 local url = GetEmojiURL( emoji.id )
 
