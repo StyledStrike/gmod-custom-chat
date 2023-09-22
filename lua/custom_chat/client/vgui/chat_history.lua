@@ -670,7 +670,7 @@ function PANEL:UpdateEmojiPanel()
             lines[#lines + 1] = [[
                 var elCategory = document.createElement('div');
                 elCategory.className = 'emoji-category';
-                elCategory.textContent = ']] .. LangGet( category.name ) .. [[';
+                elCategory.textContent = ']] .. SafeString( LangGet( category.name ) ) .. [[';
                 elEmojiPanel.appendChild(elCategory);
             ]]
 
