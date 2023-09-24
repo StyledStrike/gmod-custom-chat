@@ -557,6 +557,8 @@ function Theme.ShowImportPanel()
             CustomChat:SetTheme( themeId )
             frame:Close()
 
+            CustomChat.InternalMessage( CustomChat.GetLanguageText( "theme.import_success" ) )
+
         elseif errorMessage then
             Derma_Message( L( "theme.import_failed" ) .. ": " .. errorMessage, L"theme.import_failed", L"ok" )
         end
