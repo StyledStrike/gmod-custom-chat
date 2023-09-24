@@ -6,10 +6,6 @@ local NetPrefs = _G.NetPrefs or {
 
 _G.NetPrefs = NetPrefs
 
-local function PrintF( str, ... )
-    MsgC( Color( 76, 0, 255 ), "[NetPrefs] ", Color( 255, 255, 255 ), string.format( str, ... ), "\n" )
-end
-
 --- Gets a value saved on the server.
 function NetPrefs.Get( key, default )
     return NetPrefs.values[key] or default
@@ -84,8 +80,6 @@ if SERVER then
         -- skip disconnected players
         if item.target ~= "all" and not IsValid( item.target ) then return end
 
-        PrintF( "Sending key '%s' to %s", item.key, tostring( item.target ) )
-
         local value = util.Compress( NetPrefs.values[item.key] )
         local valueSize = #value
 
@@ -124,6 +118,10 @@ if SERVER then
 end
 
 if CLIENT then
+    local function PrintF( str, ... )
+        MsgC( Color( 76, 0, 255 ), "[NetPrefs] ", Color( 255, 255, 255 ), string.format( str, ... ), "\n" )
+    end
+
     net.Receive( "netprefs.sync_value", function()
         local key = net.ReadString()
         local valueSize = net.ReadUInt( 16 )
