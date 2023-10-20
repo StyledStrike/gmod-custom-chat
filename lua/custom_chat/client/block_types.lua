@@ -118,9 +118,7 @@ blockTypes["url"] = function( panel, url, _, font )
 
     if canEmbed and CustomChat.IsWhitelisted( url ) then
         if urlType == "image" then
-            local cvarSafeMode = GetConVar( "custom_chat_safe_mode" )
-            local safeFilter = ( cvarSafeMode and cvarSafeMode:GetInt() or 0 ) > 0
-
+            local safeFilter = CustomChat.GetConVarInt( "safe_mode", 1 ) > 0
             return panel:CreateImage( url, url, nil, url, safeFilter )
 
         elseif urlType == "audio" then

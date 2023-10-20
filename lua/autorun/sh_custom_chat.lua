@@ -11,10 +11,18 @@ CustomChat.channels = {
 CreateConVar( "custom_chat_safe_mode", "0", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
     "Enable safe mode to all players. Only show images after clicking them.", 0, 1 )
 
+CreateConVar( "custom_chat_allow_colors", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
+    "Allows the usage of color formatting options. Recommended to be disabled on servers.", 0, 1 )
+
 -- Utility functions
 
 function CustomChat.PrintF( str, ... )
     MsgC( Color( 0, 123, 255 ), "[Custom Chat] ", Color( 255, 255, 255 ), string.format( str, ... ), "\n" )
+end
+
+function CustomChat.GetConVarInt( name, default )
+    local cvar = GetConVar( "custom_chat_" .. name )
+    return cvar and cvar:GetInt() or default
 end
 
 function CustomChat.Serialize( tbl )
