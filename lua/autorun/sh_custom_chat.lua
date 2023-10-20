@@ -14,6 +14,9 @@ CreateConVar( "custom_chat_safe_mode", "0", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLIC
 CreateConVar( "custom_chat_allow_colors", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
     "Allows the usage of color formatting options. Recommended to be disabled on servers.", 0, 1 )
 
+CreateConVar( "custom_chat_max_lines", "6", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
+    "Limits how many lines each message can have. Recommended to be low on servers.", 0, 10 )
+
 -- Utility functions
 
 function CustomChat.PrintF( str, ... )
@@ -122,12 +125,13 @@ function CustomChat.CleanupString( str )
     end
 
     -- limit the number of line breaks
+    local max = CustomChat.GetConVarInt( "max_lines", 5 )
     local breaks = 0
 
     str = str:gsub( "\n", function()
         breaks = breaks + 1
 
-        return breaks > 8 and "" or "\n"
+        return breaks > max and "" or "\n"
     end )
 
     return str:Trim()

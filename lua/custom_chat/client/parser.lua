@@ -25,10 +25,14 @@ local rangeTypes = {
     { type = "code", pattern = "```[^%z]-[^```]*```" }
 }
 
+local allowColor = false
+
 -- A "range" is where a pattern starts/ends on a string.
 -- This function searches for all ranges of one type
 -- on this str, then returns them in a array.
 local function FindAllRangesOfType( rangeType, str )
+    if not allowColor and rangeType.type == "color" then return {} end
+
     if rangeType.ignoreCase then
         str = string.lower( str )
     end
@@ -71,6 +75,8 @@ local function RangeSorter( a, b )
 end
 
 function CustomChat.ParseString( str, outFunc )
+    allowColor = CustomChat.GetConVarInt( "allow_colors", 0 ) > 0
+
     local ranges = {}
 
     -- for each range type...
