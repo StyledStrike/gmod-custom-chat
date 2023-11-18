@@ -47,11 +47,12 @@ net.Receive( "customchat.say", function( _, ply )
     text = hook.Run( "PlayerSay", ply, text, channel ~= CustomChat.channels.everyone )
 
     if not isstring( text ) or text == "" then return end
-    hook.Run("player_say", {
+
+    hook.Run( "player_say", {
         priority = 1, -- ??
         userid = ply:UserID(),
         text = text,
-    })
+    } )
 
     local targets = CustomChat:GetListeners( ply, text, channel )
     if #targets == 0 then return end
