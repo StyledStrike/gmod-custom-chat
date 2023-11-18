@@ -56,16 +56,12 @@ $$rainbow text here$$
 <255,0,0>Red text here, and <0,0,255>blue text here
 ```
 
----
-
 ### Fonts
 
 You can change the font by typing **;fontname;** before the text.
 _(A list of fonts can be found on the workshop page.)_
 
 ```;comic; This will be displayed as Comic Sans```
-
----
 
 ### Whitelisted Sites
 
@@ -89,3 +85,7 @@ hook.Add( "CanEmbedCustomChat", "override_chat_embed_access", function( ply, url
     if urlType == "audio" then return false end
 end )
 ```
+
+## Contributing
+
+Before you open a pull request, please read [this](https://github.com/StyledStrike/gmod-custom-chat/blob/master/.github/pull_request_template.md).
