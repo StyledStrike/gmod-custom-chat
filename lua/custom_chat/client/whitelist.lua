@@ -23,8 +23,8 @@ local whitelist = {
     simple [[www.google.com]],
 
     -- Google Drive
-    simple [[docs.google.com]],
-    simple [[drive.google.com]],
+    pattern [[docs%.google%.com/uc.+]],
+    pattern [[drive%.google%.com/uc.+]],
 
     -- Backblaze B2 (ShareX)
     pattern [[(%w+)%.backblazeb2%.com/(.+)]],
@@ -58,6 +58,8 @@ local whitelist = {
 
     -- Steam
     pattern [[([%w-_%.]*)%.steamstatic.com/(.+)]],
+    pattern [[images%.[%w-_]+%.steamusercontent%.com/(.+)]],
+    pattern [[avatars%.[%w-_]+%.steamstatic%.com/(.+)]],
     simple [[images.akamai.steamusercontent.com]],
     simple [[steamuserimages-a.akamaihd.net]],
     simple [[steamcdn-a.akamaihd.net]],
@@ -127,7 +129,11 @@ local whitelist = {
     pattern [[([%w-_]*)([%.]-)twitch%.tv/(.+)]],
 
     -- Facepunch
-    pattern [[([%w-_]+)%.facepunch%.com/(.+)]]
+    pattern [[([%w-_]+)%.facepunch%.com/(.+)]],
+
+    -- Revolt
+    simple [[static.revolt.chat]],
+    simple [[autumn.revolt.chat]]
 }
 
 function CustomChat.IsWhitelisted( url )
