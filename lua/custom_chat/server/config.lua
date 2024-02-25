@@ -2,7 +2,9 @@ util.AddNetworkString( "customchat.set_theme" )
 util.AddNetworkString( "customchat.set_emojis" )
 util.AddNetworkString( "customchat.set_tags" )
 
-local Config = CustomChat.Config or {}
+local Config = CustomChat.Config or {
+    lastSeen = {}
+}
 
 CustomChat.Config = Config
 
@@ -15,6 +17,7 @@ function Config:Load()
     local themeData = Unserialize( LoadDataFile( "server_theme.json" ) )
     local emojiData = Unserialize( LoadDataFile( "server_emojis.json" ) )
     local tagsData = Unserialize( LoadDataFile( "server_tags.json" ) )
+    local lastSeenData = Unserialize( LoadDataFile( "server_last_seen.json" ) )
 
     if not table.IsEmpty( themeData ) then
         NetPrefs.Set( "customchat.theme", Serialize( themeData ) )
@@ -26,6 +29,17 @@ function Config:Load()
 
     if not table.IsEmpty( tagsData ) then
         NetPrefs.Set( "customchat.tags", Serialize( tagsData ) )
+    end
+
+    if not table.IsEmpty( lastSeenData ) then
+        local IsNumber = isnumber
+        local SteamIDTo64 = util.SteamIDTo64
+
+        for id, time in pairs( lastSeenData ) do
+            if IsNumber( time ) and SteamIDTo64( id ) ~= "0" then
+                self.lastSeen[id] = time
+            end
+        end
     end
 end
 
@@ -56,6 +70,13 @@ function Config:SetChatTags( data, admin )
 
     CustomChat.EnsureDataDir()
     CustomChat.SaveDataFile( "server_tags.json", NetPrefs.Get( "customchat.tags", "{}" ) )
+end
+
+function Config:SetLastSeen( steamId, time )
+    self.lastSeen[steamId] = time
+
+    CustomChat.EnsureDataDir()
+    CustomChat.SaveDataFile( "server_last_seen.json", CustomChat.Serialize( self.lastSeen ) )
 end
 
 net.Receive( "customchat.set_theme", function( _, ply )

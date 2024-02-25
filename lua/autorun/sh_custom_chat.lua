@@ -65,6 +65,43 @@ function CustomChat.IsStringValid( str )
     return type( str ) == "string" and str ~= ""
 end
 
+function CustomChat.NiceTime( time )
+    local L = CustomChat.GetLanguageText
+    local s = time % 60
+
+    time = math.floor( time / 60 )
+    local m = time % 60
+
+    time = math.floor( time / 60 )
+    local h = time % 24
+
+    time = math.floor( time / 24 )
+    local d = time % 7
+    local w = math.floor( time / 7 )
+
+    local parts = {}
+
+    if w > 0 then
+        parts[#parts + 1] = w .. " " .. L( "time.weeks" )
+    end
+
+    if d > 0 then
+        parts[#parts + 1] = d .. " " .. L( "time.days" )
+    end
+
+    if h > 0 then
+        parts[#parts + 1] = ( "%02i " ):format( h ) .. L( "time.hours" )
+    end
+
+    if m > 0 then
+        parts[#parts + 1] = ( "%02i " ):format( m ) .. L( "time.minutes" )
+    end
+
+    parts[#parts + 1] = ( "%02i " ):format( s ) .. L( "time.seconds" )
+
+    return table.concat( parts, " " )
+end
+
 -- You can override these "CanSet" functions if you want.
 -- Just make sure to do it both on SERVER and CLIENT.
 

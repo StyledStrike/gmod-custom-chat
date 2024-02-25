@@ -108,16 +108,18 @@ hook.Add( "player_connect_client", "CustomChat.ShowConnectMessages", function( d
 
     local c = Tags.connection.joinColor
     local name = data.name
+    local steamId = data.networkid
+    local isBot = data.bot == 1
 
-    -- only force a player block if custom chat is enabled
+    -- only use a player block if custom chat is enabled
     if GetConVar( "customchat_disable" ):GetInt() == 0 then
         name = {
             blockType = "player",
             blockValue = {
                 name = data.name,
-                id = data.networkid,
-                id64 = util.SteamIDTo64( data.networkid ),
-                isBot = data.bot == 1
+                id = steamId,
+                id64 = util.SteamIDTo64( steamId ),
+                isBot = isBot
             }
         }
     end
@@ -125,7 +127,7 @@ hook.Add( "player_connect_client", "CustomChat.ShowConnectMessages", function( d
     chat.AddText(
         Color( 255, 255, 255 ), Tags.connection.joinPrefix,
         Color( c[1], c[2], c[3] ), name,
-        Color( 150, 150, 150 ), " <" .. data.networkid .. "> ",
+        Color( 150, 150, 150 ), " <" .. steamId .. "> ",
         Color( 255, 255, 255 ), Tags.connection.joinSuffix
     )
 end, HOOK_LOW )
@@ -135,16 +137,18 @@ hook.Add( "player_disconnect", "CustomChat.ShowDisconnectMessages", function( da
 
     local c = Tags.connection.leaveColor
     local name = data.name
+    local steamId = data.networkid
+    local isBot = data.bot == 1
 
-    -- only force a player block if custom chat is enabled
+    -- only use a player block if custom chat is enabled
     if GetConVar( "customchat_disable" ):GetInt() == 0 then
         name = {
             blockType = "player",
             blockValue = {
                 name = data.name,
-                id = data.networkid,
-                id64 = util.SteamIDTo64( data.networkid ),
-                isBot = data.bot == 1
+                id = steamId,
+                id64 = util.SteamIDTo64( steamId ),
+                isBot = isBot
             }
         }
     end
@@ -152,7 +156,7 @@ hook.Add( "player_disconnect", "CustomChat.ShowDisconnectMessages", function( da
     chat.AddText(
         Color( 255, 255, 255 ), Tags.connection.leavePrefix,
         Color( c[1], c[2], c[3] ), name,
-        Color( 150, 150, 150 ), " <" .. data.networkid .. "> ",
+        Color( 150, 150, 150 ), " <" .. steamId .. "> ",
         Color( 255, 255, 255 ), Tags.connection.leaveSuffix,
         Color( 150, 150, 150 ), " (" .. data.reason .. ")"
     )

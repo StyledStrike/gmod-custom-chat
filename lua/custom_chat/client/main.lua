@@ -497,3 +497,59 @@ hook.Add( "NetPrefs_OnChange", "CustomChat.OnServerConfigChange", function( key,
         Tags.connection = data.connection or Tags.connection
     end
 end )
+
+local function OnPlayerActivated( ply, steamId, color, absenceLength )
+    local name = ply:Nick()
+
+    -- only use a player block if custom chat is enabled
+    if GetConVar( "customchat_disable" ):GetInt() == 0 then
+        name = {
+            blockType = "player",
+            blockValue = {
+                name = name,
+                id = steamId,
+                id64 = ply:SteamID64(),
+                isBot = ply:IsBot()
+            }
+        }
+    end
+
+    -- show a message if this player is a friend
+    if steamId ~= LocalPlayer():SteamID() and ply:GetFriendStatus() == "friend" then
+        chat.AddText(
+            Color( 255, 255, 255 ), ":small_blue_diamond: " .. CustomChat.GetLanguageText( "friend_spawned1" ) .. " ",
+            color, name,
+            Color( 255, 255, 255 ), " " .. CustomChat.GetLanguageText( "friend_spawned2" )
+        )
+    end
+
+    -- show the last time the server saw this player
+    if absenceLength < 1 then return end
+
+    local lastSeenTime = CustomChat.NiceTime( math.Round( absenceLength ) )
+
+    chat.AddText(
+        color, name,
+        Color( 150, 150, 150 ), " " .. CustomChat.GetLanguageText( "last_seen1" ),
+        Color( 200, 200, 200 ), " " .. lastSeenTime,
+        Color( 150, 150, 150 ), " " .. CustomChat.GetLanguageText( "last_seen2" )
+    )
+end
+
+net.Receive( "customchat.player_spawned", function()
+    local steamId = net.ReadString()
+    local color = net.ReadColor( false )
+    local absenceLength = net.ReadFloat()
+
+    -- wait till the player entity is valid, within a few tries
+    local timerId = "CustomChat.WaitValid" .. steamId
+
+    timer.Create( timerId, 0.2, 50, function()
+        local ply = player.GetBySteamID( steamId )
+
+        if IsValid( ply ) then
+            timer.Remove( timerId )
+            OnPlayerActivated( ply, steamId, color, absenceLength )
+        end
+    end )
+end )

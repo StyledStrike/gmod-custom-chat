@@ -1,5 +1,7 @@
 resource.AddWorkshop( "2799307109" )
+
 util.AddNetworkString( "customchat.say" )
+util.AddNetworkString( "customchat.player_spawned" )
 
 -- handle message networking 
 local sayCooldown = {}
@@ -66,4 +68,27 @@ end )
 
 hook.Add( "PlayerDisconnected", "CustomChat.SayCooldownCleanup", function( ply )
     sayCooldown[ply:AccountID()] = nil
+    CustomChat.Config:SetLastSeen( ply:SteamID(), os.time() )
 end )
+
+hook.Add( "PlayerInitialSpawn", "CustomChat.BroadcastInitialSpawn", function( ply )
+    local steamId = ply:SteamID()
+    local color = team.GetColor( ply:Team() )
+
+    local lastSeen = CustomChat.Config.lastSeen
+    local time = os.time()
+    local absenceLength = 0
+
+    if lastSeen[steamId] then
+        absenceLength = math.max( time - lastSeen[steamId], 0 )
+    end
+
+    CustomChat.Config:SetLastSeen( steamId, time )
+
+    net.Start( "customchat.player_spawned", false )
+    net.WriteString( steamId )
+    net.WriteColor( color, false )
+    net.WriteFloat( absenceLength )
+    net.Broadcast()
+end )
+
