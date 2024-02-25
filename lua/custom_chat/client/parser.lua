@@ -33,10 +33,6 @@ local allowColor = false
 local function FindAllRangesOfType( rangeType, str )
     if not allowColor and rangeType.type == "color" then return {} end
 
-    if rangeType.ignoreCase then
-        str = string.lower( str )
-    end
-
     local ranges = {}
     local pStart, pEnd = 1, 0
 
@@ -71,7 +67,7 @@ local function MergeRangeInto( tbl, range )
 end
 
 local function RangeSorter( a, b )
-    return a.s < b.s -- heh, get it
+    return a.s < b.s -- heh, get it?
 end
 
 function CustomChat.ParseString( str, outFunc )
@@ -107,7 +103,7 @@ function CustomChat.ParseString( str, outFunc )
             outFunc( "string", string_sub( str, lastRangeEnd, r.s - 1 ) )
         end
 
-        -- remeber where this range ended at
+        -- remember where this range ended at
         lastRangeEnd = r.e + 1
 
         -- output a block with the type of this range, and
