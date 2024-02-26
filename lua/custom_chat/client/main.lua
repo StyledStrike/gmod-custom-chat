@@ -523,9 +523,10 @@ local function OnPlayerActivated( ply, steamId, color, absenceLength )
         )
     end
 
-    -- show the last time the server saw this player
     if absenceLength < 1 then return end
+    if CustomChat.GetConVarInt( "enable_absence_messages", 0 ) == 0 then return end
 
+    -- show the last time the server saw this player
     local lastSeenTime = CustomChat.NiceTime( math.Round( absenceLength ) )
 
     chat.AddText(

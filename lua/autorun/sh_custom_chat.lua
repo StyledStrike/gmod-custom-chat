@@ -17,6 +17,9 @@ CreateConVar( "custom_chat_allow_colors", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REP
 CreateConVar( "custom_chat_max_lines", "6", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
     "Limits how many lines each message can have. Recommended to be low on servers.", 0, 10 )
 
+CreateConVar( "custom_chat_enable_absence_messages", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
+    "On first spawn, show messages about when a player was last present on the server.", 0, 1 )
+
 -- Utility functions
 
 function CustomChat.PrintF( str, ... )
