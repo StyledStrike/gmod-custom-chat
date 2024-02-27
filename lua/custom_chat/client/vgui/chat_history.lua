@@ -985,7 +985,9 @@ function PANEL:CreateEmbed( url )
         success = function( code, body )
             code = tostring( code )
 
-            if code == "204" or code:sub( 1, 1 ) ~= "2" then
+            local isHTML = body:len() > 15 and body:sub( 1, 15 ) == "<!DOCTYPE html>"
+
+            if not isHTML and code:sub( 1, 1 ) ~= "2" then
                 return
             end
 
