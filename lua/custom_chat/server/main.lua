@@ -72,23 +72,28 @@ hook.Add( "PlayerDisconnected", "CustomChat.SayCooldownCleanup", function( ply )
 end )
 
 hook.Add( "PlayerInitialSpawn", "CustomChat.BroadcastInitialSpawn", function( ply )
-    local steamId = ply:SteamID()
-    local color = team.GetColor( ply:Team() )
+    -- give some time for other addons to assign the team
+    timer.Simple( 1, function()
+        if not IsValid( ply ) then return end
 
-    local lastSeen = CustomChat.Config.lastSeen
-    local time = os.time()
-    local absenceLength = 0
+        local steamId = ply:SteamID()
+        local color = team.GetColor( ply:Team() )
 
-    if lastSeen[steamId] then
-        absenceLength = math.max( time - lastSeen[steamId], 0 )
-    end
+        local lastSeen = CustomChat.Config.lastSeen
+        local time = os.time()
+        local absenceLength = 0
 
-    CustomChat.Config:SetLastSeen( steamId, time )
+        if lastSeen[steamId] then
+            absenceLength = math.max( time - lastSeen[steamId], 0 )
+        end
 
-    net.Start( "customchat.player_spawned", false )
-    net.WriteString( steamId )
-    net.WriteColor( color, false )
-    net.WriteFloat( absenceLength )
-    net.Broadcast()
-end )
+        CustomChat.Config:SetLastSeen( steamId, time )
+
+        net.Start( "customchat.player_spawned", false )
+        net.WriteString( steamId )
+        net.WriteColor( color, false )
+        net.WriteFloat( absenceLength )
+        net.Broadcast()
+    end )
+end, HOOK_LOW )
 
