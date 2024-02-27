@@ -117,7 +117,9 @@ local whitelist = {
     pattern [[([%w-_]+)%.bandcamp%.com/(.+)]],
 
     -- Twitter
-    pattern [[([%w-_]+)%.twitter%.com/(.+)]],
+    simple [[twitter.com]],
+    simple [[fxtwitter.com]],
+    simple [[x.com]],
 
     -- Deviant Art
     pattern [[([%w-_]+)%.deviantart%.com/(.+)]],
