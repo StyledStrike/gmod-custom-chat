@@ -183,9 +183,7 @@ if SERVER then
     AddCSLuaFile( "includes/modules/styled_netprefs.lua" )
 
     -- Shared files
-    include( "custom_chat/shared/migrate_data.lua" )
     include( "custom_chat/shared/override_istyping.lua" )
-    AddCSLuaFile( "custom_chat/shared/migrate_data.lua" )
     AddCSLuaFile( "custom_chat/shared/override_istyping.lua" )
 
     -- Server files
@@ -235,7 +233,6 @@ if CLIENT then
     require( "styled_netprefs" )
 
     -- Shared files
-    include( "custom_chat/shared/migrate_data.lua" )
     include( "custom_chat/shared/override_istyping.lua" )
 
     -- Client files
