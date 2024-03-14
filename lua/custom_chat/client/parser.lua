@@ -1,5 +1,5 @@
 local string_sub = string.sub
-local table_insert = table.insert
+local string_find = string.find
 
 --[[
     Find patterns on strings, and turns them into "blocks"
@@ -37,11 +37,28 @@ local function FindAllRangesOfType( rangeType, str )
     local pStart, pEnd = 1, 0
 
     while pStart do
-        pStart, pEnd = string.find( str, rangeType.pattern, pStart )
+        pStart, pEnd = string_find( str, rangeType.pattern, pStart )
 
         if pStart then
-            table_insert( ranges, { s = pStart, e = pEnd, type = rangeType.type } )
+            ranges[#ranges + 1] = { s = pStart, e = pEnd, type = rangeType.type }
             pStart = pEnd
+        end
+    end
+
+    return ranges
+end
+
+-- Find all places where a player name starts/ends on another string.
+local function FindPlayerMentions( name, str )
+    local ranges = {}
+    local s, e = 1, 0
+
+    while s do
+        s, e = string_find( str, name, s, true )
+
+        if s then
+            ranges[#ranges + 1] = { s = s, e = e, type = "mention", value = name }
+            s = e
         end
     end
 
@@ -61,7 +78,7 @@ local function MergeRangeInto( tbl, range )
     end
 
     -- include the new range
-    newTbl[#newTbl + 1] = { s = range.s, e = range.e, type = range.type }
+    newTbl[#newTbl + 1] = { s = range.s, e = range.e, type = range.type, value = range.value }
 
     return newTbl
 end
@@ -74,6 +91,19 @@ function CustomChat.ParseString( str, outFunc )
     allowColor = CustomChat.GetConVarInt( "allow_colors", 0 ) > 0
 
     local ranges = {}
+
+    -- try to find player mentions first
+    local playersByName = CustomChat.playersByName
+
+    for name, _ in pairs( playersByName ) do
+        -- find all ranges (start-end) of this player name
+        local newRanges = FindPlayerMentions( name, str )
+
+        -- then merge them into the ranges table
+        for _, r in ipairs( newRanges ) do
+            ranges = MergeRangeInto( ranges, r )
+        end
+    end
 
     -- for each range type...
     for _, rangeType in ipairs( rangeTypes ) do
@@ -106,17 +136,25 @@ function CustomChat.ParseString( str, outFunc )
         -- remember where this range ended at
         lastRangeEnd = r.e + 1
 
-        -- output a block with the type of this range, and
-        -- use where it starts/ends on the string as the value
-        local value = string_sub( str, r.s, r.e )
+        if r.type == "mention" then
+            local p = playersByName[r.value]
 
-        if value ~= "" then
-            outFunc( r.type, value )
+            -- output a player block
+            outFunc( "player", p )
+            hook.Run( "CustomChatPlayerMentioned", p.id )
+        else
+            -- output a block with the type of this range, and
+            -- use where it starts/ends on the string as the value
+            local value = string_sub( str, r.s, r.e )
+
+            if value ~= "" then
+                outFunc( r.type, value )
+            end
         end
     end
 
     -- output any leftover text after the last range
-    if lastRangeEnd - 1 < string.len( str ) then
+    if lastRangeEnd <= string.len( str ) then
         outFunc( "string", string_sub( str, lastRangeEnd ) )
     end
 end

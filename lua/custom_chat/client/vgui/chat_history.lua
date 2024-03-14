@@ -504,6 +504,7 @@ local fontNames = {
     ["roboto"] = "Roboto"
 }
 
+local string_sub = string.sub
 local SafeString = string.JavascriptSafe
 local IsStringValid = CustomChat.IsStringValid
 local RGBAToJs = CustomChat.RGBAToJs
@@ -701,17 +702,9 @@ function PANEL:AppendContents( contents, showTimestamp )
         return
     end
 
-    local playersByName = {}
+    CustomChat:CachePlayerNames()
 
-    for _, ply in ipairs( player.GetAll() ) do
-        playersByName[ply:Nick()] = {
-            ply = ply,
-            name = ply:Nick(),
-            id = ply:SteamID(),
-            id64 = ply:SteamID64(),
-            isBot = ply:IsBot()
-        }
-    end
+    local playersByName = CustomChat.playersByName
 
     -- lets split the message contents into "blocks"
     local blocks = {}
@@ -872,7 +865,7 @@ function PANEL:CreateImage( url, link, cssClass, altText, safeFilter )
 
         if site and prefix == "https" and forceHTTP[site] then
             CustomChat.PrintF( "Forcing plain HTTP for %s", site )
-            url = "http" .. string.sub( url, 6 )
+            url = "http" .. string_sub( url, 6 )
         end
     end
 
@@ -1051,7 +1044,7 @@ function PANEL:OnHTTPResponse( embedId, body, url )
     }
 
     if props["image"] then
-        if string.sub( props["image"], 1, 2 ) == "//" then
+        if string_sub( props["image"], 1, 2 ) == "//" then
             props["image"] = "https:" .. props["image"]
         end
 
@@ -1171,7 +1164,7 @@ function PANEL:FetchUserAvatarURL( id )
 
             if url then
                 if forceHTTP then
-                    url = "http" .. string.sub( url, 6 )
+                    url = "http" .. string_sub( url, 6 )
                 end
 
                 CustomChat.PrintF( "Fetching avatar image for %s: %s", id, url )

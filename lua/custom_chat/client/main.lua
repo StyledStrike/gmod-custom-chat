@@ -22,6 +22,22 @@ function CustomChat.InternalMessage( text )
     chat.AddText( color_white, "[", Color( 80, 165, 204 ), "Custom Chat", color_white, "] ", text )
 end
 
+function CustomChat:CachePlayerNames()
+    local playersByName = {}
+
+    for _, ply in ipairs( player.GetAll() ) do
+        playersByName[ply:Nick()] = {
+            ply = ply,
+            name = ply:Nick(),
+            id = ply:SteamID(),
+            id64 = ply:SteamID64(),
+            isBot = ply:IsBot()
+        }
+    end
+
+    self.playersByName = playersByName
+end
+
 local Config = CustomChat.Config
 
 function CustomChat:CreateFrame()
@@ -379,6 +395,18 @@ local function CustomChat_Think()
     end
 end
 
+local function CustomChat_PlayerMentioned( id )
+    if id ~= CustomChat.localSteamId then return end
+
+    local t = RealTime()
+    local mentionCooldown = CustomChat.mentionCooldown or 0
+
+    if t < mentionCooldown then return end
+    CustomChat.mentionCooldown = t + 3
+
+    sound.Play( "buttons/blip1.wav", Vector(), 0, 100, 1 )
+end
+
 function CustomChat:Enable()
     chat.AddText = CustomChat_AddText
     chat.Close = CustomChat_Close
@@ -388,6 +416,7 @@ function CustomChat:Enable()
     hook.Add( "PlayerBindPress", "CustomChat.OnPlayerBindPress", CustomChat_OnPlayerBindPress )
     hook.Add( "HUDShouldDraw", "CustomChat.HUDShouldDraw", CustomChat_HUDShouldDraw )
     hook.Add( "Think", "CustomChat.Think", CustomChat_Think )
+    hook.Add( "CustomChatPlayerMentioned", "CustomChat.MentionSound", CustomChat_PlayerMentioned )
 
     if IsValid( CustomChat.frame ) then
         CustomChat.frame:SetVisible( true )
@@ -407,6 +436,7 @@ function CustomChat:Disable()
     hook.Remove( "PlayerBindPress", "CustomChat.OnPlayerBindPress" )
     hook.Remove( "HUDShouldDraw", "CustomChat.HUDShouldDraw" )
     hook.Remove( "Think", "CustomChat.Think" )
+    hook.Remove( "CustomChatPlayerMentioned", "CustomChat.MentionSound" )
 
     chat.AddText = CustomChat.DefaultAddText
     chat.Close = CustomChat.DefaultClose
@@ -452,6 +482,10 @@ net.Receive( "customchat.say", function()
 
     CustomChat.lastSpeaker = ply
     hook.Run( "OnPlayerChat", ply, text, channel ~= CustomChat.channels.everyone, isDead )
+end )
+
+hook.Add( "InitPostEntity", "CustomChat.StoreLocalSteamId", function()
+    CustomChat.localSteamId = LocalPlayer():SteamID()
 end )
 
 hook.Add( "NetPrefs_OnChange", "CustomChat.OnServerConfigChange", function( key, value )
@@ -515,7 +549,7 @@ local function OnPlayerActivated( ply, steamId, color, absenceLength )
     end
 
     -- show a message if this player is a friend
-    if steamId ~= LocalPlayer():SteamID() and ply:GetFriendStatus() == "friend" then
+    if steamId ~= CustomChat.localSteamId and ply:GetFriendStatus() == "friend" then
         chat.AddText(
             Color( 255, 255, 255 ), ":small_blue_diamond: " .. CustomChat.GetLanguageText( "friend_spawned1" ) .. " ",
             color, name,
