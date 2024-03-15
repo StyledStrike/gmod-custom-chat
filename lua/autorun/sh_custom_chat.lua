@@ -15,10 +15,13 @@ CreateConVar( "custom_chat_allow_colors", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REP
     "Allows the usage of color formatting options. Recommended to be disabled on servers.", 0, 1 )
 
 CreateConVar( "custom_chat_max_lines", "6", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
-    "Limits how many lines each message can have. Recommended to be low on servers.", 0, 10 )
+    "Limits how many lines each message can have. Recommended to be low on servers.", 1, 10 )
 
 CreateConVar( "custom_chat_enable_absence_messages", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
     "On first spawn, show messages about when a player was last present on the server.", 0, 1 )
+
+CreateConVar( "custom_chat_enable_friend_messages", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
+    "Show messages to players when their friends spawn on the server.", 0, 1 )
 
 -- Utility functions
 

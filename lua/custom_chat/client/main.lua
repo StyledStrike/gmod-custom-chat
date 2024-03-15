@@ -549,7 +549,11 @@ local function OnPlayerActivated( ply, steamId, color, absenceLength )
     end
 
     -- show a message if this player is a friend
-    if steamId ~= CustomChat.localSteamId and ply:GetFriendStatus() == "friend" then
+    if
+        CustomChat.GetConVarInt( "enable_friend_messages", 0 ) > 0 and
+        steamId ~= CustomChat.localSteamId and
+        ply:GetFriendStatus() == "friend"
+    then
         chat.AddText(
             Color( 255, 255, 255 ), ":small_blue_diamond: " .. CustomChat.GetLanguageText( "friend_spawned1" ) .. " ",
             color, name,
