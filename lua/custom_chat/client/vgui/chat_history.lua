@@ -11,7 +11,6 @@ return [[<!DOCTYPE html>
 
 <script>
 var maxMessages = 200;
-var animateMessages = true;
 var temporaryLifetime = 10000;
 var isAwesomuim = navigator.userAgent.indexOf("Awesomium") != -1;
 
@@ -51,7 +50,7 @@ function setDisplayMode(mode) {
         setEmojiPanelVisible(false);
 }
 
-function appendMessage(message, showTemporary) {
+function appendMessage(message, showTemporary, showAnimation) {
     var wasAtBottom = isScrollAtBottom();
 
     elmMain.appendChild(message);
@@ -59,7 +58,7 @@ function appendMessage(message, showTemporary) {
     if (elmMain.childElementCount > maxMessages)
         elmMain.removeChild(elmMain.firstChild);
 
-    if (animateMessages) {
+    if (showAnimation) {
         var animKey = isAwesomuim ? "-webkit-animation" : "animation";
         var animValue = isAwesomuim ? "wk_anim_slidein 0.3s ease-out 1" : "ch_anim_slidein 0.3s ease-out 1";
 
@@ -520,6 +519,9 @@ function PANEL:Init()
     self.lastSearch = ""
     self.lastEmbedId = 0
 
+    self.animateMessages = true
+    self.animationCooldown = 0
+
     -- the main element that represents a single message,
     -- and is the parent for all of it's blocks
     self.rootElement = "elMessage"
@@ -619,7 +621,7 @@ function PANEL:SetDisplayMode( mode )
 end
 
 function PANEL:SetEnableAnimations( enable )
-    self:QueueJavascript( "animateMessages = " .. ( enable and "true" or "false" ) .. ";" )
+    self.animateMessages = enable
 end
 
 function PANEL:SetDefaultFont( fontName )
@@ -805,7 +807,12 @@ function PANEL:AppendContents( contents, showTimestamp )
     -- lets not add this message to the temp container if hud is disabled
     local showTemporary = ( GetConVar( "cl_drawhud" ):GetInt() == 0 ) and "false" or "true"
 
-    lines[#lines + 1] = ( "appendMessage(%s, %s);" ):format( self.rootElement, showTemporary )
+    -- prevent animations while the chat is being spammed
+    local t = RealTime()
+    local showAnimation = ( t > self.animationCooldown and self.animateMessages ) and "true" or "false"
+    self.animationCooldown = t + 0.5
+
+    lines[#lines + 1] = ( "appendMessage(%s, %s, %s);" ):format( self.rootElement, showTemporary, showAnimation )
 
     self:QueueJavascript( table.concat( lines, "\n" ) )
 end
