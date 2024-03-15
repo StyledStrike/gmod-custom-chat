@@ -706,8 +706,6 @@ function PANEL:AppendContents( contents, showTimestamp )
 
     CustomChat:CachePlayerNames()
 
-    local playersByName = CustomChat.playersByName
-
     -- lets split the message contents into "blocks"
     local blocks = {}
 
@@ -731,13 +729,8 @@ function PANEL:AppendContents( contents, showTimestamp )
             end
 
         elseif type( obj ) == "string" then
-            -- if obj is a player name...
-            if playersByName[obj] then
-                AddBlock( "player", playersByName[obj] )
-            else
-                -- otherwise find more blocks using patterns
-                CustomChat.ParseString( obj, AddBlock )
-            end
+            -- find more blocks using patterns
+            CustomChat.ParseString( obj, AddBlock )
 
         elseif type( obj ) == "Player" and IsValid( obj ) then
             AddBlock( "player", {

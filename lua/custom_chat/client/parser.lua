@@ -49,7 +49,8 @@ local function FindAllRangesOfType( rangeType, str )
 end
 
 -- Find all places where a player name starts/ends on another string.
-local function FindPlayerMentions( name, str )
+local function FindPlayerMentions( p, str )
+    local name = p.name
     local ranges = {}
     local s, e = 1, 0
 
@@ -57,7 +58,7 @@ local function FindPlayerMentions( name, str )
         s, e = string_find( str, name, s, true )
 
         if s then
-            ranges[#ranges + 1] = { s = s, e = e, type = "mention", value = name }
+            ranges[#ranges + 1] = { s = s, e = e, type = "mention", value = p }
             s = e
         end
     end
@@ -93,11 +94,9 @@ function CustomChat.ParseString( str, outFunc )
     local ranges = {}
 
     -- try to find player mentions first
-    local playersByName = CustomChat.playersByName
-
-    for name, _ in pairs( playersByName ) do
+    for _, p in pairs( CustomChat.playersByName ) do
         -- find all ranges (start-end) of this player name
-        local newRanges = FindPlayerMentions( name, str )
+        local newRanges = FindPlayerMentions( p, str )
 
         -- then merge them into the ranges table
         for _, r in ipairs( newRanges ) do
@@ -137,11 +136,9 @@ function CustomChat.ParseString( str, outFunc )
         lastRangeEnd = r.e + 1
 
         if r.type == "mention" then
-            local p = playersByName[r.value]
-
             -- output a player block
-            outFunc( "player", p )
-            hook.Run( "CustomChatPlayerMentioned", p.id )
+            outFunc( "player", r.value )
+            hook.Run( "CustomChatPlayerMentioned", r.value.id )
         else
             -- output a block with the type of this range, and
             -- use where it starts/ends on the string as the value
