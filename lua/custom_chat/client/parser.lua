@@ -48,24 +48,6 @@ local function FindAllRangesOfType( rangeType, str )
     return ranges
 end
 
--- Find all places where a player name starts/ends on another string.
-local function FindPlayerMentions( p, str )
-    local name = p.name
-    local ranges = {}
-    local s, e = 1, 0
-
-    while s do
-        s, e = string_find( str, name, s, true )
-
-        if s then
-            ranges[#ranges + 1] = { s = s, e = e, type = "mention", value = p }
-            s = e
-        end
-    end
-
-    return ranges
-end
-
 -- Merges a range into a array of ranges
 -- in a way that overrides overlapping ranges.
 local function MergeRangeInto( tbl, range )
@@ -92,17 +74,6 @@ function CustomChat.ParseString( str, outFunc )
     allowColor = CustomChat.GetConVarInt( "allow_colors", 0 ) > 0
 
     local ranges = {}
-
-    -- try to find player mentions first
-    for _, p in pairs( CustomChat.playersByName ) do
-        -- find all ranges (start-end) of this player name
-        local newRanges = FindPlayerMentions( p, str )
-
-        -- then merge them into the ranges table
-        for _, r in ipairs( newRanges ) do
-            ranges = MergeRangeInto( ranges, r )
-        end
-    end
 
     -- for each range type...
     for _, rangeType in ipairs( rangeTypes ) do
@@ -135,18 +106,12 @@ function CustomChat.ParseString( str, outFunc )
         -- remember where this range ended at
         lastRangeEnd = r.e + 1
 
-        if r.type == "mention" then
-            -- output a player block
-            outFunc( "player", r.value )
-            hook.Run( "CustomChatPlayerMentioned", r.value.id )
-        else
-            -- output a block with the type of this range, and
-            -- use where it starts/ends on the string as the value
-            local value = string_sub( str, r.s, r.e )
+        -- output a block with the type of this range, and
+        -- use where it starts/ends on the string as the value
+        local value = string_sub( str, r.s, r.e )
 
-            if value ~= "" then
-                outFunc( r.type, value )
-            end
+        if value ~= "" then
+            outFunc( r.type, value )
         end
     end
 

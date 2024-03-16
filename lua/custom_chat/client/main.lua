@@ -395,18 +395,6 @@ local function CustomChat_Think()
     end
 end
 
-local function CustomChat_PlayerMentioned( id )
-    if id ~= CustomChat.localSteamId then return end
-
-    local t = RealTime()
-    local mentionCooldown = CustomChat.mentionCooldown or 0
-
-    if t < mentionCooldown then return end
-    CustomChat.mentionCooldown = t + 3
-
-    sound.Play( "buttons/blip1.wav", Vector(), 0, 100, 1 )
-end
-
 function CustomChat:Enable()
     chat.AddText = CustomChat_AddText
     chat.Close = CustomChat_Close
@@ -416,7 +404,6 @@ function CustomChat:Enable()
     hook.Add( "PlayerBindPress", "CustomChat.OnPlayerBindPress", CustomChat_OnPlayerBindPress )
     hook.Add( "HUDShouldDraw", "CustomChat.HUDShouldDraw", CustomChat_HUDShouldDraw )
     hook.Add( "Think", "CustomChat.Think", CustomChat_Think )
-    hook.Add( "CustomChatPlayerMentioned", "CustomChat.MentionSound", CustomChat_PlayerMentioned )
 
     if IsValid( CustomChat.frame ) then
         CustomChat.frame:SetVisible( true )
@@ -436,7 +423,6 @@ function CustomChat:Disable()
     hook.Remove( "PlayerBindPress", "CustomChat.OnPlayerBindPress" )
     hook.Remove( "HUDShouldDraw", "CustomChat.HUDShouldDraw" )
     hook.Remove( "Think", "CustomChat.Think" )
-    hook.Remove( "CustomChatPlayerMentioned", "CustomChat.MentionSound" )
 
     chat.AddText = CustomChat.DefaultAddText
     chat.Close = CustomChat.DefaultClose
