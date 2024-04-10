@@ -45,8 +45,10 @@ net.Receive( "customchat.say", function( _, ply )
         text = text:Left( CustomChat.MAX_MESSAGE_LENGTH )
     end
 
+    local teamOnly = channel ~= CustomChat.channels.everyone
+
     text = CustomChat.CleanupString( text )
-    text = hook.Run( "PlayerSay", ply, text, channel ~= CustomChat.channels.everyone )
+    text = hook.Run( "PlayerSay", ply, text, teamOnly )
 
     if not isstring( text ) or text == "" then return end
 
@@ -54,6 +56,7 @@ net.Receive( "customchat.say", function( _, ply )
         priority = 1, -- ??
         userid = ply:UserID(),
         text = text,
+        teamonly = teamOnly and 1 or 0,
     } )
 
     local targets = CustomChat:GetListeners( ply, text, channel )
