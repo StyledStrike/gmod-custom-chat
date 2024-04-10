@@ -105,6 +105,16 @@ function PANEL:Init()
         self:ValueChanged( "animate", self.enableSlideAnimation )
     end
 
+    -- Player Avatars
+    self.playerAvatars = AddProperty( "theme.avatars", "DButton", panelProperties )
+    self.playerAvatars:SetText( L"theme.avatars" )
+
+    self.playerAvatars.DoClick = function()
+        self.enableAvatars = not self.enableAvatars
+        self.playerAvatars:SetIcon( self.enableAvatars and "icon16/accept.png" or "icon16/cross.png" )
+        self:ValueChanged( "avatars", self.enableAvatars )
+    end
+
     -- Background Blur
     self.sliderBlur = AddProperty( "theme.bg_blur", "DNumSlider", panelProperties )
     self.sliderBlur:SetText( L"theme.bg_blur" )
@@ -195,6 +205,7 @@ function PANEL:LoadThemeData( data )
 
     self.buttonFontShadow:SetIcon( self.enableFontShadow and "icon16/accept.png" or "icon16/cross.png" )
     self.buttonSlideAnimation:SetIcon( self.enableSlideAnimation and "icon16/accept.png" or "icon16/cross.png" )
+    self.playerAvatars:SetIcon( self.enableAvatars and "icon16/accept.png" or "icon16/cross.png" )
 
     self.sliderBlur:SetValue( self.backgroundBlur )
     self.sliderCorner:SetValue( self.cornerRadius )
@@ -223,6 +234,7 @@ function PANEL:SetDisabled( disabled )
     self.comboFont:SetDisabled( disabled )
     self.buttonFontShadow:SetDisabled( disabled )
     self.buttonSlideAnimation:SetDisabled( disabled )
+    self.playerAvatars:SetDisabled( disabled )
 
     self.sliderBlur:SetEnabled( not disabled )
     self.sliderCorner:SetEnabled( not disabled )

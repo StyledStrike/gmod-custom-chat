@@ -203,6 +203,7 @@ function PANEL:LoadThemeData( data )
     self.history:SetDefaultFont( self.fontName )
     self.history:SetFontShadowEnabled( self.enableFontShadow )
     self.history:SetEnableAnimations( self.enableSlideAnimation )
+    self.history:SetEnableAvatars( self.enableAvatars )
 
     self.history:SetBackgroundColor( self.inputBackgroundColor )
     self.history:SetScrollBarColor( self.scrollBarColor )

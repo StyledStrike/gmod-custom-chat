@@ -521,6 +521,7 @@ function PANEL:Init()
 
     self.animateMessages = true
     self.animationCooldown = 0
+    self.displayAvatars = true
 
     -- the main element that represents a single message,
     -- and is the parent for all of it's blocks
@@ -622,6 +623,10 @@ end
 
 function PANEL:SetEnableAnimations( enable )
     self.animateMessages = enable
+end
+
+function PANEL:SetEnableAvatars( enable )
+    self.displayAvatars = enable
 end
 
 function PANEL:SetDefaultFont( fontName )
