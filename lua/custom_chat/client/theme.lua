@@ -23,6 +23,7 @@ function Theme.GetDefaultTheme()
         font = Theme.fonts[1],
         font_shadow = true,
         animate = true,
+        avatars = true,
         blur = 4,
         corner_radius = 8,
         padding = 8,
@@ -74,6 +75,7 @@ function Theme.ParseTheme( data, themeTable )
 
     SetBool( themeTable, "enableFontShadow", data.font_shadow )
     SetBool( themeTable, "enableSlideAnimation", data.animate )
+    SetBool( themeTable, "enableAvatars", data.avatars )
 
     SetNumber( themeTable, "backgroundBlur", data.blur, 0, 8 )
     SetNumber( themeTable, "cornerRadius", data.corner_radius, 0, 32 )

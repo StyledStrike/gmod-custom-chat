@@ -43,7 +43,7 @@ end
 blockTypes["player"] = function( panel, data, color, font )
     local lines = {}
 
-    if not data.isBot then
+    if not data.isBot and panel.displayAvatars then
         lines[#lines + 1] = panel:CreateImage( panel:FetchUserAvatarURL( data.id64 ), nil, "avatar ply-" .. data.id64 )
     end
 
@@ -78,7 +78,10 @@ blockTypes["player"] = function( panel, data, color, font )
 
     if color and color ~= color_white then
         AddLine( lines, "elPlayer.style.color = '%s';", RGBToJs( color ) )
-        AddLine( lines, "elImg.style['border-color'] = '%s';", RGBToJs( color ) )
+
+        if panel.displayAvatars then
+            AddLine( lines, "elImg.style['border-color'] = '%s';", RGBToJs( color ) )
+        end
     end
 
     return table.concat( lines, "\n" )
