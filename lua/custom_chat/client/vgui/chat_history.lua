@@ -627,6 +627,17 @@ end
 
 function PANEL:SetEnableAvatars( enable )
     self.displayAvatars = enable
+
+    -- Show/hide existing avatar elements
+    local display = enable and "inline-block" or "none"
+
+    self:QueueJavascript( [[
+        var avatarElements = document.getElementsByClassName('avatar');
+
+        for (var i = 0; i < avatarElements.length; i++) {
+            avatarElements[i].style["display"] = ']] .. display .. [[';
+        }
+    ]] )
 end
 
 function PANEL:SetDefaultFont( fontName )
