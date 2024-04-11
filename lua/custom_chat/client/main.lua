@@ -90,7 +90,9 @@ function CustomChat:CreateFrame()
             net.SendToServer()
         end
 
-        chat.Close()
+        if not IsValid( self.Theme.themeFrame ) then
+            chat.Close()
+        end
     end
 
     chat.GetChatBoxPos = function()

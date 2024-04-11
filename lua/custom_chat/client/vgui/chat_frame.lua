@@ -137,6 +137,7 @@ function PANEL:SubmitMessage()
         end
     end
 
+    self.entry:SetText( "" )
     self.OnSubmitMessage( text )
 end
 

@@ -146,17 +146,15 @@ function Theme.GetList()
     return themes
 end
 
-local themeFrame
-
 hook.Add( "FinishChat", "CustomChat.CloseThemePanel", function()
-    if IsValid( themeFrame ) then
-        themeFrame:Close()
+    if IsValid( Theme.themeFrame ) then
+        Theme.themeFrame:Close()
     end
 end )
 
 hook.Add( "NetPrefs_OnChange", "CustomChat.UpdateThemeList", function( key )
-    if key == "customchat.theme" and IsValid( themeFrame ) then
-        timer.Simple( 0, themeFrame._RefreshList )
+    if key == "customchat.theme" and IsValid( Theme.themeFrame ) then
+        timer.Simple( 0, Theme.themeFrame._RefreshList )
     end
 end )
 
@@ -164,8 +162,8 @@ local Config = CustomChat.Config
 local L = CustomChat.GetLanguageText
 
 function Theme.OpenEditor()
-    if IsValid( themeFrame ) then
-        themeFrame:Close()
+    if IsValid( Theme.themeFrame ) then
+        Theme.themeFrame:Close()
     end
 
     local frame = vgui.Create( "DFrame" )
@@ -176,7 +174,11 @@ function Theme.OpenEditor()
     frame:Center()
     frame:MakePopup()
 
-    themeFrame = frame
+    frame.OnClose = function()
+        Theme.themeFrame = nil
+    end
+
+    Theme.themeFrame = frame
 
     -- put the frame to the side of the chat
     -- but keep it inside of the screen
