@@ -83,8 +83,12 @@ hook.Add( "PlayerInitialSpawn", "CustomChat.BroadcastInitialSpawn", function( pl
         local color = team.GetColor( ply:Team() )
 
         local time = os.time()
+        local absenceLength = 0
         local lastSeen = CustomChat.Config:GetLastSeen( steamId )
-        local absenceLength = math.max( time - lastSeen, 0 )
+
+        if lastSeen then
+            absenceLength = math.max( time - lastSeen, 0 )
+        end
 
         CustomChat.Config:SetLastSeen( steamId, time )
 

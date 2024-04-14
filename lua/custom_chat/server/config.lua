@@ -91,8 +91,6 @@ function Config:GetLastSeen( steamId )
     if row and row.LastSeen then
         return row.LastSeen
     end
-
-    return 0
 end
 
 net.Receive( "customchat.set_theme", function( _, ply )
