@@ -3,10 +3,14 @@ util.AddNetworkString( "customchat.set_emojis" )
 util.AddNetworkString( "customchat.set_tags" )
 
 local Config = CustomChat.Config or {
-    lastSeen = {}
+    LAST_SEEN_TABLE = "customchat_last_seen"
 }
 
 CustomChat.Config = Config
+
+-- Setup SQL tables
+sql.Query( "CREATE TABLE IF NOT EXISTS " .. Config.LAST_SEEN_TABLE ..
+    " ( SteamID TEXT NOT NULL PRIMARY KEY, LastSeen INTEGER NOT NULL );" )
 
 function Config:Load()
     CustomChat.EnsureDataDir()
@@ -17,7 +21,6 @@ function Config:Load()
     local themeData = Unserialize( LoadDataFile( "server_theme.json" ) )
     local emojiData = Unserialize( LoadDataFile( "server_emojis.json" ) )
     local tagsData = Unserialize( LoadDataFile( "server_tags.json" ) )
-    local lastSeenData = Unserialize( LoadDataFile( "server_last_seen.json" ) )
 
     if not table.IsEmpty( themeData ) then
         NetPrefs.Set( "customchat.theme", Serialize( themeData ) )
@@ -29,17 +32,6 @@ function Config:Load()
 
     if not table.IsEmpty( tagsData ) then
         NetPrefs.Set( "customchat.tags", Serialize( tagsData ) )
-    end
-
-    if not table.IsEmpty( lastSeenData ) then
-        local IsNumber = isnumber
-        local SteamIDTo64 = util.SteamIDTo64
-
-        for id, time in pairs( lastSeenData ) do
-            if IsNumber( time ) and SteamIDTo64( id ) ~= "0" then
-                self.lastSeen[id] = time
-            end
-        end
     end
 end
 
@@ -73,10 +65,34 @@ function Config:SetChatTags( data, admin )
 end
 
 function Config:SetLastSeen( steamId, time )
-    self.lastSeen[steamId] = time
+    local row = sql.QueryRow( "SELECT LastSeen FROM " .. self.LAST_SEEN_TABLE .. " WHERE SteamID = '" .. steamId .. "';" )
+    local status = "FAILED"
 
-    CustomChat.EnsureDataDir()
-    CustomChat.SaveDataFile( "server_last_seen.json", CustomChat.Serialize( self.lastSeen ) )
+    time = math.floor( time )
+
+    if row then
+        local success = sql.Query( "UPDATE " .. self.LAST_SEEN_TABLE ..
+            " SET LastSeen = " .. time .. " WHERE SteamID = '" .. steamId .. "';" )
+
+        if success ~= false then status = "UPDATED" end
+    else
+        local success = sql.Query( "INSERT INTO " .. self.LAST_SEEN_TABLE ..
+            " ( SteamID, LastSeen ) VALUES ( '" .. steamId .. "', " .. time .. " );" )
+
+        if success ~= false then status = "INSERTED" end
+    end
+
+    CustomChat.PrintF( "SetLastSeen SQL for player %s: %s", steamId, status )
+end
+
+function Config:GetLastSeen( steamId )
+    local row = sql.QueryRow( "SELECT LastSeen FROM " .. self.LAST_SEEN_TABLE .. " WHERE SteamID = '" .. steamId .. "';" )
+
+    if row and row.LastSeen then
+        return row.LastSeen
+    end
+
+    return 0
 end
 
 net.Receive( "customchat.set_theme", function( _, ply )
@@ -107,3 +123,29 @@ net.Receive( "customchat.set_tags", function( _, ply )
 end )
 
 Config:Load()
+
+do
+    -- Migrate old "last seen" data to SQL.
+    -- This code will stay here for a month or two.
+    local lastSeenData = CustomChat.Unserialize( CustomChat.LoadDataFile( "server_last_seen.json" ) )
+    if table.IsEmpty( lastSeenData ) then return end
+
+    CustomChat.PrintF( "Migrating old 'last seen' data to SQL..." )
+
+    local IsNumber = isnumber
+    local SteamIDTo64 = util.SteamIDTo64
+
+    for id, time in pairs( lastSeenData ) do
+        if IsNumber( time ) and SteamIDTo64( id ) ~= "0" then
+            Config:SetLastSeen( id, time )
+        end
+    end
+
+    local oldPath = CustomChat.DATA_DIR .. "server_last_seen.json"
+    local newPath = CustomChat.DATA_DIR .. "backup_server_last_seen.json"
+
+    file.Write( newPath, CustomChat.Serialize( lastSeenData ) )
+    file.Delete( oldPath )
+
+    CustomChat.PrintF( "Migration complete. Backup saved to: %s", newPath )
+end
