@@ -75,7 +75,9 @@ function Theme.ParseTheme( data, themeTable )
 
     SetBool( themeTable, "enableFontShadow", data.font_shadow )
     SetBool( themeTable, "enableSlideAnimation", data.animate )
-    SetBool( themeTable, "enableAvatars", data.avatars )
+
+    -- new option, if not set it should be true by default
+    SetBool( themeTable, "enableAvatars", ( data.avatars == nil ) and true or data.avatars )
 
     SetNumber( themeTable, "backgroundBlur", data.blur, 0, 8 )
     SetNumber( themeTable, "cornerRadius", data.corner_radius, 0, 32 )
