@@ -307,7 +307,8 @@ function Theme.OpenEditor()
         local disableEditing = theme.id == "default" or theme.id == "server_default"
 
         buttonDelete:SetDisabled( disableEditing )
-        buttonExport:SetDisabled( disableEditing )
+        buttonExport:SetDisabled( theme.id == "default" )
+
         editorPanel:SetDisabled( disableEditing )
         editorPanel:LoadThemeData( theme )
 
