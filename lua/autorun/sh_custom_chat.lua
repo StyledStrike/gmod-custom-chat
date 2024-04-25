@@ -1,7 +1,6 @@
-CustomChat = CustomChat or {
-    DATA_DIR = "custom_chat/",
-    MAX_MESSAGE_LENGTH = 500
-}
+CustomChat = CustomChat or {}
+CustomChat.DATA_DIR = "custom_chat/"
+CustomChat.MAX_MESSAGE_LENGTH = 500
 
 CustomChat.channels = {
     everyone = 0,
@@ -211,6 +210,9 @@ if SERVER then
 end
 
 if CLIENT then
+    -- Text used on the Team chat (Default is "Say (Team)...")
+    CustomChat.TEAM_CHAT_LABEL = "custom_chat.team_say"
+
     -- Client specific utilities
     function CustomChat.ChopEnds( str, n )
         return str:sub( n, -n )

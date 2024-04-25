@@ -302,7 +302,7 @@ local function CustomChat_Open( pcalled )
         color.b = color.b * 0.3
         color.a = CustomChat.frame.inputBackgroundColor.a
 
-        CustomChat.frame:SetEntryLabel( "custom_chat.team_say", color )
+        CustomChat.frame:SetEntryLabel( CustomChat.TEAM_CHAT_LABEL or "custom_chat.team_say", color )
     else
         CustomChat.frame:SetEntryLabel( "custom_chat.say" )
     end
