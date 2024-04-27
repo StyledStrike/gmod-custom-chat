@@ -317,7 +317,7 @@ local function CustomChat_Open( pcalled )
     net.SendToServer()
 
     -- make sure other addons know we are chatting
-    hook.Run( "StartChat" )
+    hook.Run( "StartChat", CustomChat.teamMode == true )
 end
 
 local function CustomChat_Close()
