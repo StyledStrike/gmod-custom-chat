@@ -122,29 +122,3 @@ net.Receive( "customchat.set_tags", function( _, ply )
 end )
 
 Config:Load()
-
-do
-    -- Migrate old "last seen" data to SQL.
-    -- This code will stay here for a month or two.
-    local lastSeenData = CustomChat.Unserialize( CustomChat.LoadDataFile( "server_last_seen.json" ) )
-    if table.IsEmpty( lastSeenData ) then return end
-
-    CustomChat.PrintF( "Migrating old 'last seen' data to SQL..." )
-
-    local IsNumber = isnumber
-    local SteamIDTo64 = util.SteamIDTo64
-
-    for id, time in pairs( lastSeenData ) do
-        if IsNumber( time ) and SteamIDTo64( id ) ~= "0" then
-            Config:SetLastSeen( id, time )
-        end
-    end
-
-    local oldPath = CustomChat.DATA_DIR .. "server_last_seen.json"
-    local newPath = CustomChat.DATA_DIR .. "backup_server_last_seen.json"
-
-    file.Write( newPath, CustomChat.Serialize( lastSeenData ) )
-    file.Delete( oldPath )
-
-    CustomChat.PrintF( "Migration complete. Backup saved to: %s", newPath )
-end
