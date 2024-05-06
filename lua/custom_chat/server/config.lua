@@ -73,14 +73,14 @@ function Config:SetLastSeen( steamId, time )
         local success = sql.Query( "UPDATE " .. self.LAST_SEEN_TABLE ..
             " SET LastSeen = " .. time .. " WHERE SteamID = '" .. steamId .. "';" )
 
-        if success ~= false then
+        if success == false then
             CustomChat.PrintF( "SetLastSeen SQL for player %s failed: %s", steamId, sql.LastError() )
         end
     else
         local success = sql.Query( "INSERT INTO " .. self.LAST_SEEN_TABLE ..
             " ( SteamID, LastSeen ) VALUES ( '" .. steamId .. "', " .. time .. " );" )
 
-        if success ~= false then
+        if success == false then
             CustomChat.PrintF( "SetLastSeen SQL for player %s failed: %s", steamId, sql.LastError() )
         end
     end
