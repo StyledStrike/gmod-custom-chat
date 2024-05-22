@@ -81,7 +81,7 @@ end
 -- Create the default categories
 
 AddEmojiCategory( "category.custom", {
-    { id = "rainbowplz", url = "https://emoji.gg/assets/emoji/1908_RainbowPls.gif" }
+    { id = "rainbowplz", url = "asset://garrysmod/materials/custom_chat/rainbowplz.png" }
 } )
 
 AddEmojiCategory( "category.people", {
