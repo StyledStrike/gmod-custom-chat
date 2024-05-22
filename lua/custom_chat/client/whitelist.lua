@@ -95,6 +95,7 @@ local whitelist = {
 
     -- emoji.gg
     simple [[emoji.gg]],
+    pattern [[([%w-_]+)%.emoji%.gg/(.+)]],
 
     -- Tenor
     simple [[tenor.com]],
