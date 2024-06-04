@@ -14,29 +14,11 @@ A simple and customizable chat box that can format text, display images and emoj
 * Find text with _Ctrl+F_
 * Shows icons for prop models
 * Keeps the default "hands on ear when the chat is open" behaviour
-* Can be enabled/disabled at any time *(Using the `customchat_disable` console variable)*
-* _(Admin Only)_ Suggest a theme to be used on your server
+* Can be enabled/disabled at any time *(Using the `custom_chat_enable` console variable)*
+* _(Admin Only)_ Set a theme to be used on your server
 * _(Admin Only)_ Set custom emojis
 * _(Admin Only)_ Set custom chat tags
 * _(Admin Only)_ Set custom join/leave messages
-
-### ⚠ A major refactor was implemented recently.
-
-Heres some of the more notable changes:
-
-- Moved and renamed files, now using more appropriate names
-- Replaced all references of `SChat` with `CustomChat`
-- Made functions from the `CustomChat` global table use `:` only when necessary
-- Implemented new data save formats, save data to a separate folder
-- Written a data migration script
-- Use a dedicated library to synchonize server theme/emojis/tags across clients
-- Made the chat history panel able to be used separately
-- Store emojis in a more readable format
-- Vastly faster way to access emoji properties
-- Moved the main chat interface to a separate vgui panel
-- Made the right-click menu options work independently (so now it can show both "Copy text..." and "Copy link...", for example)
-- Theme editor overhaul & the ability to save multiple themes
-- All text is stored in language files now
 
 ---
 
@@ -76,12 +58,12 @@ hook.Add( "CanEmbedCustomChat", "override_chat_embed_access", function( ply, url
     -- return false to block embeds from "url"
 
     -- "urlType" will be one of these strings:
-    -- "image", "audio", and "url" for other stuff
+    -- "image", "audio", and "url" for other things
 
-    -- example: only allow super admins to use embeds
+    -- Example: only allow super admins to use embeds
     if not ply:IsSuperAdmin() then return false end
 
-    -- example: prevent audio from embedding for everyone
+    -- Example: prevent audio from embedding for everyone
     if urlType == "audio" then return false end
 end )
 ```
