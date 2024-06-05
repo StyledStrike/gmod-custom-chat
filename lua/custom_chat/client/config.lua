@@ -3,7 +3,7 @@ local Config = CustomChat.Config or {}
 CustomChat.Config = Config
 
 function Config:Reset()
-    self.width = 550
+    self.width = 600
     self.height = 260
     self.offsetLeft = -1
     self.offsetBottom = -1
@@ -34,7 +34,7 @@ function Config:SetWhitelistEnabled( enabled )
     self.allowAnyURL = not enabled
     self:Save()
 
-    CustomChat.InternalMessage( CustomChat.GetLanguageText( enabled and "whitelist.enabled" or "whitelist.disabled" ) )
+    CustomChat.PrintMessage( CustomChat.GetLanguageText( enabled and "whitelist.enabled" or "whitelist.disabled" ) )
 end
 
 local function ValidateNumber( n, min, max )
@@ -67,7 +67,7 @@ function Config:Load()
 
     CustomChat.EnsureDataDir()
 
-    local data = CustomChat.Unserialize( CustomChat.LoadDataFile( "client_config.json" ) )
+    local data = CustomChat.FromJSON( CustomChat.LoadDataFile( "client_config.json" ) )
     local SetNumber, SetBool = self.SetNumber, self.SetBool
 
     SetNumber( self, "width", data.width, 250, 1000 )
@@ -84,7 +84,7 @@ end
 
 function Config:Save( immediate )
     if not immediate then
-        -- avoid spamming the file system
+        -- Avoid spamming the file system
         timer.Remove( "CustomChat.SaveConfigDelay" )
         timer.Create( "CustomChat.SaveConfigDelay", 1, 1, function()
             self:Save( true )
@@ -93,7 +93,7 @@ function Config:Save( immediate )
         return
     end
 
-    CustomChat.SaveDataFile( "client_config.json", CustomChat.Serialize( {
+    CustomChat.SaveDataFile( "client_config.json", CustomChat.ToJSON( {
         width			= self.width,
         height			= self.height,
         offset_left		= self.offsetLeft,

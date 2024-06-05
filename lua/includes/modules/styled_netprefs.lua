@@ -118,7 +118,7 @@ if SERVER then
 end
 
 if CLIENT then
-    local function PrintF( str, ... )
+    local function Print( str, ... )
         MsgC( Color( 76, 0, 255 ), "[NetPrefs] ", Color( 255, 255, 255 ), string.format( str, ... ), "\n" )
     end
 
@@ -130,7 +130,7 @@ if CLIENT then
         value = util.Decompress( value )
 
         NetPrefs.values[key] = value
-        PrintF( "Synchronized key '%s'", key )
+        Print( "Synchronized key '%s'", key )
 
         hook.Run( "NetPrefs_OnChange", key, value )
     end )

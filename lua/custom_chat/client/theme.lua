@@ -2,17 +2,17 @@ local Theme = CustomChat.Theme or {}
 
 CustomChat.Theme = Theme
 
-Theme.fonts = {
-    "Arial",
-    "Roboto",
-    "Lucida Console",
-    "Comic Sans MS",
-    "Calibri",
-    "Consolas",
-    "Impact",
-    "Helvetica Neue",
-    "monospace"
-}
+do
+    local fonts = {}
+
+    for _, name in pairs( CustomChat.chatFonts ) do
+        fonts[#fonts + 1] = name
+    end
+
+    table.sort( fonts, function( a, b ) return a < b end )
+
+    Theme.fonts = fonts
+end
 
 function Theme.GetDefaultTheme()
     return {
@@ -20,13 +20,13 @@ function Theme.GetDefaultTheme()
         name = "",
         description = CustomChat.GetLanguageText( "theme.default_description" ),
 
-        font = Theme.fonts[1],
+        font = "Arial",
         font_shadow = true,
         animate = true,
         avatars = true,
-        blur = 4,
-        corner_radius = 8,
-        padding = 8,
+        blur = 2,
+        corner_radius = 4,
+        padding = 6,
 
         bg_r = 40,
         bg_g = 40,
@@ -38,10 +38,10 @@ function Theme.GetDefaultTheme()
         input_b = 255,
         input_a = 255,
 
-        input_bg_r = 0,
-        input_bg_g = 0,
-        input_bg_b = 0,
-        input_bg_a = 100,
+        input_bg_r = 20,
+        input_bg_g = 20,
+        input_bg_b = 20,
+        input_bg_a = 140,
 
         scroll_bar_r = 0,
         scroll_bar_g = 0,
@@ -65,36 +65,34 @@ local SetNumber = CustomChat.Config.SetNumber
 local SetBool = CustomChat.Config.SetBool
 local SetColor = CustomChat.Config.SetColor
 
-function Theme.ParseTheme( data, themeTable )
+function Theme.Parse( data, output )
     data = data or Theme.GetDefaultTheme()
-    themeTable = themeTable or {}
+    output = output or {}
 
-    themeTable.name = IsStringValid( data.name ) and data.name or "???"
-    themeTable.description = IsStringValid( data.description ) and data.description or ""
-    themeTable.fontName = IsStringValid( data.font ) and data.font or CustomChat.Theme.fonts[1]
+    output.name = IsStringValid( data.name ) and data.name or "???"
+    output.description = IsStringValid( data.description ) and data.description or ""
+    output.fontName = IsStringValid( data.font ) and data.font or "Arial"
 
-    SetBool( themeTable, "enableFontShadow", data.font_shadow )
-    SetBool( themeTable, "enableSlideAnimation", data.animate )
+    SetBool( output, "enableFontShadow", data.font_shadow )
+    SetBool( output, "enableSlideAnimation", data.animate )
+    SetBool( output, "enableAvatars", Either( data.avatars == nil, true, data.avatars ) )
 
-    -- new option, if not set it should be true by default
-    SetBool( themeTable, "enableAvatars", ( data.avatars == nil ) and true or data.avatars )
+    SetNumber( output, "backgroundBlur", data.blur, 0, 8 )
+    SetNumber( output, "cornerRadius", data.corner_radius, 0, 32 )
+    SetNumber( output, "padding", data.padding, 0, 64 )
 
-    SetNumber( themeTable, "backgroundBlur", data.blur, 0, 8 )
-    SetNumber( themeTable, "cornerRadius", data.corner_radius, 0, 32 )
-    SetNumber( themeTable, "padding", data.padding, 0, 64 )
+    SetColor( output, "backgroundColor", data.bg_r, data.bg_g, data.bg_b, data.bg_a )
+    SetColor( output, "inputColor", data.input_r, data.input_g, data.input_b, data.input_a )
+    SetColor( output, "inputBackgroundColor", data.input_bg_r, data.input_bg_g, data.input_bg_b, data.input_bg_a )
 
-    SetColor( themeTable, "backgroundColor", data.bg_r, data.bg_g, data.bg_b, data.bg_a )
-    SetColor( themeTable, "inputColor", data.input_r, data.input_g, data.input_b, data.input_a )
-    SetColor( themeTable, "inputBackgroundColor", data.input_bg_r, data.input_bg_g, data.input_bg_b, data.input_bg_a )
+    SetColor( output, "scrollBarColor", data.scroll_bar_r, data.scroll_bar_g, data.scroll_bar_b, data.scroll_bar_a )
+    SetColor( output, "scrollBackgroundColor", data.scroll_bg_r, data.scroll_bg_g, data.scroll_bg_b, data.scroll_bg_a )
+    SetColor( output, "highlightColor", data.highlight_r, data.highlight_g, data.highlight_b, data.highlight_a )
 
-    SetColor( themeTable, "scrollBarColor", data.scroll_bar_r, data.scroll_bar_g, data.scroll_bar_b, data.scroll_bar_a )
-    SetColor( themeTable, "scrollBackgroundColor", data.scroll_bg_r, data.scroll_bg_g, data.scroll_bg_b, data.scroll_bg_a )
-    SetColor( themeTable, "highlightColor", data.highlight_r, data.highlight_g, data.highlight_b, data.highlight_a )
-
-    return themeTable
+    return output
 end
 
-function Theme.LoadThemeFile( themeId )
+function Theme.LoadFile( themeId )
     if themeId == "default" then
         return Theme.GetDefaultTheme()
     end
@@ -103,12 +101,12 @@ function Theme.LoadThemeFile( themeId )
     local data = file.Read( filePath, "DATA" )
 
     if not data then
-        CustomChat.PrintF( "Failed to load theme file: %s", filePath )
+        CustomChat.Print( "Failed to load theme file: %s", filePath )
 
         return Theme.GetDefaultTheme()
     end
 
-    local theme = CustomChat.Unserialize( data )
+    local theme = CustomChat.FromJSON( data )
     theme.id = themeId
     theme.name = IsStringValid( theme.name ) and theme.name or "???"
     theme.description = IsStringValid( theme.description ) and theme.description or ""
@@ -116,13 +114,13 @@ function Theme.LoadThemeFile( themeId )
     return theme
 end
 
-function Theme.SaveThemeFile( themeId, data )
+function Theme.SaveFile( themeId, data )
     local filePath = "themes/" .. themeId .. ".json"
 
     data.id = data.id or themeId
 
     CustomChat.EnsureDataDir()
-    CustomChat.SaveDataFile( filePath, CustomChat.Serialize( data ) )
+    CustomChat.SaveDataFile( filePath, CustomChat.ToJSON( data ) )
 
     return themeId
 end
@@ -138,25 +136,26 @@ function Theme.GetList()
         themes[#themes + 1] = Theme.serverTheme
     end
 
-    local themesFolder = CustomChat.DATA_DIR .. "themes/"
-    local files = file.Find( themesFolder .. "*", "DATA" )
+    local files = file.Find( CustomChat.DATA_DIR .. "themes/*", "DATA" )
 
     for _, fileName in ipairs( files ) do
-        themes[#themes + 1] = Theme.LoadThemeFile( fileName:sub( 1, -6 ) )
+        themes[#themes + 1] = Theme.LoadFile( fileName:sub( 1, -6 ) )
     end
 
     return themes
 end
 
+----- Theme Editor
+
 hook.Add( "FinishChat", "CustomChat.CloseThemePanel", function()
-    if IsValid( Theme.themeFrame ) then
-        Theme.themeFrame:Close()
+    if IsValid( Theme.editorFrame ) then
+        Theme.editorFrame:Close()
     end
 end )
 
 hook.Add( "NetPrefs_OnChange", "CustomChat.UpdateThemeList", function( key )
-    if key == "customchat.theme" and IsValid( Theme.themeFrame ) then
-        timer.Simple( 0, Theme.themeFrame._RefreshList )
+    if key == "customchat.theme" and IsValid( Theme.editorFrame ) then
+        timer.Simple( 0, Theme.editorFrame._RefreshList )
     end
 end )
 
@@ -164,8 +163,8 @@ local Config = CustomChat.Config
 local L = CustomChat.GetLanguageText
 
 function Theme.OpenEditor()
-    if IsValid( Theme.themeFrame ) then
-        Theme.themeFrame:Close()
+    if IsValid( Theme.editorFrame ) then
+        Theme.editorFrame:Close()
     end
 
     local frame = vgui.Create( "DFrame" )
@@ -177,13 +176,14 @@ function Theme.OpenEditor()
     frame:MakePopup()
 
     frame.OnClose = function()
-        Theme.themeFrame = nil
+        Theme.editorFrame._RefreshList = nil
+        Theme.editorFrame = nil
     end
 
-    Theme.themeFrame = frame
+    Theme.editorFrame = frame
 
-    -- put the frame to the side of the chat
-    -- but keep it inside of the screen
+    -- Put the frame on the side of the chat box,
+    -- while keeping it inside of the screen
     do
         local chatX, chatY = chat.GetChatBoxPos()
         local chatW, chatH = chat.GetChatBoxSize()
@@ -197,9 +197,17 @@ function Theme.OpenEditor()
         frame:SetPos( x, y )
     end
 
-    local items = {}
-    local selectedIndex, selectedPanel, isRefreshingList
-    local OnSelectTheme, RefreshList
+    local editor = {
+        items = {},
+        selectedIndex = nil,
+        selectedPanel = nil,
+
+        colorSelected = Color( 39, 86, 156 ),
+        colorUnselected = Color( 50, 50, 50, 255 ),
+        colorTitle = Color( 0, 0, 0, 200 )
+    }
+
+    ----- Theme list
 
     local themesList = vgui.Create( "DScrollPanel", frame )
     themesList:Dock( FILL )
@@ -235,7 +243,7 @@ function Theme.OpenEditor()
 
     buttonExport.DoClick = function()
         frame:Close()
-        Theme.ShowExportPanel( items[selectedIndex] )
+        Theme.ShowExportPanel( editor.items[editor.selectedIndex] )
     end
 
     local buttonImport = vgui.Create( "DButton", panelOptions )
@@ -249,70 +257,65 @@ function Theme.OpenEditor()
         Theme.ShowImportPanel()
     end
 
-    local editorPanel = vgui.Create( "CustomChatThemeEditor", frame )
+    ----- Theme editor
+
+    local editorPanel = vgui.Create( "CustomChat_ThemeEditor", frame )
     editorPanel:Dock( RIGHT )
     editorPanel:SetWide( 200 )
 
     editorPanel.OnThemeChanged = function( key, value )
-        if not selectedIndex then return end
+        if not editor.selectedIndex then return end
 
-        local theme = items[selectedIndex]
+        local theme = editor.items[editor.selectedIndex]
         theme[key] = value
 
         CustomChat.frame:LoadThemeData( theme )
 
-        -- avoid spamming the file system
-        timer.Remove( "CustomChat.SaveThemeDelay" )
-        timer.Create( "CustomChat.SaveThemeDelay", 1, 1, function()
-            Theme.SaveThemeFile( theme.id, theme )
-        end )
-
+        -- Update the theme name/description on the themes list
         if key == "name" then
-            selectedPanel._labelName:SetText( "[" .. theme.id .. ".json] " .. value  )
+            if theme.id == "server_default" then
+                editor.selectedPanel._labelName:SetText( L"theme.server_default" )
+            else
+                editor.selectedPanel._labelName:SetText( "[" .. theme.id .. ".json] " .. value  )
+            end
 
         elseif key == "description" then
-            selectedPanel._labelDescription:SetText( value )
+            editor.selectedPanel._labelDescription:SetText( value )
         end
+
+        if theme.id == "server_default" then return end
+
+        -- Avoid spamming the file system
+        timer.Remove( "CustomChat.SaveThemeDelay" )
+        timer.Create( "CustomChat.SaveThemeDelay", 1, 1, function()
+            Theme.SaveFile( theme.id, theme )
+        end )
     end
 
-    local colorSelected = Color( 39, 86, 156 )
-    local colorUnselected = Color( 50, 50, 50, 255 )
-    local colorTitle = Color( 0, 0, 0, 200 )
-
-    local PaintTheme = function( s, w, h )
-        if s._isSelected then
-            draw.RoundedBox( 4, 0, 0, w, h, colorSelected )
-        else
-            draw.RoundedBox( 4, 0, 0, w, h, colorUnselected )
+    editor.OnSelectTheme = function( s, dontUpdate )
+        if IsValid( editor.selectedPanel ) then
+            editor.selectedPanel._isSelected = nil
         end
 
-        draw.RoundedBoxEx( 4, 0, 0, w, 22, colorTitle, true, true )
-
-        if s._isSelected then
-            surface.SetDrawColor( 255, 255, 255, 255 * math.abs( math.sin( RealTime() * 3 ) ) )
-            surface.DrawOutlinedRect( 0, 0, w, h, 1 )
-        end
-    end
-
-    OnSelectTheme = function( s )
-        if IsValid( selectedPanel ) then
-            selectedPanel._isSelected = nil
-        end
-
-        selectedIndex = s._themeIndex
-        selectedPanel = s
+        editor.selectedIndex = s._themeIndex
+        editor.selectedPanel = s
         s._isSelected = true
 
-        local theme = items[selectedIndex]
+        local theme = editor.items[editor.selectedIndex]
         local disableEditing = theme.id == "default" or theme.id == "server_default"
 
-        buttonDelete:SetDisabled( disableEditing )
+        -- Allow players with permission to edit the server theme
+        if theme.id == "server_default" and CustomChat.CanSetServerTheme( LocalPlayer() ) then
+            disableEditing = false
+        end
+
+        buttonDelete:SetDisabled( disableEditing or theme.id == "server_default" )
         buttonExport:SetDisabled( theme.id == "default" )
 
         editorPanel:SetDisabled( disableEditing )
         editorPanel:LoadThemeData( theme )
 
-        if isRefreshingList then return end
+        if dontUpdate then return end
 
         CustomChat:SetTheme( theme.id )
 
@@ -322,76 +325,77 @@ function Theme.OpenEditor()
         CustomChat.Config:Save()
     end
 
-    RefreshList = function()
-        themesList:Clear()
-        items = Theme.GetList()
-        isRefreshingList = true
+    editor.PaintTheme = function( s, w, h )
+        if s._isSelected then
+            draw.RoundedBox( 4, 0, 0, w, h, editor.colorSelected )
+        else
+            draw.RoundedBox( 4, 0, 0, w, h, editor.colorUnselected )
+        end
 
-        local shouldSelect
+        draw.RoundedBoxEx( 4, 0, 0, w, 22, editor.colorTitle, true, true )
+
+        if s._isSelected then
+            surface.SetDrawColor( 255, 255, 255, 255 * math.abs( math.sin( RealTime() * 3 ) ) )
+            surface.DrawOutlinedRect( 0, 0, w, h, 1 )
+        end
+    end
+
+    editor.RefreshList = function()
+        themesList:Clear()
+        editor.items = Theme.GetList()
+
         local currentThemeId = Theme.serverTheme and "server_default" or Config.themeId
 
-        for i, theme in ipairs( items ) do
+        for i, theme in ipairs( editor.items ) do
             local panel = themesList:Add( "DButton" )
             panel:SetTall( 50 )
             panel:SetText( "" )
             panel:Dock( TOP )
             panel:DockMargin( 0, 0, 0, 5 )
 
-            panel._themeIndex = i
-            panel.Paint = PaintTheme
-            panel.DoClick = OnSelectTheme
-
             local labelName = vgui.Create( "DLabel", panel )
 
-            if theme.id == "server_default" then
-                labelName:SetText( L"theme.server_default" )
-
-            elseif theme.id == "default" then
-                labelName:SetText( L"theme.default" )
-
-            else
-                labelName:SetText( "[" .. theme.id .. ".json] " .. theme.name )
-            end
+            labelName:SetText( theme.id == "server_default" and L"theme.server_default" or (
+                theme.id == "default" and L"theme.default" or "[" .. theme.id .. ".json] " .. theme.name
+            ) )
 
             labelName:SizeToContents()
             labelName:SetTextColor( color_white )
             labelName:Dock( TOP )
             labelName:DockMargin( 6, 5, 0, 0 )
-            panel._labelName = labelName
 
             local labelDescription = vgui.Create( "DLabel", panel )
             labelDescription:SetText( theme.description )
             labelDescription:Dock( TOP )
             labelDescription:DockMargin( 4, 8, 4, 0 )
             labelDescription:SetTextColor( Color( 200, 200, 200 ) )
+
+            panel._themeIndex = i
+            panel._labelName = labelName
             panel._labelDescription = labelDescription
+            panel.Paint = editor.PaintTheme
+            panel.DoClick = editor.OnSelectTheme
 
             if theme.id == currentThemeId then
-                shouldSelect = panel
+                editor.OnSelectTheme( panel, true )
             end
         end
-
-        if shouldSelect then
-            shouldSelect:DoClick()
-        end
-
-        isRefreshingList = false
     end
 
     buttonNew.DoClick = function()
         Derma_StringRequest( L"theme.new", L"theme.new_tip", "", function( text )
-            local id = Theme.CreateThemeFile( text )
+            local id = Theme.CreateFile( text )
             if not id then return end
 
             CustomChat.Config.themeId = id
             CustomChat.Config:Save()
 
-            timer.Simple( 0, RefreshList )
+            timer.Simple( 0, editor.RefreshList )
         end )
     end
 
     buttonDelete.DoClick = function()
-        local theme = items[selectedIndex]
+        local theme = editor.items[editor.selectedIndex]
 
         Derma_Query( L"theme.delete_tip" .. "\n\n" .. theme.id, L"theme.delete", L"yes", function()
             file.Delete( CustomChat.DATA_DIR .. "themes/" .. theme.id .. ".json", "DATA" )
@@ -400,12 +404,12 @@ function Theme.OpenEditor()
             CustomChat.Config:Save()
             CustomChat:SetTheme( "default" )
 
-            timer.Simple( 0, RefreshList )
+            timer.Simple( 0, editor.RefreshList )
         end, L"no" )
     end
 
-    frame._RefreshList = RefreshList
-    RefreshList()
+    frame._RefreshList = editor.RefreshList
+    editor.RefreshList()
 
     if game.SinglePlayer() then return end
     if not CustomChat.CanSetServerTheme( LocalPlayer() ) then return end
@@ -423,12 +427,11 @@ function Theme.OpenEditor()
     end
 
     buttonServerTheme.DoClick = function()
-        local query
-        local args
+        local query, args
         local data = ""
 
-        if selectedIndex then
-            data = CustomChat.Serialize( items[selectedIndex] )
+        if editor.selectedIndex then
+            data = CustomChat.ToJSON( editor.items[editor.selectedIndex] )
         end
 
         if Theme.serverTheme then
@@ -457,7 +460,7 @@ function Theme.OpenEditor()
     end
 end
 
-function Theme.CreateThemeFile( themeId, data )
+function Theme.CreateFile( themeId, data )
     if string.len( themeId ) == 0 or themeId == "default" or themeId == "server_theme" then
         Derma_Message( L"theme.invalid_file_name", L"invalid_input", L"ok" )
 
@@ -483,7 +486,7 @@ function Theme.CreateThemeFile( themeId, data )
     data.name = IsStringValid( data.name ) and data.name or CustomChat.GetLanguageText( "theme.new_name" )
 
     CustomChat.EnsureDataDir()
-    CustomChat.SaveDataFile( filePath, CustomChat.Serialize( data ) )
+    CustomChat.SaveDataFile( filePath, CustomChat.ToJSON( data ) )
 
     if not file.Exists( CustomChat.DATA_DIR .. filePath, "DATA" ) then
         Derma_Message( L"theme.invalid_file_name", L"invalid_input", L"ok" )
@@ -548,7 +551,7 @@ function Theme.ShowImportPanel()
             return false, L"theme.import_error_json"
         end
 
-        local id = Theme.CreateThemeFile( themeId, data )
+        local id = Theme.CreateFile( themeId, data )
         if not id then return false end
 
         return true
@@ -564,7 +567,7 @@ function Theme.ShowImportPanel()
             CustomChat:SetTheme( themeId )
             frame:Close()
 
-            CustomChat.InternalMessage( CustomChat.GetLanguageText( "theme.import_success" ) )
+            CustomChat.PrintMessage( CustomChat.GetLanguageText( "theme.import_success" ) )
 
         elseif errorMessage then
             Derma_Message( L( "theme.import_failed" ) .. ": " .. errorMessage, L"theme.import_failed", L"ok" )
@@ -575,7 +578,7 @@ end
 function Theme.ShowExportPanel( data )
     chat.Close()
 
-    data = CustomChat.Serialize( data )
+    data = CustomChat.ToJSON( data )
 
     local frame = vgui.Create( "DFrame" )
     frame:SetSize( 400, 280 )

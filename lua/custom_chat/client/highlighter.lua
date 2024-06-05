@@ -1,7 +1,9 @@
--- Very basic and generalized syntax highlighter.
--- Only deals with (, ), {, }, [, ], strings,
--- numbers and a few keywords that may exist
--- in many languages (especially SF/E2/Lua)
+--[[
+    Very basic and generalized syntax highlighter.
+
+    Only deals with (, ), {, }, [, ], strings, numbers and a few 
+    keywords that may exist in many languages (especially SF/E2/Lua).
+]]
 
 local punctuation = {
     ["["] = "bracket",
