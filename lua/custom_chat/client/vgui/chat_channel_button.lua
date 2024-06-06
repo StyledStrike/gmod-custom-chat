@@ -1,10 +1,9 @@
 local PANEL = {}
 
-PANEL.buttonSelected = Color( 34, 52, 142 )
-PANEL.buttonHover = Color( 255, 255, 255, 30 )
-
-PANEL.indicatorBackground = Color( 200, 0, 0, 255 )
-PANEL.indicatorText = Color( 255, 255, 255, 255 )
+PANEL.colorSelected = Color( 34, 52, 142 )
+PANEL.colorHover = Color( 255, 255, 255, 30 )
+PANEL.colorIndicator = Color( 200, 0, 0, 255 )
+PANEL.colorText = Color( 255, 255, 255, 255 )
 
 function PANEL:Init()
     self:SetCursor( "hand" )
@@ -26,11 +25,11 @@ end
 
 function PANEL:Paint( w, h )
     if self.isSelected then
-        draw.RoundedBox( 4, 0, 0, w, h, self.buttonSelected )
+        draw.RoundedBox( 4, 0, 0, w, h, self.colorSelected )
     end
 
     if self:IsHovered() then
-        surface.SetDrawColor( self.buttonHover:Unpack() )
+        surface.SetDrawColor( self.colorHover:Unpack() )
         surface.DrawRect( 0, 0, w, h )
     end
 end
@@ -41,8 +40,8 @@ function PANEL:PaintOver( w, h )
         local x = w - size - 2
         local y = h - size - 2
 
-        draw.RoundedBox( size * 0.5, x, y, size, size, self.indicatorBackground )
-        draw.SimpleText( self.notificationCount, "TargetIDSmall", x + size * 0.5, y + size * 0.5, self.indicatorText, 1, 1 )
+        draw.RoundedBox( size * 0.5, x, y, size, size, self.colorIndicator )
+        draw.SimpleText( self.notificationCount, "TargetIDSmall", x + size * 0.5, y + size * 0.5, self.colorText, 1, 1 )
     end
 end
 

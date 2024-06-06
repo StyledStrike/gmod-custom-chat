@@ -195,6 +195,7 @@ function PANEL:CreateChannel( id, tooltip, icon )
     channel.button:Dock( TOP )
     channel.button:DockMargin( 0, 0, 0, 2 )
     channel.button.channelId = id
+    channel.button.colorSelected = self.highlightColor
 
     self.channels[id] = channel
 end
@@ -275,6 +276,10 @@ function PANEL:LoadThemeData( data )
 
     self.entryDock._backgroundColor = self.inputBackgroundColor
     self.channelList._backgroundColor = self.inputBackgroundColor
+
+    for _, c in pairs( self.channels ) do
+        c.button.colorSelected = self.highlightColor
+    end
 
     self:InvalidateChildren()
 end

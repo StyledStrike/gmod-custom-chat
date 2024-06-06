@@ -53,9 +53,9 @@ function Theme.GetDefaultTheme()
         scroll_bg_b = 120,
         scroll_bg_a = 255,
 
-        highlight_r = 95,
-        highlight_g = 181,
-        highlight_b = 231,
+        highlight_r = 60,
+        highlight_g = 105,
+        highlight_b = 230,
         highlight_a = 255
     }
 end
