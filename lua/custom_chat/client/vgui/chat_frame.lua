@@ -145,7 +145,11 @@ function PANEL:OpenChat()
     if CustomChat.isUsingTeamOnly == true then
         self:SetActiveChannel( "team" )
     else
-        self:SetActiveChannel( self.previousChannel or "global" )
+        if self.lastChannelId == "team" then
+            self.lastChannelId = nil
+        end
+
+        self:SetActiveChannel( self.lastChannelId or "global" )
     end
 end
 
@@ -212,11 +216,7 @@ end
 function PANEL:SetActiveChannel( id )
     if not self.channels[id] then return end
 
-    if self.activeChannelId ~= "team" then
-        self.previousChannel = self.activeChannelId
-    end
-
-    self.activeChannelId = id
+    self.lastChannelId = id
     self.channels[id].missedCount = 0
 
     self:SetChannelNotificationCount( id, 0 )
@@ -330,7 +330,7 @@ function PANEL:SubmitMessage()
     end
 
     self.entry:SetText( "" )
-    self.OnSubmitMessage( text, self.activeChannelId )
+    self.OnSubmitMessage( text, self.lastChannelId )
 end
 
 local MAT_BLUR = Material( "pp/blurscreen" )
