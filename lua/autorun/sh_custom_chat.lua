@@ -4,7 +4,7 @@ CustomChat = CustomChat or {}
 CustomChat.DATA_DIR = "custom_chat/"
 
 -- Max. number of characters in a single message
-CustomChat.MAX_MESSAGE_LENGTH = 500
+CustomChat.MAX_MESSAGE_LENGTH = 400
 
 if CLIENT then
     -- Text shown when using Team chat (Default is "Say (Team)...")
