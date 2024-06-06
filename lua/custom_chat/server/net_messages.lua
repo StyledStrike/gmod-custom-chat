@@ -29,8 +29,6 @@ net.Receive( "customchat.say", function( _, ply )
     local channel = net.ReadString()
     local text = net.ReadString()
 
-    -- TODO: filter channel
-
     if text:len() > CustomChat.MAX_MESSAGE_LENGTH then
         text = text:Left( CustomChat.MAX_MESSAGE_LENGTH )
     end

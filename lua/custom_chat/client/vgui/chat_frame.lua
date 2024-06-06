@@ -310,7 +310,7 @@ function PANEL:AppendAtCaret( text )
         self.entry:SetText( newText )
         self.entry:SetCaretPos( caretPos + text:len() )
     else
-        surface.PlaySound( "resource/warning.wav" ) -- TODO: change sound to the E thing
+        surface.PlaySound( "resource/warning.wav" )
     end
 end
 
