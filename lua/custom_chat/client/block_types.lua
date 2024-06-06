@@ -537,11 +537,11 @@ blocks["spoiler"] = function( value, ctx )
     return Create.Text( ChopEnds( value, 3 ), ctx.font, nil, nil, nil, "spoiler" )
 end
 
-blocks["italic"] = function( value, ctx )
-    return Create.Text( ChopEnds( value, 2 ), ctx.font, nil, ctx.color, nil, "b-text" )
+blocks["bold"] = function( value, ctx )
+    return Create.Text( ChopEnds( value, 3 ), ctx.font, nil, ctx.color, nil, "b-text" )
 end
 
-blocks["bold"] = function( value, ctx )
+blocks["italic"] = function( value, ctx )
     return Create.Text( ChopEnds( value, 2 ), ctx.font, nil, ctx.color, nil, "i-text" )
 end
 
