@@ -184,12 +184,12 @@ function CustomChat:SetTheme( themeId )
     end
 end
 
-function CustomChat:AddMessage( contents )
+function CustomChat:AddMessage( contents, channelId )
     if not IsValid( self.frame ) then
         self:CreateFrame()
     end
 
-    local channelId = self.lastNetMessage and self.lastNetMessage.channel or "global"
+    channelId = channelId or ( self.lastNetMessage and self.lastNetMessage.channel or "global" )
     self.frame:AppendContents( contents, channelId, self.Config.timestamps )
 end
 
