@@ -6,6 +6,7 @@ function PANEL:Init()
     self:ShowCloseButton( false )
 
     self.channels = {}
+    self.channelIndexes = {}
 
     self.channelList = vgui.Create( "DPanel", self )
     self.channelList:SetWide( 30 )
@@ -89,6 +90,11 @@ function PANEL:Init()
             end
 
         elseif code == KEY_TAB then
+            if input.IsControlDown() then
+                self:NextChannel()
+                return
+            end
+
             local text = s:GetText()
             local replaceText = hook.Run( "OnChatTab", text )
 
@@ -185,23 +191,46 @@ function PANEL:ClearEverything()
     end
 end
 
-function PANEL:CreateChannel( id, tooltip, icon )
+function PANEL:NextChannel()
+    local currentIndex = 1
+
+    for i, id in ipairs( self.channelIndexes ) do
+        if self.channels[id].button.isSelected then
+            currentIndex = i
+            break
+        end
+    end
+
+    local nextIndex = currentIndex + 1
+
+    if nextIndex > #self.channelIndexes then
+        nextIndex = 1
+    end
+
+    self:SetActiveChannel( self.channelIndexes[nextIndex] )
+end
+
+function PANEL:CreateChannel( id, name, icon )
     if self.channels[id] then return end
 
     self.history:QueueJavascript( "CreateChannel('" .. id .. "');" )
 
-    local channel = { missedCount = 0 }
+    local channel = {
+        name = name,
+        missedCount = 0
+    }
 
     channel.button = vgui.Create( "CustomChat_ChannelButton", self.channelList )
     channel.button:SetIcon( icon )
     channel.button:SetTall( 28 )
-    channel.button:SetTooltip( tooltip )
+    channel.button:SetTooltip( name )
     channel.button:Dock( TOP )
     channel.button:DockMargin( 0, 0, 0, 2 )
     channel.button.channelId = id
     channel.button.colorSelected = self.highlightColor
 
     self.channels[id] = channel
+    self.channelIndexes[#self.channelIndexes + 1] = id
 end
 
 function PANEL:RemoveChannel( id )
@@ -211,13 +240,16 @@ function PANEL:RemoveChannel( id )
 
     self.channels[id].button:Remove()
     self.channels[id] = nil
+
+    table.RemoveByValue( self.channelIndexes, id )
 end
 
 function PANEL:SetActiveChannel( id )
-    if not self.channels[id] then return end
+    local channel = self.channels[id]
+    if not channel then return end
 
     self.lastChannelId = id
-    self.channels[id].missedCount = 0
+    channel.missedCount = 0
 
     self:SetChannelNotificationCount( id, 0 )
     self.history:QueueJavascript( "SetActiveChannel('" .. id .. "');" )
@@ -235,8 +267,12 @@ function PANEL:SetActiveChannel( id )
         color.a = self.inputBackgroundColor.a
 
         self:SetEntryLabel( CustomChat.TEAM_CHAT_LABEL, color )
-    else
+
+    elseif id == "global" then
         self:SetEntryLabel( "custom_chat.say" )
+
+    else
+        self:SetEntryLabel( L( "say" ) .. " (" .. channel.name .. ")" )
     end
 
     if self.isChatOpen then
