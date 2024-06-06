@@ -128,7 +128,7 @@ pre {
     width: 45%;
     height: 90%;
     padding: 4px;
-
+    user-select: none;
     overflow-x: hidden;
     overflow-y: scroll;
 
@@ -829,5 +829,3 @@ function PANEL.OnSelectEmoji( _id ) end
 function PANEL.OnRightClick( _data ) end
 
 vgui.Register( "CustomChat_History", PANEL, "DHTML" )
-
-CustomChat.ResetChatbox()
