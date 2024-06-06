@@ -339,9 +339,11 @@ function PANEL:AppendContents( contents, channelId, showTimestamp )
     local channel = self.channels[channelId]
     if not channel then return end
 
-    channel.missedCount = channel.missedCount + 1
+    if self.lastChannelId ~= channelId then
+        channel.missedCount = channel.missedCount + 1
+    end
 
-    if channel.missedCount > 1 then
+    if channel.missedCount > 0 then
         self:SetChannelNotificationCount( channelId, channel.missedCount )
     end
 
