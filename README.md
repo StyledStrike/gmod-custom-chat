@@ -9,6 +9,7 @@ A simple and customizable chat box that can format text, display images and emoj
 
 * Customizable
 * Has built-in emojis
+* Has a direct message/chat channels system
 * Supports text formatting (bold, italic, fonts, code blocks, etc.)
 * Embed image/audio files (Only loads from trusted websites by default)
 * Find text with _Ctrl+F_
