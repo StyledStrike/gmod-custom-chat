@@ -6,6 +6,9 @@ CustomChat.DATA_DIR = "custom_chat/"
 -- Max. number of characters in a single message
 CustomChat.MAX_MESSAGE_LENGTH = 400
 
+-- Max. number of characters in a channel ID
+CustomChat.MAX_CHANNEL_ID_LENGTH = 200
+
 if CLIENT then
     -- Text shown when using Team chat (Default is "Say (Team)...")
     CustomChat.TEAM_CHAT_LABEL = "custom_chat.team_say"

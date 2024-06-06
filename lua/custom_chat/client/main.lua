@@ -149,11 +149,15 @@ function CustomChat:CreateFrame()
         self:OpenContextMenu( data )
     end
 
-    self.frame.OnSubmitMessage = function( text, channelId )
+    self.frame.OnSubmitMessage = function( text, channel )
         if string.len( text ) > 0 then
+            local message = CustomChat.ToJSON( {
+                channel = channel,
+                text = text
+            } )
+
             net.Start( "customchat.say", false )
-            net.WriteString( channelId )
-            net.WriteString( text )
+            net.WriteString( message )
             net.SendToServer()
         end
 
@@ -184,13 +188,13 @@ function CustomChat:SetTheme( themeId )
     end
 end
 
-function CustomChat:AddMessage( contents, channelId )
+function CustomChat:AddMessage( contents, channel )
     if not IsValid( self.frame ) then
         self:CreateFrame()
     end
 
-    channelId = channelId or ( self.lastNetMessage and self.lastNetMessage.channel or "global" )
-    self.frame:AppendContents( contents, channelId, self.Config.timestamps )
+    channel = channel or ( self.lastReceivedMessage and self.lastReceivedMessage.channel or "global" )
+    self.frame:AppendContents( contents, channel, self.Config.timestamps )
 end
 
 function CustomChat:CreateCustomChannel( id, tooltip, icon )
@@ -199,7 +203,11 @@ function CustomChat:CreateCustomChannel( id, tooltip, icon )
     end
 
     if id == "global" or id == "team" then
-        error( "You cannot call CustomChat:CreateCustomChannel with reserved channel IDs!" )
+        error( "You cannot call CustomChat:CreateCustomChannel with a reserved channel ID!" )
+    end
+
+    if id:len() > CustomChat.MAX_CHANNEL_ID_LENGTH then
+        error( "You cannot use a ID longer than " .. CustomChat.MAX_CHANNEL_ID_LENGTH .. " characters on CustomChat:CreateCustomChannel!" )
     end
 
     self.frame:CreateChannel( id, tooltip, icon )
@@ -209,7 +217,7 @@ function CustomChat:RemoveCustomChannel( id )
     if not IsValid( self.frame ) then return end
 
     if id == "global" or id == "team" then
-        error( "You cannot call CustomChat:RemoveCustomChannel with reserved channel IDs!" )
+        error( "You cannot call CustomChat:RemoveCustomChannel with a reserved channel ID!" )
     end
 
     self.frame:RemoveChannel( id )
@@ -592,20 +600,17 @@ hook.Add( "NetPrefs_OnChange", "CustomChat.OnServerConfigChange", function( key,
 end )
 
 net.Receive( "customchat.say", function()
-    local channel = net.ReadString()
-    local text = net.ReadString()
-    local ply = net.ReadEntity()
+    local message = net.ReadString()
+    local speaker = net.ReadEntity()
 
-    if not IsValid( ply ) then return end
+    if not IsValid( speaker ) then return end
 
-    local isDead = not ply:Alive()
+    message = CustomChat.FromJSON( message )
+    message.speaker = speaker
 
-    CustomChat.lastNetMessage = {
-        speaker = ply,
-        channel = channel
-    }
+    CustomChat.lastReceivedMessage = message
 
-    hook.Run( "OnPlayerChat", ply, text, channel == "team", isDead )
+    hook.Run( "OnPlayerChat", speaker, message.text, message.channel == "team", not speaker:Alive() )
 
-    CustomChat.lastNetMessage = nil
+    CustomChat.lastReceivedMessage = nil
 end )
