@@ -20,6 +20,17 @@ function PANEL:Init()
         surface.DrawRect( 0, 0, w, h )
     end
 
+    local buttonOpenDM = vgui.Create( "DButton", self.channelList )
+    buttonOpenDM:SetIcon( "icon16/add.png" )
+    buttonOpenDM:SetTall( 26 )
+    buttonOpenDM:SetTooltip( L"channel.open_dm" )
+    buttonOpenDM:SetPaintBackground( false )
+    buttonOpenDM:Dock( BOTTOM )
+
+    buttonOpenDM.DoClick = function()
+        self:OpenDirectMessage()
+    end
+
     self.history = vgui.Create( "CustomChat_History", self )
     self.history:Dock( FILL )
     self.history:DockMargin( 0, -24, 0, 0 )
@@ -167,6 +178,10 @@ function PANEL:CloseChat()
 
     self:SetTemporaryMode( true )
     self.isChatOpen = false
+
+    if IsValid( self.frameOpenDM ) then
+        self.frameOpenDM:Close()
+    end
 end
 
 function PANEL:SetTemporaryMode( tempMode )
@@ -221,9 +236,9 @@ function PANEL:CreateChannel( id, name, icon )
     }
 
     channel.button = vgui.Create( "CustomChat_ChannelButton", self.channelList )
-    channel.button:SetIcon( icon )
     channel.button:SetTall( 28 )
     channel.button:SetTooltip( name )
+    channel.button:SetIcon( icon )
     channel.button:Dock( TOP )
     channel.button:DockMargin( 0, 0, 0, 2 )
     channel.button.channelId = id
@@ -322,11 +337,7 @@ end
 
 function PANEL:AppendContents( contents, channelId, showTimestamp )
     local channel = self.channels[channelId]
-
-    if not channel then
-        channelId = "global"
-        channel = self.channels["global"]
-    end
+    if not channel then return end
 
     channel.missedCount = channel.missedCount + 1
 
@@ -334,7 +345,7 @@ function PANEL:AppendContents( contents, channelId, showTimestamp )
         self:SetChannelNotificationCount( channelId, channel.missedCount )
     end
 
-    self.history:AppendContents( contents, channelId or "global", showTimestamp )
+    self.history:AppendContents( contents, channelId, showTimestamp )
 end
 
 function PANEL:AppendAtCaret( text )
@@ -367,6 +378,115 @@ function PANEL:SubmitMessage()
 
     self.entry:SetText( "" )
     self.OnSubmitMessage( text, self.lastChannelId )
+end
+
+function PANEL:OpenDirectMessage()
+    local frame = vgui.Create( "DFrame" )
+    frame:SetSize( 380, 300 )
+    frame:SetTitle( L"channel.open_dm" )
+    frame:ShowCloseButton( true )
+    frame:SetDeleteOnClose( true )
+    frame:MakePopup()
+
+    frame.OnClose = function()
+        self.frameOpenDM = nil
+    end
+
+    self.frameOpenDM = frame
+    CustomChat:PutFrameToTheSide( frame )
+
+    local playersScroll = vgui.Create( "DScrollPanel", frame )
+    playersScroll:Dock( FILL )
+    playersScroll.pnlCanvas:DockPadding( 4, 4, 4, 4 )
+
+    local scrollColor = Color( 30, 30, 30 )
+
+    playersScroll.Paint = function( _, w, h )
+        draw.RoundedBox( 4, 0, 0, w, h, scrollColor )
+    end
+
+    local targets = {}
+    local localPly = LocalPlayer()
+
+    -- Filter existing DMs
+    for _, ply in ipairs( player.GetHumans() ) do
+        if ply ~= localPly and not self.channels[ply:SteamID()] then
+            targets[#targets + 1] = ply
+        end
+    end
+
+    if #targets == 0 then
+        frame:SetTall( 80 )
+        CustomChat:PutFrameToTheSide( frame )
+
+        local label = vgui.Create( "DLabel", frame )
+        label:Dock( FILL )
+        label:SetTextColor( Color( 255, 255, 255 ) )
+        label:SetContentAlignment( 5 )
+        label:SetText( L"channel.no_dm_targets" )
+
+        return
+    end
+
+    local bgColor = Color( 0, 0, 0 )
+    local nameColor = Color( 255, 255, 255 )
+
+    local PaintLine = function( s, w, h )
+        draw.RoundedBox( 4, 0, 0, w, h, bgColor )
+        draw.SimpleText( s._name, "Trebuchet18", 36, h * 0.5, nameColor, 0, 1 )
+    end
+
+    local ClickLine = function( s )
+        frame:Close()
+
+        if IsValid( s._ply ) then
+            self:CreateChannel( s._id, s._name, s._ply )
+            self:SetActiveChannel( s._id )
+        end
+    end
+
+    local function UpdateList( filter )
+        playersScroll:Clear()
+
+        for _, ply in ipairs( targets ) do
+            local playerName = ply:Nick()
+
+            if not filter or playerName:lower():find( filter, 1, true ) then
+                local line = vgui.Create( "DPanel", playersScroll )
+                line:SetCursor( "hand" )
+                line:SetTall( 32 )
+                line:Dock( TOP )
+                line:DockMargin( 0, 0, 0, 2 )
+
+                line._ply = ply
+                line._id = ply:SteamID()
+                line._name = playerName
+                line.Paint = PaintLine
+                line.OnMousePressed = ClickLine
+
+                local avatar = vgui.Create( "AvatarImage", line )
+                avatar:Dock( LEFT )
+                avatar:DockMargin( 4, 4, 4, 4 )
+                avatar:SetWide( 24 )
+                avatar:SetPlayer( ply, 64 )
+            end
+        end
+    end
+
+    UpdateList()
+
+    local entryFilter = vgui.Create( "DTextEntry", frame )
+    entryFilter:SetTabbingDisabled( true )
+    entryFilter:SetDrawLanguageID( false )
+    entryFilter:SetPlaceholderText( "custom_chat.channel.dm_player_filter" )
+    entryFilter:Dock( BOTTOM )
+
+    entryFilter.OnChange = function( s )
+        local text = s:GetText():Trim():lower()
+        if text:len() < 1 then text = nil end
+
+        UpdateList( text )
+    end
 end
 
 local MAT_BLUR = Material( "pp/blurscreen" )

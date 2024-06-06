@@ -181,21 +181,7 @@ function Theme.OpenEditor()
     end
 
     Theme.editorFrame = frame
-
-    -- Put the frame on the side of the chat box,
-    -- while keeping it inside of the screen
-    do
-        local chatX, chatY = chat.GetChatBoxPos()
-        local chatW, chatH = chat.GetChatBoxSize()
-
-        local x = chatX + chatW + 8
-        local y = ( chatY + chatH * 0.5 ) - ( frame:GetTall() * 0.5 )
-
-        x = math.Clamp( x, 0, ScrW() - frame:GetWide() )
-        y = math.Clamp( y, 0, ScrH() - frame:GetTall() )
-
-        frame:SetPos( x, y )
-    end
+    CustomChat:PutFrameToTheSide( frame )
 
     local editor = {
         items = {},

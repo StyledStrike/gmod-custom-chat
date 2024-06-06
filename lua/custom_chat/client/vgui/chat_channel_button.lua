@@ -4,6 +4,7 @@ PANEL.colorSelected = Color( 34, 52, 142 )
 PANEL.colorHover = Color( 255, 255, 255, 30 )
 PANEL.colorIndicator = Color( 200, 0, 0, 255 )
 PANEL.colorText = Color( 255, 255, 255, 255 )
+PANEL.hoverFunc = function() return false end
 
 function PANEL:Init()
     self:SetCursor( "hand" )
@@ -13,7 +14,22 @@ function PANEL:Init()
 end
 
 function PANEL:SetIcon( path )
-    self.icon:SetImage( path )
+    self.icon:Remove()
+
+    if isentity( path ) and IsValid( path ) and path:IsPlayer() then
+        self.icon = vgui.Create( "AvatarImage", self )
+        self.icon:SetPlayer( path, 64 )
+        self.icon:SetZPos( self:GetZPos() + 10 )
+        self.icon.TestHover = self.hoverFunc
+
+        return
+    end
+
+    self.icon = vgui.Create( "DImage", self )
+
+    if type( path ) == "string" then
+        self.icon:SetImage( path )
+    end
 end
 
 function PANEL:PerformLayout( w, h )

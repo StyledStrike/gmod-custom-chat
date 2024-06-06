@@ -43,11 +43,45 @@ net.Receive( "customchat.say", function( _, speaker )
     end
 
     local teamOnly = channel == "team"
+    local dmTarget = nil
+
+    -- Is this a DM?
+    if util.SteamIDTo64( channel ) ~= "0" then
+        dmTarget = player.GetBySteamID( channel )
+        if not IsValid( dmTarget ) then return end
+        teamOnly = true
+    end
 
     text = CustomChat.CleanupString( text )
     text = hook.Run( "PlayerSay", speaker, text, teamOnly )
 
     if not IsStringValid( text ) then return end
+
+    if dmTarget then
+        -- Send to the DM target
+        message = CustomChat.ToJSON( {
+            channel = speaker:SteamID(),
+            text = text
+        } )
+
+        net.Start( "customchat.say", false )
+        net.WriteString( message )
+        net.WriteEntity( speaker )
+        net.Send( dmTarget )
+
+        -- And also relay it back to the speaker
+        message = CustomChat.ToJSON( {
+            channel = channel,
+            text = text
+        } )
+
+        net.Start( "customchat.say", false )
+        net.WriteString( message )
+        net.WriteEntity( speaker )
+        net.Send( speaker )
+
+        return
+    end
 
     hook.Run( "player_say", {
         priority = 1, -- ??

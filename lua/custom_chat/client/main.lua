@@ -93,6 +93,21 @@ function CustomChat.IsEnabled()
     return CustomChat.GetConVarInt( "enable", 1 ) > 0
 end
 
+--- Put a frame on the side of the chat box,
+--- while keeping it inside of the screen.
+function CustomChat:PutFrameToTheSide( frame )
+    local chatX, chatY = chat.GetChatBoxPos()
+    local chatW, chatH = chat.GetChatBoxSize()
+
+    local x = chatX + chatW + 8
+    local y = ( chatY + chatH * 0.5 ) - ( frame:GetTall() * 0.5 )
+
+    x = math.Clamp( x, 0, ScrW() - frame:GetWide() )
+    y = math.Clamp( y, 0, ScrH() - frame:GetTall() )
+
+    frame:SetPos( x, y )
+end
+
 --- Helper function to "reset" the chat box.
 --- Used for development.
 function CustomChat.ResetChatbox()
@@ -188,13 +203,32 @@ function CustomChat:SetTheme( themeId )
     end
 end
 
-function CustomChat:AddMessage( contents, channel )
+function CustomChat:AddMessage( contents, channelId )
     if not IsValid( self.frame ) then
         self:CreateFrame()
     end
 
-    channel = channel or ( self.lastReceivedMessage and self.lastReceivedMessage.channel or "global" )
-    self.frame:AppendContents( contents, channel, self.Config.timestamps )
+    channelId = channelId or ( self.lastReceivedMessage and self.lastReceivedMessage.channel or "global" )
+
+    local dmSpeaker = nil
+
+    if util.SteamIDTo64( channelId ) ~= "0" then
+        local ply = player.GetBySteamID( channelId )
+
+        if IsValid( ply ) then
+            dmSpeaker = ply
+            table.insert( contents, 1, ":email: " )
+        end
+    end
+
+    if not self.frame.channels[channelId] then
+        -- If this is not a DM, ignore this message
+        if not dmSpeaker then return end
+
+        self.frame:CreateChannel( channelId, dmSpeaker:Nick(), dmSpeaker )
+    end
+
+    self.frame:AppendContents( contents, channelId, self.Config.timestamps )
 end
 
 function CustomChat:CreateCustomChannel( id, tooltip, icon )
