@@ -1,8 +1,8 @@
 -- Dictionary of all emojis, where keys are emoji IDs and values are tables
-local emojis = CustomChat.emojis or {}
+local emojis = {}
 
 -- Array of emoji categories
-local emojiCategories = CustomChat.emojiCategories or {}
+local emojiCategories = {}
 
 CustomChat.emojis = emojis
 CustomChat.emojiCategories = emojiCategories
