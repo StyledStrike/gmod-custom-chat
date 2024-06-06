@@ -246,6 +246,8 @@ function PANEL:CreateChannel( id, name, icon )
 
     self.channels[id] = channel
     self.channelIndexes[#self.channelIndexes + 1] = id
+
+    return channel
 end
 
 function PANEL:RemoveChannel( id )
@@ -442,7 +444,9 @@ function PANEL:OpenDirectMessage()
         frame:Close()
 
         if IsValid( s._ply ) then
-            self:CreateChannel( s._id, s._name, s._ply )
+            local channel = self:CreateChannel( s._id, s._name, s._ply )
+            channel.isDM = true
+
             self:SetActiveChannel( s._id )
         end
     end

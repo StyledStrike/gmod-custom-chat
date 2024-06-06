@@ -8,9 +8,10 @@ PANEL.hoverFunc = function() return false end
 
 function PANEL:Init()
     self:SetCursor( "hand" )
+    self.icon = vgui.Create( "DImage", self )
+
     self.isSelected = false
     self.notificationCount = 0
-    self.icon = vgui.Create( "DImage", self )
 end
 
 function PANEL:SetIcon( path )
@@ -62,9 +63,11 @@ function PANEL:PaintOver( w, h )
 end
 
 function PANEL:OnMousePressed( keyCode )
+    -- self -> channel list -> chat frame
+    local frame = self:GetParent():GetParent()
+
     if keyCode == MOUSE_LEFT then
-        -- self -> channel list -> chat frame
-        self:GetParent():GetParent():SetActiveChannel( self.channelId )
+        frame:SetActiveChannel( self.channelId )
     end
 end
 

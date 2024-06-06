@@ -225,7 +225,8 @@ function CustomChat:AddMessage( contents, channelId )
         -- If this is not a DM, ignore this message
         if not dmSpeaker then return end
 
-        self.frame:CreateChannel( channelId, dmSpeaker:Nick(), dmSpeaker )
+        local channel = self.frame:CreateChannel( channelId, dmSpeaker:Nick(), dmSpeaker )
+        channel.isDM = true
     end
 
     self.frame:AppendContents( contents, channelId, self.Config.timestamps )
@@ -297,6 +298,16 @@ function CustomChat:OpenContextMenu( data )
     optionsMenu:AddOption( L"find", function()
         self.frame.history:FindText()
     end ):SetIcon( "icon16/zoom.png" )
+
+    local channelId = self.frame.lastChannelId
+    local channel = self.frame.channels[channelId]
+
+    if channel.isDM then
+        optionsMenu:AddOption( L"channel.close_dm", function()
+            self.frame:NextChannel()
+            self.frame:RemoveChannel( channelId )
+        end ):SetIcon( "icon16/cancel.png" )
+    end
 
     optionsMenu:AddOption( L"context.clear_all", function()
         self.frame:ClearEverything()
