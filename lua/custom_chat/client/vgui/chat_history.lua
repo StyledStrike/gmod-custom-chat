@@ -355,6 +355,7 @@ var elChannelPanel = document.getElementById("channelContainer");
 var elEmojiPanel = document.getElementById("emojiContainer");
 
 var channels = {};
+var lastEmojiScroll = 0;
 
 function RemoveElementById(id) {
     var e = document.getElementById(id);
@@ -384,7 +385,14 @@ function RemoveChannel(chid) {
 }
 
 function SetEmojiPanelVisible(v) {
-    elEmojiPanel.style["display"] = v ? "block" : "none";
+    if (v) {
+        elEmojiPanel.style["display"] = "block";
+        elEmojiPanel.scrollTop = lastEmojiScroll;
+    }
+    else {
+        lastEmojiScroll = elEmojiPanel.scrollTop;
+        elEmojiPanel.style["display"] = "none";
+    }
 }
 
 function SetChatVisible(v) {
