@@ -308,7 +308,7 @@ function CustomChat:OpenContextMenu( data )
     sliderFontSize.Label:SetTextColor( color_white )
 
     sliderFontSize.OnValueChanged = function( _, value )
-        Config.fontSize = math.floor( math.Clamp( value, 12, 48 ) )
+        Config.fontSize = math.Round( math.Clamp( value, 12, 48 ) )
         self.frame.history:SetFontSize( Config.fontSize )
         Config:Save()
     end
