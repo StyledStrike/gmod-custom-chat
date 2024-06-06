@@ -193,6 +193,28 @@ function CustomChat:AddMessage( contents )
     self.frame:AppendContents( contents, channelId, self.Config.timestamps )
 end
 
+function CustomChat:CreateCustomChannel( id, tooltip, icon )
+    if not IsValid( self.frame ) then
+        self:CreateFrame()
+    end
+
+    if id == "global" or id == "team" then
+        error( "You cannot call CustomChat:CreateCustomChannel with reserved channel IDs!" )
+    end
+
+    self.frame:CreateChannel( id, tooltip, icon )
+end
+
+function CustomChat:RemoveCustomChannel( id )
+    if not IsValid( self.frame ) then return end
+
+    if id == "global" or id == "team" then
+        error( "You cannot call CustomChat:RemoveCustomChannel with reserved channel IDs!" )
+    end
+
+    self.frame:RemoveChannel( id )
+end
+
 function CustomChat:OpenContextMenu( data )
     data = data or {}
 
