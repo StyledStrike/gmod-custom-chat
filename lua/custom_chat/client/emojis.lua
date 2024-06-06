@@ -101,12 +101,23 @@ function CustomChat.OpenEmojiEditor()
     local L = CustomChat.GetLanguageText
 
     local frame = vgui.Create( "DFrame" )
-    frame:SetSize( 600, 400 )
+    frame:SetSize( 700, 400 )
     frame:SetTitle( L"emojis.title" )
     frame:ShowCloseButton( true )
     frame:SetDeleteOnClose( true )
     frame:Center()
     frame:MakePopup()
+
+    local panelWarning = vgui.Create( "DPanel", frame )
+    panelWarning:Dock( BOTTOM )
+    panelWarning:DockPadding( 4, 4, 4, 4 )
+    panelWarning:SetBackgroundColor( Color( 82, 63, 23 ) )
+
+    local labelWarning = vgui.Create( "DLabel", panelWarning )
+    labelWarning:Dock( FILL )
+    labelWarning:SetTextColor( Color( 255, 255, 160 ) )
+    labelWarning:SetContentAlignment( 5 )
+    labelWarning:SetText( L"emojis.branch_warning" )
 
     local customEmojis = table.Copy( emojiCategories[1].items )
     local RefreshList
@@ -213,7 +224,6 @@ function CustomChat.OpenEmojiEditor()
         entryURL:SetMaximumCharCount( 256 )
         entryURL:SetUpdateOnType( true )
         entryURL:SetPlaceholderText( L"emojis.url_placeholder" )
-        entryURL._branchWarning = true
 
         entryURL.OnValueChange = function( s, value )
             local newURL = string.Trim( value )
@@ -221,11 +231,6 @@ function CustomChat.OpenEmojiEditor()
             if string.len( newURL ) == 0 then
                 MarkEntryAsInvalid( s, L"emojis.empty_url" )
             else
-                if not s._branchWarning and BRANCH == "unknown" and newURL:sub( 1, 5 ) == "https" then
-                    s._branchWarning = true
-                    Derma_Message( L"emojis.branch_warning", L"emojis.title", L"ok" )
-                end
-
                 MarkEntryAsValid( s )
             end
 
@@ -235,7 +240,6 @@ function CustomChat.OpenEmojiEditor()
         timer.Simple( 0, function()
             entryId:SetValue( id )
             entryURL:SetValue( url )
-            entryURL._branchWarning = nil
         end )
 
         local btnRemove = vgui.Create( "DButton", item )
