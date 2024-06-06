@@ -1,102 +1,62 @@
 resource.AddWorkshop( "2799307109" )
 
-util.AddNetworkString( "customchat.say" )
-util.AddNetworkString( "customchat.player_spawned" )
+local LAST_SEEN_TABLE = CustomChat.LAST_SEEN_TABLE
 
--- handle message networking 
-local sayCooldown = {}
+-- Setup "last seen" SQLite table
+sql.Query( "CREATE TABLE IF NOT EXISTS " .. LAST_SEEN_TABLE ..
+    " ( SteamID TEXT NOT NULL PRIMARY KEY, LastSeen INTEGER NOT NULL );" )
 
--- Gets a list of all players who can
--- listen to messages from a "speaker".
-function CustomChat:GetListeners( speaker, text, channel )
-    local targets = {}
+function CustomChat:GetLastSeen( steamId )
+    local row = sql.QueryRow( "SELECT LastSeen FROM " .. LAST_SEEN_TABLE .. " WHERE SteamID = '" .. steamId .. "';" )
 
-    if channel == self.channels.everyone then
-        targets = player.GetHumans()
-
-    elseif channel == self.channels.team then
-        targets = team.GetPlayers( speaker:Team() )
+    if row and row.LastSeen then
+        return row.LastSeen
     end
-
-    local listeners = {}
-    local teamOnly = channel ~= CustomChat.channels.everyone
-
-    for _, ply in ipairs( targets ) do
-        if hook.Run( "PlayerCanSeePlayersChat", text, teamOnly, ply, speaker ) then
-            listeners[#listeners + 1] = ply
-        end
-    end
-
-    return listeners
 end
 
-net.Receive( "customchat.say", function( _, ply )
-    local id = ply:AccountID()
-    local nextSay = sayCooldown[id] or 0
+function CustomChat:SetLastSeen( steamId, time )
+    local row = sql.QueryRow( "SELECT LastSeen FROM " .. LAST_SEEN_TABLE .. " WHERE SteamID = '" .. steamId .. "';" )
 
-    if RealTime() < nextSay then return end
+    time = math.floor( time )
 
-    sayCooldown[id] = RealTime() + 0.5
+    if row then
+        local success = sql.Query( "UPDATE " .. LAST_SEEN_TABLE ..
+            " SET LastSeen = " .. time .. " WHERE SteamID = '" .. steamId .. "';" )
 
-    local channel = net.ReadUInt( 4 )
-    local text = net.ReadString()
+        if success == false then
+            CustomChat.Print( "SetLastSeen SQL for player %s failed: %s", steamId, sql.LastError() )
+        end
+    else
+        local success = sql.Query( "INSERT INTO " .. LAST_SEEN_TABLE ..
+            " ( SteamID, LastSeen ) VALUES ( '" .. steamId .. "', " .. time .. " );" )
 
-    if text:len() > CustomChat.MAX_MESSAGE_LENGTH then
-        text = text:Left( CustomChat.MAX_MESSAGE_LENGTH )
+        if success == false then
+            CustomChat.Print( "SetLastSeen SQL for player %s failed: %s", steamId, sql.LastError() )
+        end
+    end
+end
+
+function CustomChat:LoadConfig()
+    CustomChat.EnsureDataDir()
+
+    local ToJSON, FromJSON = CustomChat.ToJSON, CustomChat.FromJSON
+    local LoadDataFile = CustomChat.LoadDataFile
+
+    local themeData = FromJSON( LoadDataFile( "server_theme.json" ) )
+    local emojiData = FromJSON( LoadDataFile( "server_emojis.json" ) )
+    local tagsData = FromJSON( LoadDataFile( "server_tags.json" ) )
+
+    if not table.IsEmpty( themeData ) then
+        NetPrefs.Set( "customchat.theme", ToJSON( themeData ) )
     end
 
-    local teamOnly = channel ~= CustomChat.channels.everyone
+    if not table.IsEmpty( emojiData ) then
+        NetPrefs.Set( "customchat.emojis", ToJSON( emojiData ) )
+    end
 
-    text = CustomChat.CleanupString( text )
-    text = hook.Run( "PlayerSay", ply, text, teamOnly )
+    if not table.IsEmpty( tagsData ) then
+        NetPrefs.Set( "customchat.tags", ToJSON( tagsData ) )
+    end
+end
 
-    if not isstring( text ) or text == "" then return end
-
-    hook.Run( "player_say", {
-        priority = 1, -- ??
-        userid = ply:UserID(),
-        text = text,
-        teamonly = teamOnly and 1 or 0,
-    } )
-
-    local targets = CustomChat:GetListeners( ply, text, channel )
-    if #targets == 0 then return end
-
-    net.Start( "customchat.say", false )
-    net.WriteUInt( channel, 4 )
-    net.WriteString( text )
-    net.WriteEntity( ply )
-    net.Send( targets )
-end )
-
-hook.Add( "PlayerDisconnected", "CustomChat.SayCooldownCleanup", function( ply )
-    sayCooldown[ply:AccountID()] = nil
-    CustomChat.Config:SetLastSeen( ply:SteamID(), os.time() )
-end )
-
-hook.Add( "PlayerInitialSpawn", "CustomChat.BroadcastInitialSpawn", function( ply )
-    -- give some time for other addons to assign the team
-    timer.Simple( 1, function()
-        if not IsValid( ply ) then return end
-
-        local steamId = ply:SteamID()
-        local color = team.GetColor( ply:Team() )
-
-        local time = os.time()
-        local absenceLength = 0
-        local lastSeen = CustomChat.Config:GetLastSeen( steamId )
-
-        if lastSeen then
-            absenceLength = math.max( time - lastSeen, 0 )
-        end
-
-        CustomChat.Config:SetLastSeen( steamId, time )
-
-        net.Start( "customchat.player_spawned", false )
-        net.WriteString( steamId )
-        net.WriteColor( color, false )
-        net.WriteFloat( absenceLength )
-        net.Broadcast()
-    end )
-end, HOOK_LOW )
-
+CustomChat:LoadConfig()

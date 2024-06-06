@@ -1,13 +1,39 @@
+local L = CustomChat.GetLanguageText
 local PANEL = {}
 
 function PANEL:Init()
     self:SetTitle( "" )
     self:ShowCloseButton( false )
 
-    self.history = vgui.Create( "CustomChatHistory", self )
+    self.channels = {}
+    self.channelIndexes = {}
+
+    self.channelList = vgui.Create( "DPanel", self )
+    self.channelList:SetWide( 30 )
+    self.channelList:Dock( LEFT )
+    self.channelList:DockMargin( 0, -24, 4, 0 )
+    self.channelList:DockPadding( 2, 2, 2, 2 )
+    self.channelList._backgroundColor = Color( 0, 0, 0 )
+
+    self.channelList.Paint = function( s, w, h )
+        surface.SetDrawColor( s._backgroundColor:Unpack() )
+        surface.DrawRect( 0, 0, w, h )
+    end
+
+    local buttonOpenDM = vgui.Create( "DButton", self.channelList )
+    buttonOpenDM:SetIcon( "icon16/add.png" )
+    buttonOpenDM:SetTall( 26 )
+    buttonOpenDM:SetTooltip( L"channel.open_dm" )
+    buttonOpenDM:SetPaintBackground( false )
+    buttonOpenDM:Dock( BOTTOM )
+
+    buttonOpenDM.DoClick = function()
+        self:OpenDirectMessage()
+    end
+
+    self.history = vgui.Create( "CustomChat_History", self )
     self.history:Dock( FILL )
     self.history:DockMargin( 0, -24, 0, 0 )
-    self.history:SetDisplayMode( "temp" )
     self.history:SetFontSize( CustomChat.Config.fontSize )
     self.history:UpdateEmojiPanel()
 
@@ -52,23 +78,22 @@ function PANEL:Init()
     end
 
     self.entry.OnChange = function( s )
-        if s.GetText then
-            local text = s:GetText() or ""
+        if not s.GetText then return end
 
-            hook.Run( "ChatTextChanged", text )
+        local text = s:GetText() or ""
 
-            local _, lineCount = string.gsub( text, "\n", "\n" )
-            lineCount = math.Clamp( lineCount + 1, 1, 5 )
+        hook.Run( "ChatTextChanged", text )
 
-            self.entryDock:SetTall( 20 * lineCount )
-            self.entry._multilineMode = lineCount > 1
-        end
+        local _, lineCount = string.gsub( text, "\n", "\n" )
+        lineCount = math.Clamp( lineCount + 1, 1, 5 )
+
+        self.entryDock:SetTall( 20 * lineCount )
+        self.entry._multilineMode = lineCount > 1
     end
 
     self.entry.OnKeyCodeTyped = function( s, code )
         if code == KEY_ESCAPE then
             chat.Close()
-            gui.HideGameUI()
 
         elseif code == KEY_F then
             if input.IsControlDown() then
@@ -76,6 +101,11 @@ function PANEL:Init()
             end
 
         elseif code == KEY_TAB then
+            if input.IsControlDown() then
+                self:NextChannel()
+                return
+            end
+
             local text = s:GetText()
             local replaceText = hook.Run( "OnChatTab", text )
 
@@ -114,13 +144,226 @@ function PANEL:Init()
         self.history:ToggleEmojiPanel()
     end
 
-    self.isChatOpen = false
+    self:CreateChannel( "global", L"channel.global", "icon16/world.png" )
+    self:CreateChannel( "team", L"channel.team", CustomChat.TEAM_CHAT_ICON )
+
+    self:SetActiveChannel( "global" )
     self:LoadThemeData()
     self:CloseChat()
 end
 
-function PANEL.OnSubmitMessage( _text ) end
-function PANEL.OnRightClick( _data ) end
+function PANEL:OpenChat()
+    self.entryDock:SetTall( 20 )
+    self.history:ScrollToBottom()
+
+    self:SetTemporaryMode( false )
+    self.isChatOpen = true
+
+    if CustomChat.isUsingTeamOnly == true then
+        self:SetActiveChannel( "team" )
+    else
+        if self.lastChannelId == "team" then
+            self.lastChannelId = nil
+        end
+
+        self:SetActiveChannel( self.lastChannelId or "global" )
+    end
+end
+
+function PANEL:CloseChat()
+    self.history:ClearSelection()
+    self.entry:SetText( "" )
+    self.entry.HistoryPos = 0
+    self.entry._multilineMode = false
+
+    self:SetTemporaryMode( true )
+    self.isChatOpen = false
+
+    if IsValid( self.frameOpenDM ) then
+        self.frameOpenDM:Close()
+    end
+end
+
+function PANEL:SetTemporaryMode( tempMode )
+    self.history:SetTemporaryMode( tempMode )
+
+    for _, pnl in ipairs( self:GetChildren() ) do
+        if pnl ~= self.history and
+            pnl ~= self.btnMaxim and
+            pnl ~= self.btnClose and
+            pnl ~= self.btnMinim
+        then
+            pnl:SetVisible( not tempMode )
+        end
+    end
+end
+
+function PANEL:ClearEverything()
+    self.history:ClearEverything()
+
+    for id, _ in pairs( self.channels ) do
+        self:SetChannelNotificationCount( id, 0 )
+    end
+end
+
+function PANEL:NextChannel()
+    local currentIndex = 1
+
+    for i, id in ipairs( self.channelIndexes ) do
+        if self.channels[id].button.isSelected then
+            currentIndex = i
+            break
+        end
+    end
+
+    local nextIndex = currentIndex + 1
+
+    if nextIndex > #self.channelIndexes then
+        nextIndex = 1
+    end
+
+    self:SetActiveChannel( self.channelIndexes[nextIndex] )
+end
+
+function PANEL:CreateChannel( id, name, icon )
+    if self.channels[id] then return end
+
+    self.history:QueueJavascript( "CreateChannel('" .. id .. "');" )
+
+    local channel = {
+        name = name,
+        missedCount = 0
+    }
+
+    channel.button = vgui.Create( "CustomChat_ChannelButton", self.channelList )
+    channel.button:SetTall( 28 )
+    channel.button:SetTooltip( name )
+    channel.button:SetIcon( icon )
+    channel.button:Dock( TOP )
+    channel.button:DockMargin( 0, 0, 0, 2 )
+    channel.button.channelId = id
+    channel.button.colorSelected = self.highlightColor
+
+    self.channels[id] = channel
+    self.channelIndexes[#self.channelIndexes + 1] = id
+
+    return channel
+end
+
+function PANEL:RemoveChannel( id )
+    if not self.channels[id] then return end
+
+    self.history:QueueJavascript( "RemoveChannel('" .. id .. "');" )
+
+    self.channels[id].button:Remove()
+    self.channels[id] = nil
+
+    table.RemoveByValue( self.channelIndexes, id )
+end
+
+function PANEL:SetActiveChannel( id )
+    local channel = self.channels[id]
+    if not channel then return end
+
+    self.lastChannelId = id
+    channel.missedCount = 0
+
+    self:SetChannelNotificationCount( id, 0 )
+    self.history:QueueJavascript( "SetActiveChannel('" .. id .. "');" )
+
+    for chid, c in pairs( self.channels ) do
+        c.button.isSelected = chid == id
+    end
+
+    if id == "team" then
+        local color = team.GetColor( LocalPlayer():Team() )
+
+        color.r = color.r * 0.3
+        color.g = color.g * 0.3
+        color.b = color.b * 0.3
+        color.a = self.inputBackgroundColor.a
+
+        self:SetEntryLabel( CustomChat.TEAM_CHAT_LABEL, color )
+
+    elseif id == "global" then
+        self:SetEntryLabel( "custom_chat.say" )
+
+    else
+        self:SetEntryLabel( L( "say" ) .. " (" .. channel.name .. ")" )
+    end
+
+    if self.isChatOpen then
+        self.entry:RequestFocus()
+    end
+end
+
+function PANEL:SetChannelNotificationCount( id, count )
+    if self.channels[id] then
+        self.channels[id].button.notificationCount = count
+    end
+end
+
+function PANEL:SetEntryLabel( text, color )
+    self.entry:SetPlaceholderText( text )
+    self.entryDock._backgroundColor = color or self.inputBackgroundColor
+end
+
+function PANEL:LoadThemeData( data )
+    CustomChat.Theme.Parse( data, self )
+
+    self.history:SetDefaultFont( self.fontName )
+    self.history:SetFontShadowEnabled( self.enableFontShadow )
+    self.history:SetEnableAnimations( self.enableSlideAnimation )
+    self.history:SetEnableAvatars( self.enableAvatars )
+
+    self.history:SetBackgroundColor( self.inputBackgroundColor )
+    self.history:SetScrollBarColor( self.scrollBarColor )
+    self.history:SetScrollBackgroundColor( self.scrollBackgroundColor )
+    self.history:SetHighlightColor( self.highlightColor )
+
+    self:DockPadding( self.padding, self.padding + 24, self.padding, self.padding )
+
+    self.entry:SetTextColor( self.inputColor )
+    self.entry:SetCursorColor( self.inputColor )
+    self.entry:SetHighlightColor( self.highlightColor )
+
+    self.entryDock._backgroundColor = self.inputBackgroundColor
+    self.channelList._backgroundColor = self.inputBackgroundColor
+
+    for _, c in pairs( self.channels ) do
+        c.button.colorSelected = self.highlightColor
+    end
+
+    self:InvalidateChildren()
+end
+
+function PANEL:AppendContents( contents, channelId, showTimestamp )
+    local channel = self.channels[channelId]
+    if not channel then return end
+
+    if self.lastChannelId ~= channelId then
+        channel.missedCount = channel.missedCount + 1
+    end
+
+    if channel.missedCount > 0 then
+        self:SetChannelNotificationCount( channelId, channel.missedCount )
+    end
+
+    self.history:AppendContents( contents, channelId, showTimestamp )
+end
+
+function PANEL:AppendAtCaret( text )
+    local caretPos = self.entry:GetCaretPos()
+    local oldText = self.entry:GetText()
+    local newText = oldText:sub( 1, caretPos ) .. text .. oldText:sub( caretPos + 1 )
+
+    if string.len( newText ) < self.entry:GetMaximumCharCount() then
+        self.entry:SetText( newText )
+        self.entry:SetCaretPos( caretPos + text:len() )
+    else
+        surface.PlaySound( "resource/warning.wav" )
+    end
+end
 
 function PANEL:SubmitMessage()
     local text = CustomChat.CleanupString( self.entry:GetText() )
@@ -138,108 +381,142 @@ function PANEL:SubmitMessage()
     end
 
     self.entry:SetText( "" )
-    self.OnSubmitMessage( text )
+    self.OnSubmitMessage( text, self.lastChannelId )
 end
 
-function PANEL:AppendContents( contents, showTimestamp )
-    self.history:AppendContents( contents, showTimestamp )
-end
+function PANEL:OpenDirectMessage()
+    local frame = vgui.Create( "DFrame" )
+    frame:SetSize( 380, 300 )
+    frame:SetTitle( L"channel.open_dm" )
+    frame:ShowCloseButton( true )
+    frame:SetDeleteOnClose( true )
+    frame:MakePopup()
 
-function PANEL:AppendAtCaret( text )
-    local caretPos = self.entry:GetCaretPos()
-    local oldText = self.entry:GetText()
-    local newText = oldText:sub( 1, caretPos ) .. text .. oldText:sub( caretPos + 1 )
-
-    if string.len( newText ) < self.entry:GetMaximumCharCount() then
-        self.entry:SetText( newText )
-        self.entry:SetCaretPos( caretPos + text:len() )
-    else
-        surface.PlaySound( "resource/warning.wav" )
+    frame.OnClose = function()
+        self.frameOpenDM = nil
     end
-end
 
-function PANEL:OpenChat()
-    self.entry:RequestFocus()
-    self.entryDock:SetTall( 20 )
-    self.history:ScrollToBottom()
+    self.frameOpenDM = frame
+    CustomChat:PutFrameToTheSide( frame )
 
-    self:SetDisplayMode( "main" )
-    self.isChatOpen = true
-end
+    local playersScroll = vgui.Create( "DScrollPanel", frame )
+    playersScroll:Dock( FILL )
+    playersScroll.pnlCanvas:DockPadding( 4, 4, 4, 4 )
 
-function PANEL:CloseChat()
-    self.history:ClearSelection()
-    self.entry:SetText( "" )
-    self.entry.HistoryPos = 0
-    self.entry._multilineMode = false
+    local scrollColor = Color( 30, 30, 30 )
 
-    self:SetDisplayMode( "temp" )
-    self.isChatOpen = false
-end
+    playersScroll.Paint = function( _, w, h )
+        draw.RoundedBox( 4, 0, 0, w, h, scrollColor )
+    end
 
-function PANEL:SetDisplayMode( mode )
-    self.history:SetDisplayMode( mode )
+    local targets = {}
+    local localPly = LocalPlayer()
 
-    local areChildrenVisible = mode == "main"
-
-    for _, pnl in ipairs( self:GetChildren() ) do
-        if pnl ~= self.history and
-            pnl ~= self.btnMaxim and
-            pnl ~= self.btnClose and
-            pnl ~= self.btnMinim
-        then
-            pnl:SetVisible( areChildrenVisible )
+    -- Filter existing DMs
+    for _, ply in ipairs( player.GetHumans() ) do
+        if ply ~= localPly and not self.channels[ply:SteamID()] then
+            targets[#targets + 1] = ply
         end
     end
-end
 
-function PANEL:SetEntryLabel( label, color )
-    self.entry:SetPlaceholderText( label )
-    self.entryDock._backgroundColor = color or self.inputBackgroundColor
-end
+    if #targets == 0 then
+        frame:SetTall( 80 )
+        CustomChat:PutFrameToTheSide( frame )
 
-function PANEL:LoadThemeData( data )
-    CustomChat.Theme.ParseTheme( data, self )
+        local label = vgui.Create( "DLabel", frame )
+        label:Dock( FILL )
+        label:SetTextColor( Color( 255, 255, 255 ) )
+        label:SetContentAlignment( 5 )
+        label:SetText( L"channel.no_dm_targets" )
 
-    self.history:SetDefaultFont( self.fontName )
-    self.history:SetFontShadowEnabled( self.enableFontShadow )
-    self.history:SetEnableAnimations( self.enableSlideAnimation )
-    self.history:SetEnableAvatars( self.enableAvatars )
+        return
+    end
 
-    self.history:SetBackgroundColor( self.inputBackgroundColor )
-    self.history:SetScrollBarColor( self.scrollBarColor )
-    self.history:SetScrollBackgroundColor( self.scrollBackgroundColor )
-    self.history:SetHighlightColor( self.highlightColor )
+    local bgColor = Color( 0, 0, 0 )
+    local nameColor = Color( 255, 255, 255 )
 
-    self:DockPadding( self.padding, self.padding + 24, self.padding, self.padding )
+    local PaintLine = function( s, w, h )
+        draw.RoundedBox( 4, 0, 0, w, h, bgColor )
+        draw.SimpleText( s._name, "Trebuchet18", 36, h * 0.5, nameColor, 0, 1 )
+    end
 
-    self.entry:SetTextColor( self.inputColor )
-    self.entry:SetCursorColor( self.inputColor )
-    self.entry:SetHighlightColor( self.highlightColor )
-    self.entryDock._backgroundColor = self.inputBackgroundColor
+    local ClickLine = function( s )
+        frame:Close()
 
-    self:InvalidateChildren()
+        if IsValid( s._ply ) then
+            local channel = self:CreateChannel( s._id, s._name, s._ply )
+            channel.isDM = true
+
+            self:SetActiveChannel( s._id )
+        end
+    end
+
+    local function UpdateList( filter )
+        playersScroll:Clear()
+
+        for _, ply in ipairs( targets ) do
+            local playerName = ply:Nick()
+
+            if not filter or playerName:lower():find( filter, 1, true ) then
+                local line = vgui.Create( "DPanel", playersScroll )
+                line:SetCursor( "hand" )
+                line:SetTall( 32 )
+                line:Dock( TOP )
+                line:DockMargin( 0, 0, 0, 2 )
+
+                line._ply = ply
+                line._id = ply:SteamID()
+                line._name = playerName
+                line.Paint = PaintLine
+                line.OnMousePressed = ClickLine
+
+                local avatar = vgui.Create( "AvatarImage", line )
+                avatar:Dock( LEFT )
+                avatar:DockMargin( 4, 4, 4, 4 )
+                avatar:SetWide( 24 )
+                avatar:SetPlayer( ply, 64 )
+            end
+        end
+    end
+
+    UpdateList()
+
+    local entryFilter = vgui.Create( "DTextEntry", frame )
+    entryFilter:SetTabbingDisabled( true )
+    entryFilter:SetDrawLanguageID( false )
+    entryFilter:SetPlaceholderText( "custom_chat.channel.dm_player_filter" )
+    entryFilter:Dock( BOTTOM )
+
+    entryFilter.OnChange = function( s )
+        local text = s:GetText():Trim():lower()
+        if text:len() < 1 then text = nil end
+
+        UpdateList( text )
+    end
 end
 
 local MAT_BLUR = Material( "pp/blurscreen" )
 
 function PANEL:Paint( w, h )
-    if self.isChatOpen then
-        if self.backgroundBlur > 0 then
-            surface.SetDrawColor( 255, 255, 255, 255 )
-            surface.SetMaterial( MAT_BLUR )
+    if not self.isChatOpen then return end
 
-            MAT_BLUR:SetFloat( "$blur", self.backgroundBlur )
-            MAT_BLUR:Recompute()
+    if self.backgroundBlur > 0 then
+        surface.SetDrawColor( 255, 255, 255, 255 )
+        surface.SetMaterial( MAT_BLUR )
 
-            render.UpdateScreenEffectTexture()
+        MAT_BLUR:SetFloat( "$blur", self.backgroundBlur )
+        MAT_BLUR:Recompute()
 
-            local x, y = self:LocalToScreen( 0, 0 )
-            surface.DrawTexturedRect( -x, -y, ScrW(), ScrH() )
-        end
+        render.UpdateScreenEffectTexture()
 
-        draw.RoundedBox( self.cornerRadius, 0, 0, w, h, self.backgroundColor )
+        local x, y = self:LocalToScreen( 0, 0 )
+        surface.DrawTexturedRect( -x, -y, ScrW(), ScrH() )
     end
+
+    draw.RoundedBox( self.cornerRadius, 0, 0, w, h, self.backgroundColor )
 end
 
-vgui.Register( "CustomChatFrame", PANEL, "DFrame" )
+function PANEL.OnSubmitMessage( _text, _channelId ) end
+function PANEL.OnRightClick( _data ) end
+
+vgui.Register( "CustomChat_Frame", PANEL, "DFrame" )

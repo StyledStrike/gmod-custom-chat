@@ -1,11 +1,56 @@
 CustomChat = CustomChat or {}
-CustomChat.DATA_DIR = "custom_chat/"
-CustomChat.MAX_MESSAGE_LENGTH = 500
 
-CustomChat.channels = {
-    everyone = 0,
-    team = 1
-}
+-- Server/client directory to save data
+CustomChat.DATA_DIR = "custom_chat/"
+
+-- Max. number of characters in a single message
+CustomChat.MAX_MESSAGE_LENGTH = 400
+
+-- Max. number of characters in a channel ID
+CustomChat.MAX_CHANNEL_ID_LENGTH = 200
+
+if CLIENT then
+    -- Text shown when using Team chat (Default is "Say (Team)...")
+    CustomChat.TEAM_CHAT_LABEL = "custom_chat.team_say"
+
+    -- Icon shown for the Team chat channel
+    CustomChat.TEAM_CHAT_ICON = "icon16/group.png"
+
+    -- Fonts available for use on messages
+    CustomChat.chatFonts = {
+        ["monospace"] = "monospace",
+        ["lucida"] = "Lucida Console",
+        ["comic"] = "Comic Sans MS",
+        ["arial"] = "Arial",
+        ["calibri"] = "Calibri",
+        ["consolas"] = "Consolas",
+        ["impact"] = "Impact",
+        ["symbol"] = "Symbol",
+        ["helvetica"] = "Helvetica Neue",
+        ["sugoe"] = "Sugoe Script",
+        ["roboto"] = "Roboto"
+    }
+end
+
+if SERVER then
+    -- Save "last seen" times on a SQLite table with this name
+    CustomChat.LAST_SEEN_TABLE = "customchat_last_seen"
+end
+
+-- Developers can override these "CanSet" functions if they want.
+-- Just make sure to do it both on SERVER and CLIENT.
+
+function CustomChat.CanSetServerTheme( ply )
+    return ply:IsSuperAdmin()
+end
+
+function CustomChat.CanSetServerEmojis( ply )
+    return ply:IsSuperAdmin()
+end
+
+function CustomChat.CanSetChatTags( ply )
+    return ply:IsSuperAdmin()
+end
 
 CreateConVar( "custom_chat_safe_mode", "0", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
     "Enable safe mode to all players. Only show images after clicking them.", 0, 1 )
@@ -22,9 +67,7 @@ CreateConVar( "custom_chat_enable_absence_messages", "1", bit.bor( FCVAR_ARCHIVE
 CreateConVar( "custom_chat_enable_friend_messages", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
     "Show messages to players when their friends spawn on the server.", 0, 1 )
 
--- Utility functions
-
-function CustomChat.PrintF( str, ... )
+function CustomChat.Print( str, ... )
     MsgC( Color( 0, 123, 255 ), "[Custom Chat] ", Color( 255, 255, 255 ), string.format( str, ... ), "\n" )
 end
 
@@ -33,11 +76,11 @@ function CustomChat.GetConVarInt( name, default )
     return cvar and cvar:GetInt() or default
 end
 
-function CustomChat.Serialize( tbl )
+function CustomChat.ToJSON( tbl )
     return util.TableToJSON( tbl )
 end
 
-function CustomChat.Unserialize( str )
+function CustomChat.FromJSON( str )
     if not str or str == "" then
         return {}
     end
@@ -49,6 +92,8 @@ function CustomChat.EnsureDataDir()
     if not file.IsDir( CustomChat.DATA_DIR, "DATA" ) then
         file.CreateDir( CustomChat.DATA_DIR )
     end
+
+    if SERVER then return end
 
     local themesDir = CustomChat.DATA_DIR .. "themes/"
 
@@ -62,64 +107,12 @@ function CustomChat.LoadDataFile( path )
 end
 
 function CustomChat.SaveDataFile( path, data )
-    CustomChat.PrintF( "%s: writing %s", path, string.NiceSize( string.len( data ) ) )
+    CustomChat.Print( "%s: writing %s", path, string.NiceSize( string.len( data ) ) )
     file.Write( CustomChat.DATA_DIR .. path, data )
 end
 
 function CustomChat.IsStringValid( str )
     return type( str ) == "string" and str ~= ""
-end
-
-function CustomChat.NiceTime( time )
-    local L = CustomChat.GetLanguageText
-    local s = time % 60
-
-    time = math.floor( time / 60 )
-    local m = time % 60
-
-    time = math.floor( time / 60 )
-    local h = time % 24
-
-    time = math.floor( time / 24 )
-    local d = time % 7
-    local w = math.floor( time / 7 )
-
-    local parts = {}
-
-    if w > 0 then
-        parts[#parts + 1] = w .. " " .. L( "time.weeks" )
-    end
-
-    if d > 0 then
-        parts[#parts + 1] = d .. " " .. L( "time.days" )
-    end
-
-    if h > 0 then
-        parts[#parts + 1] = ( "%02i " ):format( h ) .. L( "time.hours" )
-    end
-
-    if m > 0 then
-        parts[#parts + 1] = ( "%02i " ):format( m ) .. L( "time.minutes" )
-    end
-
-    parts[#parts + 1] = ( "%02i " ):format( s ) .. L( "time.seconds" )
-
-    return table.concat( parts, " " )
-end
-
--- You can override these "CanSet" functions if you want.
--- Just make sure to do it both on SERVER and CLIENT.
-
-function CustomChat.CanSetServerTheme( ply )
-    return ply:IsSuperAdmin()
-end
-
-function CustomChat.CanSetServerEmojis( ply )
-    return ply:IsSuperAdmin()
-end
-
-function CustomChat.CanSetChatTags( ply )
-    return ply:IsSuperAdmin()
 end
 
 -- UTF8 cleanup lookup table provided by EasyChat
@@ -162,8 +155,8 @@ function CustomChat.CleanupString( str )
 
     str = utf8.force( str )
 
-    for unicode, replacement in pairs( lookup ) do
-        str = str:gsub( unicode, replacement )
+    for code, replacement in pairs( lookup ) do
+        str = str:gsub( code, replacement )
     end
 
     -- limit the number of line breaks
@@ -185,74 +178,58 @@ if SERVER then
     AddCSLuaFile( "includes/modules/styled_netprefs.lua" )
 
     -- Shared files
-    include( "custom_chat/shared/override_istyping.lua" )
-    AddCSLuaFile( "custom_chat/shared/override_istyping.lua" )
+    include( "custom_chat/override_istyping.lua" )
+    AddCSLuaFile( "custom_chat/override_istyping.lua" )
 
     -- Server files
-    include( "custom_chat/server/config.lua" )
     include( "custom_chat/server/main.lua" )
+    include( "custom_chat/server/net_config.lua" )
+    include( "custom_chat/server/net_messages.lua" )
+    include( "custom_chat/server/player_spawn.lua" )
 
-    -- Send client files
-    AddCSLuaFile( "custom_chat/client/block_types.lua" )
+    -- Client files
     AddCSLuaFile( "custom_chat/client/config.lua" )
+    AddCSLuaFile( "custom_chat/client/main.lua" )
+
+    AddCSLuaFile( "custom_chat/client/block_types.lua" )
     AddCSLuaFile( "custom_chat/client/emojis.lua" )
     AddCSLuaFile( "custom_chat/client/highlighter.lua" )
+    AddCSLuaFile( "custom_chat/client/join_leave.lua" )
     AddCSLuaFile( "custom_chat/client/parser.lua" )
     AddCSLuaFile( "custom_chat/client/tags.lua" )
     AddCSLuaFile( "custom_chat/client/theme.lua" )
     AddCSLuaFile( "custom_chat/client/whitelist.lua" )
-    AddCSLuaFile( "custom_chat/client/main.lua" )
 
     AddCSLuaFile( "custom_chat/client/vgui/chat_frame.lua" )
     AddCSLuaFile( "custom_chat/client/vgui/chat_history.lua" )
+    AddCSLuaFile( "custom_chat/client/vgui/chat_channel_button.lua" )
     AddCSLuaFile( "custom_chat/client/vgui/tag_parts_editor.lua" )
     AddCSLuaFile( "custom_chat/client/vgui/theme_editor.lua" )
 end
 
 if CLIENT then
-    -- Text used on the Team chat (Default is "Say (Team)...")
-    CustomChat.TEAM_CHAT_LABEL = "custom_chat.team_say"
-
-    -- Client specific utilities
-    function CustomChat.ChopEnds( str, n )
-        return str:sub( n, -n )
-    end
-
-    function CustomChat.RGBToJs( c )
-        return string.format( "rgb(%d,%d,%d)", c.r, c.g, c.b )
-    end
-
-    function CustomChat.RGBAToJs( c )
-        return string.format( "rgba(%d,%d,%d,%02.2f)", c.r, c.g, c.b, c.a / 255 )
-    end
-
-    function CustomChat.AddLine( t, line, ... )
-        t[#t + 1] = line:format( ... )
-    end
-
-    function CustomChat.GetLanguageText( id )
-        return language.GetPhrase( "custom_chat." .. id )
-    end
-
     -- Libraries
     require( "styled_netprefs" )
 
     -- Shared files
-    include( "custom_chat/shared/override_istyping.lua" )
+    include( "custom_chat/override_istyping.lua" )
 
     -- Client files
-    include( "custom_chat/client/block_types.lua" )
     include( "custom_chat/client/config.lua" )
+    include( "custom_chat/client/main.lua" )
+
+    include( "custom_chat/client/block_types.lua" )
     include( "custom_chat/client/emojis.lua" )
     include( "custom_chat/client/highlighter.lua" )
+    include( "custom_chat/client/join_leave.lua" )
     include( "custom_chat/client/parser.lua" )
     include( "custom_chat/client/tags.lua" )
     include( "custom_chat/client/theme.lua" )
     include( "custom_chat/client/whitelist.lua" )
-    include( "custom_chat/client/main.lua" )
 
     include( "custom_chat/client/vgui/chat_frame.lua" )
     include( "custom_chat/client/vgui/chat_history.lua" )
+    include( "custom_chat/client/vgui/chat_channel_button.lua" )
     include( "custom_chat/client/vgui/tag_parts_editor.lua" )
     include( "custom_chat/client/vgui/theme_editor.lua" )
 end

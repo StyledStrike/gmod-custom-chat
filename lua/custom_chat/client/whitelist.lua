@@ -151,7 +151,7 @@ function CustomChat.IsWhitelisted( url )
     local prefix, site, data = string.match( url, "^(%w-)://([^/]*)/?(.*)" )
 
     if not prefix or not site then
-        CustomChat.PrintF( "Malformed URL: %s", url )
+        CustomChat.Print( "Malformed URL: %s", url )
         return false
     end
 

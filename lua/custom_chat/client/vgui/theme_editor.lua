@@ -1,5 +1,3 @@
--- Panel for previewing and editing themes
-
 local L = CustomChat.GetLanguageText
 
 local PaintProperty = function( s, w, h )
@@ -53,6 +51,7 @@ function PANEL:Init()
     -- Name
     self.entryName = AddProperty( "theme.name", "DTextEntry", panelProperties )
     self.entryName:SetUpdateOnType( true )
+
     self.entryName.OnValueChange = function( _, value )
         self:ValueChanged( "name", value )
     end
@@ -60,6 +59,7 @@ function PANEL:Init()
     -- Description
     self.entryDescription = AddProperty( "theme.description", "DTextEntry", panelProperties )
     self.entryDescription:SetUpdateOnType( true )
+
     self.entryDescription.OnValueChange = function( _, value )
         self:ValueChanged( "description", value )
     end
@@ -191,14 +191,18 @@ function PANEL:Init()
     end
 end
 
+function PANEL:Paint( w, h )
+    surface.SetDrawColor( 30, 30, 30, 255 )
+    surface.DrawRect( 0, 0, w, h )
+end
+
 function PANEL:LoadThemeData( data )
-    -- prevent triggering "OnThemeChanged" while we load the data
-    self.loadingData = true
+    self.loadingData = true -- block "OnThemeChanged"
 
     self.entryName:SetValue( data.name or "" )
     self.entryDescription:SetValue( data.description or "" )
 
-    CustomChat.Theme.ParseTheme( data, self )
+    CustomChat.Theme.Parse( data, self )
 
     local fontIndex = table.KeyFromValue( CustomChat.Theme.fonts, self.fontName )
     self.comboFont:ChooseOptionID( fontIndex and fontIndex + 1 or 1 )
@@ -259,11 +263,6 @@ function PANEL:SetDisabled( disabled )
     self.labelDisabled:DockMargin( 6, 5, 0, 0 )
 end
 
-function PANEL:Paint( w, h )
-    surface.SetDrawColor( 30, 30, 30, 255 )
-    surface.DrawRect( 0, 0, w, h )
-end
-
 local colorKeys = {
     backgroundColor = { "bg_r", "bg_g", "bg_b", "bg_a" },
     inputColor = { "input_r", "input_g", "input_b", "input_a" },
@@ -291,4 +290,4 @@ end
 
 function PANEL.OnThemeChanged( _key, _value ) end
 
-vgui.Register( "CustomChatThemeEditor", PANEL, "DPanel" )
+vgui.Register( "CustomChat_ThemeEditor", PANEL, "DPanel" )

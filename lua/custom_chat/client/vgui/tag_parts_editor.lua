@@ -1,5 +1,3 @@
--- Panel for editing parts of chat tags
-
 local L = CustomChat.GetLanguageText
 local PANEL = {}
 
@@ -106,8 +104,6 @@ function PANEL:Init()
     end
 end
 
-function PANEL.OnPartsChange( _parts ) end
-
 function PANEL:SetParts( parts )
     self.parts = table.Copy( parts )
     self:RefreshList()
@@ -142,4 +138,6 @@ function PANEL:RefreshList()
     self.OnPartsChange( self.parts )
 end
 
-vgui.Register( "CustomChatTagPartsEditor", PANEL, "DPanel" )
+function PANEL.OnPartsChange( _parts ) end
+
+vgui.Register( "CustomChat_TagPartsEditor", PANEL, "DPanel" )

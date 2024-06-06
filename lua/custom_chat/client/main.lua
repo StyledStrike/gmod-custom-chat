@@ -1,28 +1,79 @@
-CreateClientConVar( "customchat_disable", "0", true, false )
+CreateClientConVar( "custom_chat_enable", "1", true, false )
 
--- clean stuff when loading this script (helps during development)
-if IsValid( CustomChat.frame ) then
-    chat.Close()
-    cvars.RemoveChangeCallback( "customchat_disable", "customchat_disable_changed" )
-
-    CustomChat.frame:CloseChat()
-    CustomChat.frame:SetDeleteOnClose( true )
-    CustomChat.frame:Close()
-    CustomChat.frame = nil
-end
-
--- keep track of the original chat functions
+-- Keep track of the original chat functions
 CustomChat.DefaultOpen = CustomChat.DefaultOpen or chat.Open
 CustomChat.DefaultClose = CustomChat.DefaultClose or chat.Close
 CustomChat.DefaultAddText = CustomChat.DefaultAddText or chat.AddText
 CustomChat.DefaultGetChatBoxPos = CustomChat.DefaultGetChatBoxPos or chat.GetChatBoxPos
 CustomChat.DefaultGetChatBoxSize = CustomChat.DefaultGetChatBoxSize or chat.GetChatBoxSize
 
-function CustomChat.InternalMessage( text )
+local Floor = math.floor
+local Format = string.format
+
+function CustomChat.ChopEnds( str, n )
+    return str:sub( n, -n )
+end
+
+function CustomChat.ColorToRGB( c )
+    local r, g, b, a = Floor( c.r ), Floor( c.g ), Floor( c.b ), c.a
+
+    if type( a ) == "number" and a < 255 then
+        return Format( "rgba(%d,%d,%d,%02.2f)", r, g, b, a / 255 )
+    end
+
+    return Format( "rgb(%d,%d,%d)", r, g, b )
+end
+
+function CustomChat.AppendString( t, s, ... )
+    t[#t + 1] = Format( s, ... )
+end
+
+function CustomChat.GetLanguageText( id )
+    return language.GetPhrase( "custom_chat." .. id )
+end
+
+function CustomChat.NiceTime( time )
+    local L = CustomChat.GetLanguageText
+    local s = time % 60
+
+    time = Floor( time / 60 )
+    local m = time % 60
+
+    time = Floor( time / 60 )
+    local h = time % 24
+
+    time = Floor( time / 24 )
+    local d = time % 7
+    local w = Floor( time / 7 )
+
+    local parts = {}
+
+    if w > 0 then
+        parts[#parts + 1] = w .. " " .. L( "time.weeks" )
+    end
+
+    if d > 0 then
+        parts[#parts + 1] = d .. " " .. L( "time.days" )
+    end
+
+    if h > 0 then
+        parts[#parts + 1] = Format( "%02i ", h ) .. L( "time.hours" )
+    end
+
+    if m > 0 then
+        parts[#parts + 1] = Format( "%02i ", m ) .. L( "time.minutes" )
+    end
+
+    parts[#parts + 1] = Format( "%02i ", s ) .. L( "time.seconds" )
+
+    return table.concat( parts, " " )
+end
+
+function CustomChat.PrintMessage( text )
     chat.AddText( color_white, "[", Color( 80, 165, 204 ), "Custom Chat", color_white, "] ", text )
 end
 
-function CustomChat:CachePlayerNames()
+function CustomChat.GetPlayersByName()
     local playersByName = {}
 
     for _, ply in ipairs( player.GetAll() ) do
@@ -35,13 +86,47 @@ function CustomChat:CachePlayerNames()
         }
     end
 
-    self.playersByName = playersByName
+    return playersByName
 end
+
+function CustomChat.IsEnabled()
+    return CustomChat.GetConVarInt( "enable", 1 ) > 0
+end
+
+--- Put a frame on the side of the chat box,
+--- while keeping it inside of the screen.
+function CustomChat:PutFrameToTheSide( frame )
+    local chatX, chatY = chat.GetChatBoxPos()
+    local chatW, chatH = chat.GetChatBoxSize()
+
+    local x = chatX + chatW + 8
+    local y = ( chatY + chatH * 0.5 ) - ( frame:GetTall() * 0.5 )
+
+    x = math.Clamp( x, 0, ScrW() - frame:GetWide() )
+    y = math.Clamp( y, 0, ScrH() - frame:GetTall() )
+
+    frame:SetPos( x, y )
+end
+
+--- Helper function to "reset" the chat box.
+--- Used for development.
+function CustomChat.ResetChatbox()
+    if not IsValid( CustomChat.frame ) then return end
+
+    chat.Close()
+
+    CustomChat.frame:CloseChat()
+    CustomChat.frame:SetDeleteOnClose( true )
+    CustomChat.frame:Close()
+    CustomChat.frame = nil
+end
+
+CustomChat.ResetChatbox()
 
 local Config = CustomChat.Config
 
 function CustomChat:CreateFrame()
-    self.frame = vgui.Create( "CustomChatFrame" )
+    self.frame = vgui.Create( "CustomChat_Frame" )
     self.frame:SetDeleteOnClose( false )
     self.frame:SetSize( Config.width, Config.height )
     self.frame:SetPos( Config:GetDefaultPosition() )
@@ -66,7 +151,6 @@ function CustomChat:CreateFrame()
     end
 
     self.frame.OnSizeChanged = function( s, w, h )
-        -- save position/size
         local x, y = s:GetPos()
 
         Config.width = w
@@ -80,17 +164,19 @@ function CustomChat:CreateFrame()
         self:OpenContextMenu( data )
     end
 
-    self.frame.OnSubmitMessage = function( text )
+    self.frame.OnSubmitMessage = function( text, channel )
         if string.len( text ) > 0 then
-            local channel = self.channels[self.teamMode and "team" or "everyone"]
+            local message = CustomChat.ToJSON( {
+                channel = channel,
+                text = text
+            } )
 
             net.Start( "customchat.say", false )
-            net.WriteUInt( channel, 4 )
-            net.WriteString( text )
+            net.WriteString( message )
             net.SendToServer()
         end
 
-        if not IsValid( self.Theme.themeFrame ) then
+        if not IsValid( self.Theme.editorFrame ) or string.len( text ) == 0 then
             chat.Close()
         end
     end
@@ -113,43 +199,91 @@ end
 
 function CustomChat:SetTheme( themeId )
     if IsValid( self.frame ) then
-        self.frame:LoadThemeData( themeId == "server_default" and
-            self.Theme.serverTheme or self.Theme.LoadThemeFile( themeId ) )
+        self.frame:LoadThemeData( themeId == "server_default" and self.Theme.serverTheme or self.Theme.LoadFile( themeId ) )
     end
 end
 
-function CustomChat:AddMessage( contents )
+function CustomChat:AddMessage( contents, channelId )
     if not IsValid( self.frame ) then
         self:CreateFrame()
     end
 
-    self.frame:AppendContents( contents, self.Config.timestamps )
+    channelId = channelId or ( self.lastReceivedMessage and self.lastReceivedMessage.channel or "global" )
+
+    local dmSpeaker = nil
+
+    if util.SteamIDTo64( channelId ) ~= "0" then
+        local ply = player.GetBySteamID( channelId )
+
+        if IsValid( ply ) then
+            dmSpeaker = ply
+            table.insert( contents, 1, ":email: " )
+        end
+    end
+
+    if not self.frame.channels[channelId] then
+        -- If this is not a DM, ignore this message
+        if not dmSpeaker then return end
+
+        local channel = self.frame:CreateChannel( channelId, dmSpeaker:Nick(), dmSpeaker )
+        channel.isDM = true
+    end
+
+    self.frame:AppendContents( contents, channelId, self.Config.timestamps )
+end
+
+function CustomChat:CreateCustomChannel( id, tooltip, icon )
+    if not IsValid( self.frame ) then
+        self:CreateFrame()
+    end
+
+    if id == "global" or id == "team" then
+        error( "You cannot call CustomChat:CreateCustomChannel with a reserved channel ID!" )
+    end
+
+    if id:len() > CustomChat.MAX_CHANNEL_ID_LENGTH then
+        error( "You cannot use a ID longer than " .. CustomChat.MAX_CHANNEL_ID_LENGTH .. " characters on CustomChat:CreateCustomChannel!" )
+    end
+
+    self.frame:CreateChannel( id, tooltip, icon )
+end
+
+function CustomChat:RemoveCustomChannel( id )
+    if not IsValid( self.frame ) then return end
+
+    if id == "global" or id == "team" then
+        error( "You cannot call CustomChat:RemoveCustomChannel with a reserved channel ID!" )
+    end
+
+    self.frame:RemoveChannel( id )
 end
 
 function CustomChat:OpenContextMenu( data )
+    data = data or {}
+
     local L = CustomChat.GetLanguageText
 
     local optionsMenu = DermaMenu( false, self.frame )
     optionsMenu:SetMinimumWidth( 200 )
     optionsMenu:Open()
 
-    if data.extra and data.extra.steamId then
+    if data.player and data.player.steamId then
         optionsMenu:AddOption( L"context.copy_steamid", function()
-            SetClipboardText( data.extra.steamId )
+            SetClipboardText( data.player.steamId )
         end ):SetIcon( "icon16/comment_edit.png" )
 
         optionsMenu:AddOption( L"context.copy_steamid64", function()
-            SetClipboardText( data.extra.steamId64 )
+            SetClipboardText( data.player.steamId64 )
         end ):SetIcon( "icon16/comment_edit.png" )
 
         optionsMenu:AddOption( L"context.open_profile", function()
-            gui.OpenURL( "https://steamcommunity.com/profiles/" .. data.extra.steamId64 )
+            gui.OpenURL( "https://steamcommunity.com/profiles/" .. data.player.steamId64 )
         end ):SetIcon( "icon16/user.png" )
     end
 
-    if data.src and data.src ~= "" then
+    if data.url and data.url ~= "" then
         optionsMenu:AddOption( L"context.copy_link", function()
-            SetClipboardText( data.src )
+            SetClipboardText( data.url )
         end ):SetIcon( "icon16/comment_edit.png" )
     end
 
@@ -165,8 +299,18 @@ function CustomChat:OpenContextMenu( data )
         self.frame.history:FindText()
     end ):SetIcon( "icon16/zoom.png" )
 
+    local channelId = self.frame.lastChannelId
+    local channel = self.frame.channels[channelId]
+
+    if channel.isDM then
+        optionsMenu:AddOption( L"channel.close_dm", function()
+            self.frame:NextChannel()
+            self.frame:RemoveChannel( channelId )
+        end ):SetIcon( "icon16/cancel.png" )
+    end
+
     optionsMenu:AddOption( L"context.clear_all", function()
-        self.frame.history:ClearEverything()
+        self.frame:ClearEverything()
     end ):SetIcon( "icon16/cancel.png" )
 
     optionsMenu:AddSpacer()
@@ -239,7 +383,7 @@ function CustomChat:OpenContextMenu( data )
     sliderFontSize.Label:SetTextColor( color_white )
 
     sliderFontSize.OnValueChanged = function( _, value )
-        Config.fontSize = math.floor( math.Clamp( value, 12, 48 ) )
+        Config.fontSize = math.Round( math.Clamp( value, 12, 48 ) )
         self.frame.history:SetFontSize( Config.fontSize )
         Config:Save()
     end
@@ -248,7 +392,7 @@ function CustomChat:OpenContextMenu( data )
     optionsMenu:AddPanel( panelFontSize )
     optionsMenu:AddSpacer()
 
-    --- server settings
+    ----- Server options
 
     if self.CanSetServerEmojis( LocalPlayer() ) then
         optionsMenu:AddOption( L"context.emojis", function()
@@ -267,9 +411,10 @@ function CustomChat:OpenContextMenu( data )
             end
         end ):SetIcon( "icon16/tag_blue_edit.png" )
     end
+
 end
 
------ Add hooks and override chat functions -----
+----- Add hooks and override chat functions
 
 local function CustomChat_AddText( ... )
     CustomChat:AddMessage( { ... } )
@@ -278,8 +423,8 @@ end
 
 local function CustomChat_Open( pcalled )
     if not pcalled then
-        -- any errors at this point can cause the UI to get stuck and
-        -- block the pause menu/console, so heres a safety check
+        -- Any errors at this point can cause the UI to get stuck and
+        -- block the pause menu/console, so here's a safety check
         local success, err = pcall( CustomChat_Open, true )
 
         if not success then
@@ -293,31 +438,15 @@ local function CustomChat_Open( pcalled )
         CustomChat:CreateFrame()
     end
 
-    -- Update the "Say" label and the color of the text entry 
-    if CustomChat.teamMode == true then
-        local color = team.GetColor( LocalPlayer():Team() )
-
-        color.r = color.r * 0.3
-        color.g = color.g * 0.3
-        color.b = color.b * 0.3
-        color.a = CustomChat.frame.inputBackgroundColor.a
-
-        CustomChat.frame:SetEntryLabel( CustomChat.TEAM_CHAT_LABEL or "custom_chat.team_say", color )
-    else
-        CustomChat.frame:SetEntryLabel( "custom_chat.say" )
-    end
-
     CustomChat.frame:MakePopup()
     CustomChat.frame:SetMouseInputEnabled( true )
     CustomChat.frame:SetKeyboardInputEnabled( true )
     CustomChat.frame:OpenChat()
 
-    net.Start( "customchat.is_typing", false )
-    net.WriteBool( true )
-    net.SendToServer()
+    CustomChat.SetTyping( true )
 
-    -- make sure other addons know we are chatting
-    hook.Run( "StartChat", CustomChat.teamMode == true )
+    -- Make sure the gamemode and other addons know we are chatting
+    hook.Run( "StartChat", CustomChat.isUsingTeamOnly == true )
 end
 
 local function CustomChat_Close()
@@ -326,12 +455,9 @@ local function CustomChat_Close()
     CustomChat.frame:CloseChat()
     CustomChat.frame:SetMouseInputEnabled( false )
     CustomChat.frame:SetKeyboardInputEnabled( false )
+    CustomChat.SetTyping( false )
 
     gui.EnableScreenClicker( false )
-
-    net.Start( "customchat.is_typing", false )
-    net.WriteBool( false )
-    net.SendToServer()
 
     hook.Run( "FinishChat" )
     hook.Run( "ChatTextChanged", "" )
@@ -340,7 +466,7 @@ end
 local function CustomChat_OnChatText( _, _, text, textType )
     if textType == "chat" then return end
 
-    local canShowJoinLeave = not ( CustomChat.Tags.connection.showConnect or CustomChat.Tags.connection.showDisconnect )
+    local canShowJoinLeave = not ( CustomChat.JoinLeave.showConnect or CustomChat.JoinLeave.showDisconnect )
     if not canShowJoinLeave and textType == "joinleave" then return end
 
     CustomChat:AddMessage( { Color( 0, 128, 255 ), text } )
@@ -352,18 +478,18 @@ local function CustomChat_OnPlayerBindPress( _, bind, pressed )
     if not pressed then return end
     if bind ~= "messagemode" and bind ~= "messagemode2" then return end
 
-    -- dont open if playable piano is blocking input
+    -- Don't open if playable piano is blocking input
     if IsValid( LocalPlayer().Instrument ) then return end
 
-    -- dont open if Starfall is blocking input
+    -- Don't open if Starfall is blocking input
     local existingBindHooks = hook.GetTable()["PlayerBindPress"]
     if existingBindHooks["sf_keyboard_blockinput"] then return end
 
-    -- dont open if anything else blocks input
+    -- Don't open if anything else wants to block input
     local block = hook.Run( "CustomChatBlockInput" )
     if block == true then return end
 
-    CustomChat.teamMode = ( bind == "messagemode2" )
+    CustomChat.isUsingTeamOnly = ( bind == "messagemode2" )
     chat.Open()
 
     return true
@@ -378,7 +504,7 @@ local isGamePaused = false
 local function CustomChat_Think()
     if not CustomChat.frame then return end
 
-    -- hide the chat box if the game is paused
+    -- Hide the chat box if the game is paused
     if gui.IsGameUIVisible() then
         if isGamePaused == false then
             isGamePaused = true
@@ -437,51 +563,34 @@ function CustomChat:Disable()
     end
 end
 
-if GetConVar( "customchat_disable" ):GetInt() == 0 then
+if CustomChat.IsEnabled() then
     CustomChat:Enable()
 end
 
-cvars.AddChangeCallback( "customchat_disable", function( _, _, new )
-    if tonumber( new ) == 0 then
+cvars.RemoveChangeCallback( "custom_chat_enable_changed" )
+cvars.RemoveChangeCallback( "custom_chat_cl_drawhud_changed" )
+
+cvars.AddChangeCallback( "custom_chat_enable", function( _, _, new )
+    if tonumber( new ) > 0 then
         CustomChat:Enable()
     else
         CustomChat:Disable()
     end
-end, "customchat_disable_changed" )
+end, "custom_chat_enable_changed" )
 
--- remove existing temporary messages when cl_drawhud is 0
-cvars.RemoveChangeCallback( "customchat_cl_drawhud_changed" )
-
+-- Remove existing temporary messages when cl_drawhud is 0
 cvars.AddChangeCallback( "cl_drawhud", function( _, _, new )
     if IsValid( CustomChat.frame ) and new == "0" then
         CustomChat.frame.history:ClearTemporaryMessages()
     end
-end, "customchat_cl_drawhud_changed" )
-
--- received a message
-net.Receive( "customchat.say", function()
-    local channel = net.ReadUInt( 4 )
-    local text = net.ReadString()
-    local ply = net.ReadEntity()
-
-    if not IsValid( ply ) then return end
-
-    local isDead = not ply:Alive()
-
-    CustomChat.lastSpeaker = ply
-    hook.Run( "OnPlayerChat", ply, text, channel ~= CustomChat.channels.everyone, isDead )
-end )
-
-hook.Add( "InitPostEntity", "CustomChat.StoreLocalSteamId", function()
-    CustomChat.localSteamId = LocalPlayer():SteamID()
-end )
+end, "custom_chat_cl_drawhud_changed" )
 
 hook.Add( "NetPrefs_OnChange", "CustomChat.OnServerConfigChange", function( key, value )
     if key == "customchat.emojis" then
-        CustomChat.PrintF( "Received emojis from the server." )
+        CustomChat.Print( "Received emojis from the server." )
         CustomChat.ClearCustomEmojis()
 
-        local items = CustomChat.Unserialize( value )
+        local items = CustomChat.FromJSON( value )
 
         for _, emoji in ipairs( items ) do
             CustomChat.AddCustomEmoji( emoji.id, emoji.url )
@@ -492,14 +601,14 @@ hook.Add( "NetPrefs_OnChange", "CustomChat.OnServerConfigChange", function( key,
         end
 
     elseif key == "customchat.theme" then
-        local data = CustomChat.Unserialize( value )
+        local data = CustomChat.FromJSON( value )
 
         if table.IsEmpty( data ) then
-            CustomChat.PrintF( "Server default theme was empty." )
+            CustomChat.Print( "Server default theme was empty." )
             CustomChat.Theme.serverTheme = nil
             CustomChat:SetTheme( Config.themeId )
         else
-            CustomChat.PrintF( "Received the server default theme." )
+            CustomChat.Print( "Received the server default theme." )
 
             data.id = "server_default"
             data.description = CustomChat.GetLanguageText( "theme.server_default_description" )
@@ -509,74 +618,44 @@ hook.Add( "NetPrefs_OnChange", "CustomChat.OnServerConfigChange", function( key,
         end
 
     elseif key == "customchat.tags" then
-        CustomChat.PrintF( "Received chat tags from the server." )
+        local data = CustomChat.FromJSON( value )
 
-        local data = CustomChat.Unserialize( value )
+        CustomChat.Print( "Received chat tags from the server." )
+
+        -- Update player tags
         local Tags = CustomChat.Tags
 
         Tags.byId = data.byId or {}
         Tags.byTeam = data.byTeam or {}
-        Tags.connection = data.connection or Tags.connection
+
+        -- Update join/leave messages
+        local JoinLeave = CustomChat.JoinLeave
+
+        JoinLeave.showConnect = data.connection.showConnect
+        JoinLeave.showDisconnect = data.connection.showDisconnect
+
+        JoinLeave.joinColor = data.connection.joinColor
+        JoinLeave.joinPrefix = data.connection.joinPrefix
+        JoinLeave.joinSuffix = data.connection.joinSuffix
+
+        JoinLeave.leaveColor = data.connection.leaveColor
+        JoinLeave.leavePrefix = data.connection.leavePrefix
+        JoinLeave.leaveSuffix = data.connection.leaveSuffix
     end
 end )
 
-local function OnPlayerActivated( ply, steamId, color, absenceLength )
-    local name = ply:Nick()
+net.Receive( "customchat.say", function()
+    local message = net.ReadString()
+    local speaker = net.ReadEntity()
 
-    -- only use a player block if custom chat is enabled
-    if GetConVar( "customchat_disable" ):GetInt() == 0 then
-        name = {
-            blockType = "player",
-            blockValue = {
-                name = name,
-                id = steamId,
-                id64 = ply:SteamID64(),
-                isBot = ply:IsBot()
-            }
-        }
-    end
+    if not IsValid( speaker ) then return end
 
-    -- show a message if this player is a friend
-    if
-        CustomChat.GetConVarInt( "enable_friend_messages", 0 ) > 0 and
-        steamId ~= CustomChat.localSteamId and
-        ply:GetFriendStatus() == "friend"
-    then
-        chat.AddText(
-            Color( 255, 255, 255 ), ":small_blue_diamond: " .. CustomChat.GetLanguageText( "friend_spawned1" ) .. " ",
-            color, name,
-            Color( 255, 255, 255 ), " " .. CustomChat.GetLanguageText( "friend_spawned2" )
-        )
-    end
+    message = CustomChat.FromJSON( message )
+    message.speaker = speaker
 
-    if absenceLength < 1 then return end
-    if CustomChat.GetConVarInt( "enable_absence_messages", 0 ) == 0 then return end
+    CustomChat.lastReceivedMessage = message
 
-    -- show the last time the server saw this player
-    local lastSeenTime = CustomChat.NiceTime( math.Round( absenceLength ) )
+    hook.Run( "OnPlayerChat", speaker, message.text, message.channel == "team", not speaker:Alive() )
 
-    chat.AddText(
-        color, name,
-        Color( 150, 150, 150 ), " " .. CustomChat.GetLanguageText( "last_seen1" ),
-        Color( 200, 200, 200 ), " " .. lastSeenTime,
-        Color( 150, 150, 150 ), " " .. CustomChat.GetLanguageText( "last_seen2" )
-    )
-end
-
-net.Receive( "customchat.player_spawned", function()
-    local steamId = net.ReadString()
-    local color = net.ReadColor( false )
-    local absenceLength = net.ReadFloat()
-
-    -- wait till the player entity is valid, within a few tries
-    local timerId = "CustomChat.WaitValid" .. steamId
-
-    timer.Create( timerId, 0.2, 50, function()
-        local ply = player.GetBySteamID( steamId )
-
-        if IsValid( ply ) then
-            timer.Remove( timerId )
-            OnPlayerActivated( ply, steamId, color, absenceLength )
-        end
-    end )
+    CustomChat.lastReceivedMessage = nil
 end )
