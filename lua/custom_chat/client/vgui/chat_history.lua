@@ -96,7 +96,7 @@ pre {
     display: block;
     position: absolute;
     width: 100%;
-    padding: 2px;
+    padding: 4px;
 
     color: white;
     word-break: break-word;
