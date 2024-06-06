@@ -8,7 +8,7 @@ local function GetListeners( speaker, text, channel )
     local listeners = {}
 
     for _, ply in ipairs( targets ) do
-        if hook.Run( "PlayerCanSeePlayersChat", text, teamOnly, ply, speaker ) then
+        if hook.Run( "PlayerCanSeePlayersChat", text, teamOnly, ply, speaker, channel ) then
             listeners[#listeners + 1] = ply
         end
     end
@@ -27,6 +27,8 @@ net.Receive( "customchat.say", function( _, ply )
     sayCooldown[id] = RealTime() + 0.5
 
     local channel = net.ReadString()
+    if not CustomChat.IsStringValid( channel ) then return end
+
     local text = net.ReadString()
 
     if text:len() > CustomChat.MAX_MESSAGE_LENGTH then
