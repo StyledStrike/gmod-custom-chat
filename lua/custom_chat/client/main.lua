@@ -245,7 +245,7 @@ function CustomChat:CreateCustomChannel( id, tooltip, icon )
         error( "You cannot use a ID longer than " .. CustomChat.MAX_CHANNEL_ID_LENGTH .. " characters on CustomChat:CreateCustomChannel!" )
     end
 
-    self.frame:CreateChannel( id, tooltip, icon )
+    return self.frame:CreateChannel( id, tooltip, icon )
 end
 
 function CustomChat:RemoveCustomChannel( id )

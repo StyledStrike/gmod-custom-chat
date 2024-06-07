@@ -226,11 +226,19 @@ function PANEL:NextChannel()
 end
 
 function PANEL:CreateChannel( id, name, icon )
-    if self.channels[id] then return end
+    local channel = self.channels[id]
+
+    if channel then
+        channel.name = name
+        channel.button:SetTooltip( name )
+        channel.button:SetIcon( icon )
+
+        return channel
+    end
 
     self.history:QueueJavascript( "CreateChannel('" .. id .. "');" )
 
-    local channel = {
+    channel = {
         name = name,
         missedCount = 0
     }
