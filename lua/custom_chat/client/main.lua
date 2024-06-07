@@ -304,7 +304,6 @@ function CustomChat:OpenContextMenu( data )
 
     if channel.isDM then
         optionsMenu:AddOption( L"channel.close_dm", function()
-            self.frame:NextChannel()
             self.frame:RemoveChannel( channelId )
         end ):SetIcon( "icon16/cancel.png" )
     end

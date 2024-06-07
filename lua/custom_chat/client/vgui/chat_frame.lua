@@ -261,6 +261,10 @@ end
 function PANEL:RemoveChannel( id )
     if not self.channels[id] then return end
 
+    if id == self.lastChannelId then
+        self:NextChannel()
+    end
+
     self.history:QueueJavascript( "RemoveChannel('" .. id .. "');" )
 
     self.channels[id].button:Remove()
