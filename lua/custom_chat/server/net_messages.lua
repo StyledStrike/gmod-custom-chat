@@ -53,7 +53,7 @@ net.Receive( "customchat.say", function( _, speaker )
     end
 
     text = CustomChat.CleanupString( text )
-    text = hook.Run( "PlayerSay", speaker, text, teamOnly )
+    text = hook.Run( "PlayerSay", speaker, text, teamOnly, channel )
 
     if not IsStringValid( text ) then return end
 
