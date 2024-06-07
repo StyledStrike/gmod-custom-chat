@@ -281,7 +281,10 @@ function PANEL:SetActiveChannel( id )
     channel.missedCount = 0
 
     self:SetChannelNotificationCount( id, 0 )
-    self.history:QueueJavascript( "SetActiveChannel('" .. id .. "');" )
+
+    if self.isChatOpen then
+        self.history:QueueJavascript( "SetActiveChannel('" .. id .. "');" )
+    end
 
     for chid, c in pairs( self.channels ) do
         c.button.isSelected = chid == id
