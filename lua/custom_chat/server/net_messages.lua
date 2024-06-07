@@ -106,5 +106,5 @@ end )
 
 hook.Add( "PlayerDisconnected", "CustomChat.SayCooldownCleanup", function( ply )
     sayCooldown[ply:SteamID()] = nil
-    CustomChat.Config:SetLastSeen( ply:SteamID(), os.time() )
+    CustomChat:SetLastSeen( ply:SteamID(), os.time() )
 end )
