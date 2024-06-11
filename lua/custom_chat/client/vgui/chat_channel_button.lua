@@ -54,8 +54,8 @@ end
 function PANEL:PaintOver( w, h )
     if self.notificationCount > 0 then
         local size = 14
-        local x = w - size - 2
-        local y = h - size - 2
+        local x = w - size
+        local y = h - size
 
         local label = self.notificationCount < 99 and self.notificationCount or "99+"
 
