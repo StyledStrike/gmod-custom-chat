@@ -49,7 +49,6 @@ net.Receive( "customchat.say", function( _, speaker )
     if util.SteamIDTo64( channel ) ~= "0" then
         dmTarget = player.GetBySteamID( channel )
         if not IsValid( dmTarget ) then return end
-        teamOnly = true
     end
 
     text = CustomChat.CleanupString( text )
