@@ -57,8 +57,12 @@ function PANEL:PaintOver( w, h )
         local x = w - size - 2
         local y = h - size - 2
 
+        local label = self.notificationCount < 99 and self.notificationCount or "99+"
+
+        DisableClipping( true )
         draw.RoundedBox( size * 0.5, x, y, size, size, self.colorIndicator )
-        draw.SimpleText( self.notificationCount, "TargetIDSmall", x + size * 0.5, y + size * 0.5, self.colorText, 1, 1 )
+        draw.SimpleText( label, "DebugOverlay", x + size * 0.5, y + size * 0.5, self.colorText, 1, 1 )
+        DisableClipping( false )
     end
 end
 
