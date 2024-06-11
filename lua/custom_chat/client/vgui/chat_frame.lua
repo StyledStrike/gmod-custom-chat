@@ -21,6 +21,7 @@ function PANEL:Init()
     end
 
     local buttonOpenDM = vgui.Create( "DButton", self.channelList )
+    buttonOpenDM:SetText( "" )
     buttonOpenDM:SetIcon( "icon16/add.png" )
     buttonOpenDM:SetTall( 26 )
     buttonOpenDM:SetTooltip( L"channel.open_dm" )
