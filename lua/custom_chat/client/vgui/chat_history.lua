@@ -374,6 +374,7 @@ function CreateChannel(chid) {
     channels[chid] = document.createElement("pre");
     channels[chid].id = "channel_" + chid;
     channels[chid].className = "channel";
+    channels[chid].style["visibility"] = "hidden";
     elChannelPanel.appendChild(channels[chid]);
 }
 
