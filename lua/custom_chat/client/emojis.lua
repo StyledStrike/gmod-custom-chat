@@ -244,7 +244,7 @@ function CustomChat.OpenEmojiEditor()
 
         local btnRemove = vgui.Create( "DButton", item )
         btnRemove:SetIcon( "icon16/cancel.png" )
-        btnRemove:SetTooltip( L"emojis.removeremove" )
+        btnRemove:SetTooltip( L"emojis.remove" )
         btnRemove:SetText( "" )
         btnRemove:SetWide( 24 )
         btnRemove:Dock( RIGHT )
