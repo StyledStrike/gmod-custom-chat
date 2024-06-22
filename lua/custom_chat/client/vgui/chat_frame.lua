@@ -169,6 +169,14 @@ function PANEL:OpenChat()
 
         self:SetActiveChannel( self.lastChannelId or "global" )
     end
+
+    if CustomChat.GetConVarInt( "enable_dms", 1 ) == 0 then
+        for id, channel in pairs( self.channels ) do
+            if channel.isDM then
+                self:RemoveChannel( id )
+            end
+        end
+    end
 end
 
 function PANEL:CloseChat()
@@ -401,6 +409,12 @@ function PANEL:SubmitMessage()
 end
 
 function PANEL:OpenDirectMessage()
+    if CustomChat.GetConVarInt( "enable_dms", 1 ) == 0 then
+        Derma_Message( L"server_dms_disabled", L"open_dm", L"ok" )
+
+        return
+    end
+
     local frame = vgui.Create( "DFrame" )
     frame:SetSize( 380, 300 )
     frame:SetTitle( L"channel.open_dm" )

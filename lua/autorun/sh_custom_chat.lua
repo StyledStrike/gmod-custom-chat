@@ -67,6 +67,9 @@ CreateConVar( "custom_chat_enable_absence_messages", "1", bit.bor( FCVAR_ARCHIVE
 CreateConVar( "custom_chat_enable_friend_messages", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
     "Show messages to players when their friends spawn on the server.", 0, 1 )
 
+CreateConVar( "custom_chat_enable_dms", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
+    "Allow players to chat with eachother privately.", 0, 1 )
+
 function CustomChat.Print( str, ... )
     MsgC( Color( 0, 123, 255 ), "[Custom Chat] ", Color( 255, 255, 255 ), string.format( str, ... ), "\n" )
 end
