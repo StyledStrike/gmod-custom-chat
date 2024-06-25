@@ -473,9 +473,15 @@ local function CustomChat_OnChatText( _, _, text, textType )
     return true
 end
 
+local messageBinds = {
+    ["messagemode"] = true,
+    ["messagemode2"] = true,
+    ["say"] = true,
+    ["say_team"] = true
+}
+
 local function CustomChat_OnPlayerBindPress( _, bind, pressed )
-    if not pressed then return end
-    if bind ~= "messagemode" and bind ~= "messagemode2" then return end
+    if not pressed or not messageBinds[bind] then return end
 
     -- Don't open if playable piano is blocking input
     if IsValid( LocalPlayer().Instrument ) then return end
