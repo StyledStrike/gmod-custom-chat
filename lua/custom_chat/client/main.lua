@@ -135,6 +135,7 @@ function CustomChat:CreateFrame()
     self.frame:SetScreenLock( true )
     self.frame:SetMinWidth( 250 )
     self.frame:SetMinHeight( 150 )
+    self.frame:SetSidebarEnabled( not Config.hideSidebar )
 
     self.frame._MouseReleased = self.frame.OnMouseReleased
 
@@ -313,6 +314,16 @@ function CustomChat:OpenContextMenu( data )
     end ):SetIcon( "icon16/cancel.png" )
 
     optionsMenu:AddSpacer()
+
+    optionsMenu:AddOption( L"channel.open_dm", function()
+        self.frame:OpenDirectMessage()
+    end ):SetIcon( "icon16/add.png" )
+
+    optionsMenu:AddOption( L( Config.hideSidebar and "side_bar.show" or "side_bar.hide" ), function()
+        Config.hideSidebar = not Config.hideSidebar
+        Config:Save()
+        self.frame:SetSidebarEnabled( not Config.hideSidebar )
+    end ):SetIcon( Config.hideSidebar and "icon16/application_side_expand.png" or "icon16/application_side_contract.png" )
 
     optionsMenu:AddOption( L( Config.timestamps and "timestamps.disable" or "timestamps.enable" ), function()
         Config.timestamps = not Config.timestamps

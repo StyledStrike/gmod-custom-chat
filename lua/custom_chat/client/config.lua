@@ -11,6 +11,7 @@ function Config:Reset()
     self.fontSize = 18
     self.allowAnyURL = false
     self.timestamps = false
+    self.hideSidebar = false
     self.themeId = "default"
 end
 
@@ -78,6 +79,7 @@ function Config:Load()
     SetNumber( self, "fontSize", data.font_size, 10, 64 )
     SetBool( self, "timestamps", data.timestamps )
     SetBool( self, "allowAnyURL", data.allow_any_url )
+    SetBool( self, "hideSidebar", data.hide_sidebar )
 
     self.themeId = CustomChat.IsStringValid( data.theme_id ) and data.theme_id or "default"
 end
@@ -100,8 +102,9 @@ function Config:Save( immediate )
         offset_bottom	= self.offsetBottom,
 
         font_size		= self.fontSize,
-        allow_any_url 	= self.allowAnyURL,
         timestamps      = self.timestamps,
+        allow_any_url 	= self.allowAnyURL,
+        hide_sidebar    = self.hideSidebar,
         theme_id        = self.themeId
     } ) )
 end
