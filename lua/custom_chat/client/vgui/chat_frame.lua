@@ -444,6 +444,10 @@ function PANEL:OpenDirectMessage()
         return
     end
 
+    if IsValid( self.frameOpenDM ) then
+        self.frameOpenDM:Close()
+    end
+
     local frame = vgui.Create( "DFrame" )
     frame:SetSize( 380, 300 )
     frame:SetTitle( L"channel.open_dm" )
