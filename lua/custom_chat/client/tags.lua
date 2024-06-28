@@ -33,7 +33,18 @@ local function CustomChat_AddCustomTags( ply, text, isTeam, isDead )
     if not IsValid( ply ) or not ply:IsPlayer() then return end
 
     local parts = Tags:GetParts( ply )
-    if not parts then return end
+    local customParts, keepOriginal = hook.Run( "OverrideCustomChatTags", ply )
+
+    if customParts then
+        assert( type( customParts ) == "table" and table.IsSequential( customParts ),
+            "OverrideCustomChatTags must be return sequential table!" )
+
+        if not keepOriginal then
+            parts = nil
+        end
+    end
+
+    if not parts and not customParts then return end
 
     local message = {}
 
@@ -51,10 +62,16 @@ local function CustomChat_AddCustomTags( ply, text, isTeam, isDead )
         Insert( "*DEAD* " )
     end
 
+    if customParts and #customParts > 0 then
+        for _, v in ipairs( customParts ) do
+            Insert( v )
+        end
+    end
+
     local messageColor = Color( 255, 255, 255 )
 
-    if #parts > 0 then
-        for _, v in pairs( parts ) do
+    if parts and #parts > 0 then
+        for _, v in ipairs( parts ) do
             local color = Color( v[2], v[3], v[4] )
 
             if v[1] == "MESSAGE_COL" then

@@ -52,10 +52,10 @@ By default, the chat box will only load pictures from trusted websites. You can 
 
 ### For developers
 
-You can prevent links from certain players from embedding, by using the `CanEmbedCustomChat` hook on the **clientside**.
+You can prevent links from certain players from embedding, by using the `CanEmbedCustomChat` hook on the **client side**:
 
 ```lua
-hook.Add( "CanEmbedCustomChat", "override_chat_embed_access", function( ply, url, urlType )
+hook.Add( "CanEmbedCustomChat", "chat_embed_access_example", function( ply, url, urlType )
     -- return false to block embeds from "url"
 
     -- "urlType" will be one of these strings:
@@ -66,6 +66,23 @@ hook.Add( "CanEmbedCustomChat", "override_chat_embed_access", function( ply, url
 
     -- Example: prevent audio from embedding for everyone
     if urlType == "audio" then return false end
+end )
+```
+
+You can add more or override chat tags via code, using this hook on the **client side**:
+
+```lua
+hook.Add( "OverrideCustomChatTags", "custom_tags_example", function( ply )
+    -- A sequential table with strings, colors or anything really
+    local parts = {
+        color_black, "(", Color( 0, 0, 255 ), "The " .. team.GetName( ply:Team() ), color_black, ") "
+    }
+
+    -- Should we keep the original custom tags that
+    -- were added on the "[Admin] Chat Tags" menu?
+    local keepOriginalParts = true
+
+    return parts, keepOriginalParts
 end )
 ```
 
