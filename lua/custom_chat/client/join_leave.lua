@@ -8,7 +8,9 @@ local JoinLeave = CustomChat.JoinLeave or {
 
     leaveColor = { 244, 144, 12 },
     leavePrefix = ":small_orange_diamond:",
-    leaveSuffix = "left!"
+    leaveSuffix = "left!",
+
+    botConnectDisconnect = false,
 }
 
 CustomChat.JoinLeave = JoinLeave
@@ -23,6 +25,8 @@ hook.Add( "player_connect_client", "CustomChat.ShowConnectMessages", function( d
     local name = data.name
     local steamId = data.networkid
     local isBot = data.bot == 1
+
+    if (isBot and (not JoinLeave.botConnectDisconnect)) then return end
 
     -- Only use a player block if Custom Chat is enabled
     if CustomChat.IsEnabled() then
@@ -53,6 +57,8 @@ hook.Add( "player_disconnect", "CustomChat.ShowDisconnectMessages", function( da
     local steamId = data.networkid
     local isBot = data.bot == 1
 
+    if (isBot and (not JoinLeave.botConnectDisconnect)) then return end
+
     -- Only use a player block if Custom Chat is enabled
     if CustomChat.IsEnabled() then
         name = {
@@ -76,6 +82,8 @@ hook.Add( "player_disconnect", "CustomChat.ShowDisconnectMessages", function( da
 end, HOOK_LOW )
 
 local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
+    if (ply:IsBot() and (not JoinLeave.botConnectDisconnect)) then return end
+
     -- Only use a player block if Custom Chat is enabled
     if CustomChat.IsEnabled() then
         name = {

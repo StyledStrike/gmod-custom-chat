@@ -281,6 +281,18 @@ function Tags:OpenEditor()
     panelConnectionTags:SetPaintBackground( false )
     sheet:AddSheet( L"tab.conn_disconn", panelConnectionTags, "icon16/group_go.png" )
 
+    local checkBotJoinLeave = vgui.Create( "DCheckBoxLabel", panelConnectionTags )
+    checkBotJoinLeave:SetText( L"tags.show_bot_joinleave_messages" )
+    checkBotJoinLeave:SetTextColor( Color( 255, 255, 255 ) )
+    checkBotJoinLeave:SetValue( byConnection.botConnectDisconnect )
+    checkBotJoinLeave:SizeToContents()
+    checkBotJoinLeave:Dock( TOP )
+    checkBotJoinLeave:DockPadding( 6, 6, 6, 6 )
+
+    checkBotJoinLeave.OnChange = function( _, val )
+        byConnection.botConnectDisconnect = val
+    end
+
     -- Connect messages
     local panelConnect = vgui.Create( "DPanel", panelConnectionTags )
     panelConnect:Dock( LEFT )
