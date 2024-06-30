@@ -162,6 +162,9 @@ function CustomChat.CleanupString( str )
         str = str:gsub( code, replacement )
     end
 
+    -- join multiple, consecutive line breaks
+    str = str:gsub( "\n\n+", "\n" )
+
     -- limit the number of line breaks
     local max = CustomChat.GetConVarInt( "max_lines", 5 )
     local breaks = 0
