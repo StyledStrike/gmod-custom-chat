@@ -515,8 +515,6 @@ local function CustomChat_HUDShouldDraw( name )
     if name == "CHudChat" then return false end
 end
 
-local isGamePaused = false
-
 local function CustomChat_Think()
     if not CustomChat.frame then return end
 
@@ -527,7 +525,7 @@ end
 
 local function CustomChat_OnPauseMenuShow()
     if not CustomChat.frame then return end
-    
+
     if CustomChat.frame:IsVisible() then
         CustomChat.frame:SetVisible( false )
 
