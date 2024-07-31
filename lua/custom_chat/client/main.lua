@@ -515,27 +515,21 @@ local function CustomChat_HUDShouldDraw( name )
     if name == "CHudChat" then return false end
 end
 
-local isGamePaused = false
-
 local function CustomChat_Think()
     if not CustomChat.frame then return end
 
-    -- Hide the chat box if the game is paused
-    if gui.IsGameUIVisible() then
-        if isGamePaused == false then
-            isGamePaused = true
+    if not gui.IsGameUIVisible() and not CustomChat.frame:IsVisible() then
+        CustomChat.frame:SetVisible( true )
+    end
+end
 
-            CustomChat.frame:SetVisible( false )
+local function CustomChat_OnPauseMenuShow()
+    if not CustomChat.frame then return end
 
-            if CustomChat.frame.isChatOpen then
-                chat.Close()
-            end
-        end
-    else
-        if isGamePaused == true then
-            isGamePaused = false
-            CustomChat.frame:SetVisible( true )
-        end
+    if CustomChat.frame:IsVisible() then
+        CustomChat.frame:SetVisible( false )
+
+        return false
     end
 end
 
@@ -548,6 +542,7 @@ function CustomChat:Enable()
     hook.Add( "PlayerBindPress", "CustomChat.OnPlayerBindPress", CustomChat_OnPlayerBindPress )
     hook.Add( "HUDShouldDraw", "CustomChat.HUDShouldDraw", CustomChat_HUDShouldDraw )
     hook.Add( "Think", "CustomChat.Think", CustomChat_Think )
+    hook.Add( "OnPauseMenuShow", "CustomChat.OnPauseMenuShow", CustomChat_OnPauseMenuShow )
 
     if IsValid( CustomChat.frame ) then
         CustomChat.frame:SetVisible( true )
@@ -567,6 +562,7 @@ function CustomChat:Disable()
     hook.Remove( "PlayerBindPress", "CustomChat.OnPlayerBindPress" )
     hook.Remove( "HUDShouldDraw", "CustomChat.HUDShouldDraw" )
     hook.Remove( "Think", "CustomChat.Think" )
+    hook.Remove( "OnPauseMenuShow", "CustomChat.OnPauseMenuShow" )
 
     chat.AddText = CustomChat.DefaultAddText
     chat.Close = CustomChat.DefaultClose
