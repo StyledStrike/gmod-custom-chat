@@ -476,7 +476,7 @@ end
 local function CustomChat_OnChatText( _, _, text, textType )
     if textType == "chat" then return end
 
-    local canShowJoinLeave = not ( CustomChat.JoinLeave.showConnect or CustomChat.JoinLeave.showDisconnect)
+    local canShowJoinLeave = not ( CustomChat.JoinLeave.showConnect or CustomChat.JoinLeave.showDisconnect )
     if not canShowJoinLeave and textType == "joinleave" then return end
 
     CustomChat:AddMessage( { Color( 0, 128, 255 ), text } )
