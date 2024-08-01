@@ -281,13 +281,22 @@ function Tags:OpenEditor()
     panelConnectionTags:SetPaintBackground( false )
     sheet:AddSheet( L"tab.conn_disconn", panelConnectionTags, "icon16/group_go.png" )
 
-    local checkBotJoinLeave = vgui.Create( "DCheckBoxLabel", panelConnectionTags )
+    local panelBots = vgui.Create( "DPanel", panelConnectionTags )
+    panelBots:Dock( TOP )
+    panelBots:SetTall( 28 )
+    panelBots:DockMargin( 0, 0, 0, 4 )
+
+    panelBots.Paint = function( s, w, h )
+        derma.SkinHook( "Paint", "Frame", s, w, h )
+        return true
+    end
+
+    local checkBotJoinLeave = vgui.Create( "DCheckBoxLabel", panelBots )
     checkBotJoinLeave:SetText( L"tags.show_bot_joinleave_messages" )
     checkBotJoinLeave:SetTextColor( Color( 255, 255, 255 ) )
     checkBotJoinLeave:SetValue( byConnection.botConnectDisconnect )
-    checkBotJoinLeave:SizeToContents()
-    checkBotJoinLeave:Dock( TOP )
-    checkBotJoinLeave:DockPadding( 6, 6, 6, 6 )
+    checkBotJoinLeave:Dock( FILL )
+    checkBotJoinLeave:DockMargin( 6, 0, 0, 0 )
 
     checkBotJoinLeave.OnChange = function( _, val )
         byConnection.botConnectDisconnect = val
