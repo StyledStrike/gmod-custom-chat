@@ -46,27 +46,23 @@ function CustomChat.NiceTime( time )
     local d = time % 7
     local w = Floor( time / 7 )
 
-    local parts = {}
-
     if w > 0 then
-        parts[#parts + 1] = w .. " " .. L( "time.weeks" )
+        return w .. " " .. L( "time.weeks" )
     end
 
     if d > 0 then
-        parts[#parts + 1] = d .. " " .. L( "time.days" )
+        return d .. " " .. L( "time.days" )
     end
 
     if h > 0 then
-        parts[#parts + 1] = Format( "%02i ", h ) .. L( "time.hours" )
+        return Format( "%02i ", h ) .. L( "time.hours" )
     end
 
-    if m > 0 then
-        parts[#parts + 1] = Format( "%02i ", m ) .. L( "time.minutes" )
+    if m > 0 and h < 1 and d < 1 then
+        return Format( "%02i ", m ) .. L( "time.minutes" )
     end
 
-    parts[#parts + 1] = Format( "%02i ", s ) .. L( "time.seconds" )
-
-    return table.concat( parts, " " )
+    return Format( "%02i ", s ) .. L( "time.seconds" )
 end
 
 function CustomChat.PrintMessage( text )
