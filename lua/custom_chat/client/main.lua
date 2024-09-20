@@ -500,8 +500,9 @@ local function CustomChat_OnPlayerBindPress( _, bind, pressed )
     -- Don't open if playable piano is blocking input
     if IsValid( LocalPlayer().Instrument ) then return end
 
-    -- Don't open if Starfall is blocking input
+    -- Don't open if Wiremod or Starfall is blocking input
     local existingBindHooks = hook.GetTable()["PlayerBindPress"]
+    if existingBindHooks["wire_keyboard_blockinput"] then return end
     if existingBindHooks["sf_keyboard_blockinput"] then return end
 
     -- Don't open if anything else wants to block input
