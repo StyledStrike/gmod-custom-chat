@@ -55,14 +55,14 @@ function CustomChat.NiceTime( time )
     end
 
     if h > 0 then
-        return Format( "%02i ", h ) .. L( "time.hours" )
+        return h .. " " .. L( "time.hours" )
     end
 
     if m > 0 and h < 1 and d < 1 then
-        return Format( "%02i ", m ) .. L( "time.minutes" )
+        return m .. " " ..  L( "time.minutes" )
     end
 
-    return Format( "%02i ", s ) .. L( "time.seconds" )
+    return s .. " " .. L( "time.seconds" )
 end
 
 function CustomChat.PrintMessage( text )
