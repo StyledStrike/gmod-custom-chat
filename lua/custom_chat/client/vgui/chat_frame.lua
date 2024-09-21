@@ -1,3 +1,21 @@
+surface.CreateFont( "CustomChatEntry", {
+    font = "Roboto",
+    extended = true,
+    size = math.floor( ScrH() * 0.019 ),
+    weight = 400,
+    blursize = 0,
+    scanlines = 0,
+    antialias = true,
+    underline = false,
+    italic = false,
+    strikeout = false,
+    symbol = false,
+    rotary = false,
+    shadow = false,
+    additive = false,
+    outline = false
+} )
+
 local L = CustomChat.GetLanguageText
 local PANEL = {}
 
@@ -38,10 +56,18 @@ function PANEL:Init()
 
     self.entryDock.Paint = function( s, w, h )
         draw.RoundedBox( 0, 0, 0, w, h, s._backgroundColor )
+
+        if not s._calculatedFontHeight then
+            surface.SetFont( "CustomChatEntry" )
+            local _, textH = surface.GetTextSize( "A" )
+            s._calculatedFontHeight = textH
+        end
     end
 
+    self.entryDock._originalPerformLayout = self.entryDock.PerformLayout
+
     self.entry = vgui.Create( "DTextEntry", self.entryDock )
-    self.entry:SetFont( "ChatFont" )
+    self.entry:SetFont( "CustomChatEntry" )
     self.entry:SetDrawBorder( false )
     self.entry:SetPaintBackground( false )
     self.entry:SetMaximumCharCount( CustomChat.MAX_MESSAGE_LENGTH )
@@ -55,18 +81,16 @@ function PANEL:Init()
         derma.SkinHook( "Paint", "TextEntry", s, w, h )
     end
 
+    self.entry.GetLineCount = function( s )
+        local _, lineCount = string.gsub( s:GetText(), "\n", "\n" )
+        return math.Clamp( lineCount + 1, 1, 5 )
+    end
+
     self.entry.OnChange = function( s )
         if not s.GetText then return end
 
-        local text = s:GetText() or ""
-
-        hook.Run( "ChatTextChanged", text )
-
-        local _, lineCount = string.gsub( text, "\n", "\n" )
-        lineCount = math.Clamp( lineCount + 1, 1, 5 )
-
-        self.entryDock:SetTall( 20 * lineCount )
-        self.entry._multilineMode = lineCount > 1
+        hook.Run( "ChatTextChanged", s:GetText() or "" )
+        self.entryDock:InvalidateLayout()
     end
 
     self.entry.OnKeyCodeTyped = function( s, code )
@@ -103,13 +127,22 @@ function PANEL:Init()
             if code == KEY_UP then
                 s.HistoryPos = s.HistoryPos - 1
                 s:UpdateFromHistory()
+                s:SetCaretPos( 0 )
             end
 
             if code == KEY_DOWN then
                 s.HistoryPos = s.HistoryPos + 1
                 s:UpdateFromHistory()
+                s:SetCaretPos( 0 )
             end
         end
+    end
+
+    self.entryDock.PerformLayout = function( s )
+        local lineCount = self.entry:GetLineCount()
+
+        self.entry._multilineMode = lineCount > 1
+        s:SetTall( lineCount * ( s._calculatedFontHeight or 20 ) * 1.3 )
     end
 
     local emojisButton = vgui.Create( "DImageButton", self.entryDock )
