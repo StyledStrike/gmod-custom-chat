@@ -59,4 +59,10 @@ function CustomChat:LoadConfig()
     end
 end
 
+hook.Add( "ShutDown", "CustomChat.StoreLastSeen", function()
+    for _, ply in ipairs( player.GetHumans() ) do
+        CustomChat:SetLastSeen( ply:SteamID(), os.time() )
+    end
+end )
+
 CustomChat:LoadConfig()
