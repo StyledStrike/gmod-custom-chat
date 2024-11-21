@@ -26,3 +26,15 @@ hook.Add( "PlayerInitialSpawn", "CustomChat.BroadcastInitialSpawn", function( pl
         net.Broadcast()
     end )
 end, HOOK_LOW )
+
+hook.Add( "ShutDown", "CustomChat.SaveLastSeen", function()
+    local time = os.time()
+
+    for _, ply in ipairs( player.GetHumans() ) do
+        local steamId = ply:SteamID()
+
+        if steamId then -- Could be nil on the listen server host
+            CustomChat:SetLastSeen( steamId, time )
+        end
+    end
+end )
