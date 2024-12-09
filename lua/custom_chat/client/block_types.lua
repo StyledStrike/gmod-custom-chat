@@ -505,10 +505,7 @@ blocks["url"] = function( value, ctx )
 
     local lastMessage = CustomChat.lastReceivedMessage
 
-    if value:sub( 1, 8 ) == "asset://" then
-        canEmbed = true
-
-    elseif lastMessage and IsValid( lastMessage.speaker ) then
+    if lastMessage and IsValid( lastMessage.speaker ) then
         canEmbed = hook.Run( "CanEmbedCustomChat", lastMessage.speaker, value, urlType ) ~= false
     end
 
