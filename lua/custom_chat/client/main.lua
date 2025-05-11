@@ -32,49 +32,56 @@ function CustomChat.GetLanguageText( id )
     return language.GetPhrase( "custom_chat." .. id )
 end
 
-local year = 60 * 60 * 24 * 365
-local month = 60 * 60 * 24 * 30
-local day = 60 * 60 * 24
-local hour = 60 * 60
-local minute = 60
-function CustomChat.NiceTime( time )
-    local L = CustomChat.GetLanguageText
+do
+    local year = 60 * 60 * 24 * 365
+    local month = 60 * 60 * 24 * 30
+    local day = 60 * 60 * 24
+    local hour = 60 * 60
+    local minute = 60
 
-    local timeUnits = {
-        { value = math.floor( time / year ), name = "time.years" },
-        { value = math.floor( time / month ) % 12, name = "time.months" },
-        { value = math.floor( time / day ) % 30, name = "time.days" },
-        { value = math.floor( time / hour ) % 24, name = "time.hours" },
-        { value = math.floor( time / minute ) % 60, name = "time.minutes" },
-        { value = time % 60, name = "time.seconds" }
-    }
+    function CustomChat.NiceTime( time )
+        local L = CustomChat.GetLanguageText
 
-    local nonZeroUnits = {}
-    for _, unit in ipairs( timeUnits ) do
-        if unit.value > 0 then
-            table.insert( nonZeroUnits, unit )
+        local timeUnits = {
+            { value = Floor( time / year ), name = "time.years" },
+            { value = Floor( time / month ) % 12, name = "time.months" },
+            { value = Floor( time / day ) % 30, name = "time.days" },
+            { value = Floor( time / hour ) % 24, name = "time.hours" },
+            { value = Floor( time / minute ) % 60, name = "time.minutes" },
+            { value = time % 60, name = "time.seconds" }
+        }
+
+        local nonZeroUnits = {}
+
+        for _, unit in ipairs( timeUnits ) do
+            if unit.value > 0 then
+                table.insert( nonZeroUnits, unit )
+            end
         end
-    end
 
-    local selectedUnits = {}
-    local unitsToShow = 1
-    if time > month then
-        unitsToShow = 2
-    end
-    for i = 1, math.min( unitsToShow, #nonZeroUnits ) do
-        table.insert( selectedUnits, nonZeroUnits[i] )
-    end
+        local selectedUnits = {}
+        local unitsToShow = 1
 
-    if #selectedUnits == 0 then
-        return "0 " .. L( "time.seconds" )
-    end
+        if time > month then
+            unitsToShow = 2
+        end
 
-    local parts = {}
-    for _, unit in ipairs( selectedUnits ) do
-        table.insert( parts, unit.value .. " " .. L( unit.name ) )
-    end
+        for i = 1, math.min( unitsToShow, #nonZeroUnits ) do
+            table.insert( selectedUnits, nonZeroUnits[i] )
+        end
 
-    return table.concat( parts, ", " )
+        if #selectedUnits == 0 then
+            return "0 " .. L( "time.seconds" )
+        end
+
+        local parts = {}
+
+        for _, unit in ipairs( selectedUnits ) do
+            table.insert( parts, unit.value .. " " .. L( unit.name ) )
+        end
+
+        return table.concat( parts, ", " )
+    end
 end
 
 function CustomChat.PrintMessage( text )
