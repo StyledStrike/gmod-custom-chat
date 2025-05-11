@@ -32,15 +32,20 @@ function CustomChat.GetLanguageText( id )
     return language.GetPhrase( "custom_chat." .. id )
 end
 
+local year = 60 * 60 * 24 * 365
+local month = 60 * 60 * 24 * 30
+local day = 60 * 60 * 24
+local hour = 60 * 60
+local minute = 60
 function CustomChat.NiceTime( time )
     local L = CustomChat.GetLanguageText
 
     local timeUnits = {
-        { value = math.floor( time / ( 60 * 60 * 24 * 30 * 12 ) ), name = "time.years" },
-        { value = math.floor( time / ( 60 * 60 * 24 * 30 ) ) % 12, name = "time.months" },
-        { value = math.floor( time / ( 60 * 60 * 24 ) ) % 30, name = "time.days" },
-        { value = math.floor( time / ( 60 * 60 ) ) % 24, name = "time.hours" },
-        { value = math.floor( time / 60 ) % 60, name = "time.minutes" },
+        { value = math.floor( time / year ), name = "time.years" },
+        { value = math.floor( time / month ) % 12, name = "time.months" },
+        { value = math.floor( time / day ) % 30, name = "time.days" },
+        { value = math.floor( time / hour ) % 24, name = "time.hours" },
+        { value = math.floor( time / minute ) % 60, name = "time.minutes" },
         { value = time % 60, name = "time.seconds" }
     }
 
@@ -52,7 +57,11 @@ function CustomChat.NiceTime( time )
     end
 
     local selectedUnits = {}
-    for i = 1, math.min( 2, #nonZeroUnits ) do
+    local unitsToShow = 1
+    if time > month then
+        unitsToShow = 2
+    end
+    for i = 1, math.min( unitsToShow, #nonZeroUnits ) do
         table.insert( selectedUnits, nonZeroUnits[i] )
     end
 
