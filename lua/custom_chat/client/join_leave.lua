@@ -82,7 +82,7 @@ hook.Add( "player_disconnect", "CustomChat.ShowDisconnectMessages", function( da
 end, HOOK_LOW )
 
 local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
-    --if ply:IsBot() and not JoinLeave.botConnectDisconnect then return end
+    if ply:IsBot() and not JoinLeave.botConnectDisconnect then return end
 
     -- Only use a player block if Custom Chat is enabled
     if CustomChat.IsEnabled() then
