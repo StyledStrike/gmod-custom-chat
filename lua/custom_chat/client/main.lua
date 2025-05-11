@@ -34,35 +34,38 @@ end
 
 function CustomChat.NiceTime( time )
     local L = CustomChat.GetLanguageText
-    local s = time % 60
 
-    time = Floor( time / 60 )
-    local m = time % 60
+    local timeUnits = {
+        { value = math.floor( time / ( 60 * 60 * 24 * 30 * 12 ) ), name = "time.years" },
+        { value = math.floor( time / ( 60 * 60 * 24 * 30 ) ) % 12, name = "time.months" },
+        { value = math.floor( time / ( 60 * 60 * 24 ) ) % 30, name = "time.days" },
+        { value = math.floor( time / ( 60 * 60 ) ) % 24, name = "time.hours" },
+        { value = math.floor( time / 60 ) % 60, name = "time.minutes" },
+        { value = time % 60, name = "time.seconds" }
+    }
 
-    time = Floor( time / 60 )
-    local h = time % 24
-
-    time = Floor( time / 24 )
-    local d = time % 7
-    local w = Floor( time / 7 )
-
-    if w > 0 then
-        return w .. " " .. L( "time.weeks" )
+    local nonZeroUnits = {}
+    for _, unit in ipairs( timeUnits ) do
+        if unit.value > 0 then
+            table.insert( nonZeroUnits, unit )
+        end
     end
 
-    if d > 0 then
-        return d .. " " .. L( "time.days" )
+    local selectedUnits = {}
+    for i = 1, math.min( 2, #nonZeroUnits ) do
+        table.insert( selectedUnits, nonZeroUnits[i] )
     end
 
-    if h > 0 then
-        return h .. " " .. L( "time.hours" )
+    if #selectedUnits == 0 then
+        return "0 " .. L( "time.seconds" )
     end
 
-    if m > 0 and h < 1 and d < 1 then
-        return m .. " " ..  L( "time.minutes" )
+    local parts = {}
+    for _, unit in ipairs( selectedUnits ) do
+        table.insert( parts, unit.value .. " " .. L( unit.name ) )
     end
 
-    return s .. " " .. L( "time.seconds" )
+    return table.concat( parts, ", " )
 end
 
 function CustomChat.PrintMessage( text )
