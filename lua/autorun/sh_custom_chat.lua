@@ -64,6 +64,9 @@ CreateConVar( "custom_chat_max_lines", "6", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLIC
 CreateConVar( "custom_chat_enable_absence_messages", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
     "On first spawn, show messages about when a player was last present on the server.", 0, 1 )
 
+CreateConVar( "custom_chat_absence_mintime", "300", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
+    "Minimum time in seconds to show absence messages. Set to 0 to disable.", 0 )
+
 CreateConVar( "custom_chat_enable_friend_messages", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
     "Show messages to players when their friends spawn on the server.", 0, 1 )
 

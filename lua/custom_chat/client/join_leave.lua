@@ -82,7 +82,7 @@ hook.Add( "player_disconnect", "CustomChat.ShowDisconnectMessages", function( da
 end, HOOK_LOW )
 
 local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
-    if ply:IsBot() and not JoinLeave.botConnectDisconnect then return end
+    --if ply:IsBot() and not JoinLeave.botConnectDisconnect then return end
 
     -- Only use a player block if Custom Chat is enabled
     if CustomChat.IsEnabled() then
@@ -112,6 +112,9 @@ local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
 
     if absenceLength < 1 then return end
     if CustomChat.GetConVarInt( "enable_absence_messages", 0 ) == 0 then return end
+
+    local minTime = CustomChat.GetConVarInt( "absence_mintime", 0 )
+    if minTime > 0 and absenceLength < minTime then return end
 
     -- Show the last time the server saw this player
     local lastSeenTime = CustomChat.NiceTime( math.Round( absenceLength ) )
