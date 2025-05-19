@@ -575,3 +575,34 @@ blocks["advert"] = function( value, ctx )
 
     return table.concat( lines, "\n" )
 end
+
+local function ParseComponent( str )
+    return math.Clamp( tonumber( str ) or 0, 0, 255 )
+end
+
+blocks["gradient"] = function( value, ctx )
+    local components = ChopEnds( string.match( value, "%$%d+,%d+,%d+%,%d+,%d+,%d+%$" ), 2 )
+    local text = ChopEnds( string.match( value, "%([^%c]+%)" ), 2 )
+
+    components = string.Explode( ",", components, false )
+
+    local colorA = Color( ParseComponent( components[1] ), ParseComponent( components[2] ), ParseComponent( components[3] ) )
+    local colorB = Color( ParseComponent( components[4] ), ParseComponent( components[5] ), ParseComponent( components[6] ) )
+
+    local colorGlow = Color(
+        ( colorA.r + colorB.r ) * 0.5,
+        ( colorA.g + colorB.g ) * 0.5,
+        ( colorA.b + colorB.b ) * 0.5
+    )
+
+    local code = [[%s
+        elText.style.backgroundImage = '-webkit-linear-gradient(left, %s, %s)';
+        elText.style.textShadow = '0px 0px 0.2em %s';]]
+
+    return code:format(
+        Create.Text( text, ctx.font, nil, nil, nil, "gradient" ),
+        ColorToRGB( colorA ),
+        ColorToRGB( colorB ),
+        ColorToRGB( colorGlow )
+    )
+end

@@ -10,6 +10,7 @@ local rangeTypes = {
     { type = "url", pattern = "asset://[^%s%\"%>%<%!]+" },
     { type = "url", pattern = "https?://[^%s%\"%>%<%!]+" },
     { type = "hyperlink", pattern = "%[[^%c]-[^%[%]]*%]%(https?://[^'\">%s]+%)" },
+    { type = "gradient", pattern = "%$%d+,%d+,%d+%,%d+,%d+,%d+%$%([^%c]+%)" },
     { type = "model", pattern = "models/[%w_/]+.mdl" },
     { type = "font", pattern = ";[%w_]+;" },
     { type = "italic", pattern = "%*[^%c][^%*]+%*" },

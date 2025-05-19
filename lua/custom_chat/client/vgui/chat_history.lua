@@ -342,6 +342,17 @@ img {
     -webkit-animation: wk_anim_rainbow 2s linear infinite;
     animation: ch_anim_rainbow 2s linear infinite;
 }
+
+.gradient {
+    background-image: -webkit-linear-gradient(left, #ff0000, #ff0088);
+    background: linear-gradient(to left, #ff0000, #ff0088);
+    text-shadow: none;
+    color: transparent;
+
+    -webkit-background-clip: text;
+    background-clip: text;
+    background-size: 100% 100%;
+}
 </style>
 
 <script>
