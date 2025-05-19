@@ -37,6 +37,7 @@ $$rainbow text here$$
 [[Marquee-like advert here]]
 [Link text Here](https://link-url-here.org)
 <255,0,0>Red text here, and <0,0,255>blue text here
+$255,0,0,0,100,255$(red-to-blue gradient text here)
 ```
 
 ### Fonts
