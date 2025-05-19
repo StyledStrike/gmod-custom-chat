@@ -455,6 +455,7 @@ blocks["player"] = function( value, ctx )
     end
 
     local color = ctx.color
+    local gradientColors = nil
 
     if IsValid( value.ply ) then
         if CustomChat.USE_TAGS then
@@ -466,10 +467,35 @@ blocks["player"] = function( value, ctx )
             local _, _, nameColor = value.ply:getChatTag()
             if nameColor then color = nameColor end
         end
+
+        local colorA, colorB = hook.Run( "OverrideCustomChatPlayerColor", value.ply )
+
+        if IsColor( colorA ) then
+            if IsColor( colorB ) then
+                gradientColors = { colorA, colorB }
+            else
+                color = colorA
+            end
+        end
+    end
+
+    if gradientColors then
+        local colorGlow = Color(
+            ( gradientColors[1].r + gradientColors[2].r ) * 0.5,
+            ( gradientColors[1].g + gradientColors[2].g ) * 0.5,
+            ( gradientColors[1].b + gradientColors[2].b ) * 0.5
+        )
+
+        Append( lines, "elPlayer.className = 'gradient';" )
+        Append( lines, "elPlayer.style.textShadow = '0px 0px 0.2em %s';", ColorToRGB( colorGlow ) )
+        Append( lines, "elPlayer.style.backgroundImage = '-webkit-linear-gradient(left, %s, %s)';",
+            ColorToRGB( gradientColors[1] ), ColorToRGB( gradientColors[2] ) )
     end
 
     if color then
-        Append( lines, "elPlayer.style.color = '%s';", ColorToRGB( color ) )
+        if gradientColors == nil then
+            Append( lines, "elPlayer.style.color = '%s';", ColorToRGB( color ) )
+        end
 
         if ctx.panel.displayAvatars then
             Append( lines, "elImg.style['border-color'] = '%s';", ColorToRGB( color ) )
