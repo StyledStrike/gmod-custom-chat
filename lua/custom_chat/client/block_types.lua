@@ -18,6 +18,7 @@ if BRANCH == "unknown" then
     forceHTTP = {
         ["avatars.cloudflare.steamstatic.com"] = true,
         ["avatars.akamai.steamstatic.com"] = true,
+        ["avatars.fastly.steamstatic.com"] = true,
         ["media.discordapp.net"] = true,
         ["cdn.discordapp.com"] = true -- seems like it still does not work
     }
