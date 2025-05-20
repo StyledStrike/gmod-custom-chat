@@ -280,6 +280,44 @@ function Create.Embed( url, panel )
     return table.concat( lines, "\n" )
 end
 
+--- Returns JS code that creates gradient text
+function Create.Gradient( text, font, colorA, colorB, elementName )
+    elementName = elementName or "elGradient"
+
+    -- Gradient container
+    local lines = { Create.Element( "span", elementName ) }
+    Append( lines, "%s.className = 'gradient-container';", elementName )
+
+    if IsStringValid( font ) then
+        Append( lines, "%s.style.fontFamily = '%s';", font, elementName )
+    end
+
+    -- Gradient background/glow
+    Append( lines, Create.Element( "span", "elGradientGlow", elementName ) )
+    Append( lines, "elGradientGlow.className = 'gradient-bg';" )
+    Append( lines, "elGradientGlow.textContent = '%s';", text )
+
+    -- Use the combined colors for the glow effect
+    local h, s, l = ColorToHSL( Color(
+        ( colorA.r + colorB.r ) * 0.5,
+        ( colorA.g + colorB.g ) * 0.5,
+        ( colorA.b + colorB.b ) * 0.5
+    ) )
+
+    local colorGlow = ColorToRGB( HSLToColor( h, s, l * 0.5 ) )
+
+    Append( lines, "elGradientGlow.style.color = '%s';", colorGlow )
+    Append( lines, "elGradientGlow.style.textShadow = '0px 0px 0.2em %s';", colorGlow )
+
+    -- Gradient foreground/text
+    Append( lines, Create.Element( "span", "elGradientText", elementName ) )
+    Append( lines, "elGradientText.className = 'gradient-fg';" )
+    Append( lines, "elGradientText.textContent = '%s';", text )
+    Append( lines, "elGradientText.style.backgroundImage = '-webkit-linear-gradient(left, %s, %s)';", ColorToRGB( colorA ), ColorToRGB( colorB ) )
+
+    return table.concat( lines, "\n" )
+end
+
 --[[
     Steam avatar fetcher
 ]]
@@ -431,14 +469,56 @@ blocks["string"] = function( value, ctx )
 end
 
 blocks["player"] = function( value, ctx )
-    local lines = {}
+    local colors = { ctx.color }
 
-    if not value.isBot and ctx.panel.displayAvatars then
-        lines[#lines + 1] = Create.Image( CustomChat.FetchUserAvatarURL( value.id64, ctx.panel ), nil, "avatar ply-" .. value.id64 )
+    -- Get the player name color(s)
+    if IsValid( value.ply ) then
+        if CustomChat.USE_TAGS then
+            local nameColor = CustomChat.Tags:GetNameColor( value.ply )
+            if nameColor then colors[1] = nameColor end
+
+        elseif value.ply.getChatTag then
+            -- aTags support
+            local _, _, nameColor = value.ply:getChatTag()
+            if nameColor then colors[1] = nameColor end
+        end
+
+        local colorA, colorB = hook.Run( "OverrideCustomChatPlayerColor", value.ply )
+
+        if IsColor( colorA ) then
+            colors[1] = colorA
+
+            if IsColor( colorB ) then
+                colors[2] = colorB
+            end
+        end
     end
 
-    lines[#lines + 1] = Create.Element( "span", "elPlayer" )
-    Append( lines, "elPlayer.textContent = '%s';", SafeString( value.name ) )
+    local lines = {}
+
+    -- Create avatar image
+    if not value.isBot and ctx.panel.displayAvatars then
+        lines[#lines + 1] = Create.Image( CustomChat.FetchUserAvatarURL( value.id64, ctx.panel ), nil, "avatar ply-" .. value.id64 )
+
+        if colors[1] then
+            Append( lines, "elImg.style['border-color'] = '%s';", ColorToRGB( colors[1] ) )
+        end
+    end
+
+    local name = SafeString( value.name )
+
+    if #colors > 1 then
+        -- If we have more than one color, create a gradient
+        lines[#lines + 1] = Create.Gradient( name, ctx.font, colors[1], colors[2], "elPlayer" )
+    else
+        -- Otherwise create a regular text element
+        lines[#lines + 1] = Create.Element( "span", "elPlayer" )
+        Append( lines, "elPlayer.textContent = '%s';", name )
+
+        if IsStringValid( ctx.font ) then
+            Append( lines, "elPlayer.style.fontFamily = '%s';", ctx.font )
+        end
+    end
 
     if not value.isBot then
         Append( lines, "elPlayer._playerData = '%s';", util.TableToJSON( {
@@ -448,58 +528,6 @@ blocks["player"] = function( value, ctx )
 
         Append( lines, "elPlayer.style.cursor = 'pointer';" )
         Append( lines, "elPlayer.clickableText = true;" )
-    end
-
-    if IsStringValid( ctx.font ) then
-        Append( lines, "elPlayer.style.fontFamily = '%s';", ctx.font )
-    end
-
-    local color = ctx.color
-    local gradientColors = nil
-
-    if IsValid( value.ply ) then
-        if CustomChat.USE_TAGS then
-            local nameColor = CustomChat.Tags:GetNameColor( value.ply )
-            if nameColor then color = nameColor end
-
-        elseif value.ply.getChatTag then
-            -- aTags support
-            local _, _, nameColor = value.ply:getChatTag()
-            if nameColor then color = nameColor end
-        end
-
-        local colorA, colorB = hook.Run( "OverrideCustomChatPlayerColor", value.ply )
-
-        if IsColor( colorA ) then
-            if IsColor( colorB ) then
-                gradientColors = { colorA, colorB }
-            else
-                color = colorA
-            end
-        end
-    end
-
-    if gradientColors then
-        local colorGlow = Color(
-            ( gradientColors[1].r + gradientColors[2].r ) * 0.5,
-            ( gradientColors[1].g + gradientColors[2].g ) * 0.5,
-            ( gradientColors[1].b + gradientColors[2].b ) * 0.5
-        )
-
-        Append( lines, "elPlayer.className = 'gradient';" )
-        Append( lines, "elPlayer.style.textShadow = '0px 0px 0.2em %s';", ColorToRGB( colorGlow ) )
-        Append( lines, "elPlayer.style.backgroundImage = '-webkit-linear-gradient(left, %s, %s)';",
-            ColorToRGB( gradientColors[1] ), ColorToRGB( gradientColors[2] ) )
-    end
-
-    if color then
-        if gradientColors == nil then
-            Append( lines, "elPlayer.style.color = '%s';", ColorToRGB( color ) )
-        end
-
-        if ctx.panel.displayAvatars then
-            Append( lines, "elImg.style['border-color'] = '%s';", ColorToRGB( color ) )
-        end
     end
 
     return table.concat( lines, "\n" )
@@ -612,24 +640,10 @@ blocks["gradient"] = function( value, ctx )
     local text = ChopEnds( string.match( value, "%([^%c]+%)" ), 2 )
 
     components = string.Explode( ",", components, false )
+    text = SafeString( text )
 
     local colorA = Color( ParseComponent( components[1] ), ParseComponent( components[2] ), ParseComponent( components[3] ) )
     local colorB = Color( ParseComponent( components[4] ), ParseComponent( components[5] ), ParseComponent( components[6] ) )
 
-    local colorGlow = Color(
-        ( colorA.r + colorB.r ) * 0.5,
-        ( colorA.g + colorB.g ) * 0.5,
-        ( colorA.b + colorB.b ) * 0.5
-    )
-
-    local code = [[%s
-        elText.style.backgroundImage = '-webkit-linear-gradient(left, %s, %s)';
-        elText.style.textShadow = '0px 0px 0.2em %s';]]
-
-    return code:format(
-        Create.Text( text, ctx.font, nil, nil, nil, "gradient" ),
-        ColorToRGB( colorA ),
-        ColorToRGB( colorB ),
-        ColorToRGB( colorGlow )
-    )
+    return Create.Gradient( text, ctx.font, colorA, colorB )
 end

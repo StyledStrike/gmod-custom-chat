@@ -343,9 +343,24 @@ img {
     animation: ch_anim_rainbow 2s linear infinite;
 }
 
-.gradient {
-    background-image: -webkit-linear-gradient(left, #ff0000, #ff0088);
-    background: linear-gradient(to left, #ff0000, #ff0088);
+.gradient-container {
+    position: relative;
+}
+
+.gradient-bg {
+    color: blue;
+    text-shadow: 0px 0px 0.15em blue;
+}
+
+.gradient-fg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 10;
+
+    background-image: -webkit-linear-gradient(left, #ffffff, #ffffff);
     text-shadow: none;
     color: transparent;
 
