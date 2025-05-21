@@ -288,10 +288,6 @@ function Create.Gradient( text, font, colorA, colorB, elementName )
     local lines = { Create.Element( "span", elementName ) }
     Append( lines, "%s.className = 'gradient-container';", elementName )
 
-    if IsStringValid( font ) then
-        Append( lines, "%s.style.fontFamily = '%s';", font, elementName )
-    end
-
     -- Gradient background/glow
     Append( lines, Create.Element( "span", "elGradientGlow", elementName ) )
     Append( lines, "elGradientGlow.className = 'gradient-bg';" )
@@ -314,6 +310,11 @@ function Create.Gradient( text, font, colorA, colorB, elementName )
     Append( lines, "elGradientText.className = 'gradient-fg';" )
     Append( lines, "elGradientText.textContent = '%s';", text )
     Append( lines, "elGradientText.style.backgroundImage = '-webkit-linear-gradient(left, %s, %s)';", ColorToRGB( colorA ), ColorToRGB( colorB ) )
+
+    if IsStringValid( font ) then
+        Append( lines, "elGradientGlow.style.fontFamily = '%s';", font )
+        Append( lines, "elGradientText.style.fontFamily = '%s';", font )
+    end
 
     return table.concat( lines, "\n" )
 end
@@ -517,6 +518,10 @@ blocks["player"] = function( value, ctx )
 
         if IsStringValid( ctx.font ) then
             Append( lines, "elPlayer.style.fontFamily = '%s';", ctx.font )
+        end
+
+        if colors[1] then
+            Append( lines, "elPlayer.style.color = '%s';", ColorToRGB( colors[1] ) )
         end
     end
 
