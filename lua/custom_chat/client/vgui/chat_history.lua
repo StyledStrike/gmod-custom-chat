@@ -345,9 +345,6 @@ img {
 
 .gradient-container {
     position: relative;
-}
-
-.gradient-bg {
     color: blue;
     text-shadow: 0px 0px 0.15em blue;
 }

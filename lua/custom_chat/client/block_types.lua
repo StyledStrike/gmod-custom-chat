@@ -284,14 +284,10 @@ end
 function Create.Gradient( text, font, colorA, colorB, elementName )
     elementName = elementName or "elGradient"
 
-    -- Gradient container
+    -- Gradient container/glow
     local lines = { Create.Element( "span", elementName ) }
     Append( lines, "%s.className = 'gradient-container';", elementName )
-
-    -- Gradient background/glow
-    Append( lines, Create.Element( "span", "elGradientGlow", elementName ) )
-    Append( lines, "elGradientGlow.className = 'gradient-bg';" )
-    Append( lines, "elGradientGlow.textContent = '%s';", text )
+    Append( lines, "%s.textContent = '%s';", elementName, text )
 
     -- Use the combined colors for the glow effect
     local h, s, l = ColorToHSL( Color(
@@ -302,8 +298,8 @@ function Create.Gradient( text, font, colorA, colorB, elementName )
 
     local colorGlow = ColorToRGB( HSLToColor( h, s, l * 0.5 ) )
 
-    Append( lines, "elGradientGlow.style.color = '%s';", colorGlow )
-    Append( lines, "elGradientGlow.style.textShadow = '0px 0px 0.2em %s';", colorGlow )
+    Append( lines, "%s.style.color = '%s';", elementName, colorGlow )
+    Append( lines, "%s.style.textShadow = '0px 0px 0.2em %s';", elementName, colorGlow )
 
     -- Gradient foreground/text
     Append( lines, Create.Element( "span", "elGradientText", elementName ) )
@@ -312,7 +308,7 @@ function Create.Gradient( text, font, colorA, colorB, elementName )
     Append( lines, "elGradientText.style.backgroundImage = '-webkit-linear-gradient(left, %s, %s)';", ColorToRGB( colorA ), ColorToRGB( colorB ) )
 
     if IsStringValid( font ) then
-        Append( lines, "elGradientGlow.style.fontFamily = '%s';", font )
+        Append( lines, "%s.style.fontFamily = '%s';", elementName, font )
         Append( lines, "elGradientText.style.fontFamily = '%s';", font )
     end
 
