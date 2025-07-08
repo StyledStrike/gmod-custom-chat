@@ -41,12 +41,18 @@ hook.Add( "player_connect_client", "CustomChat.ShowConnectMessages", function( d
         }
     end
 
-    chat.AddText(
+    local parts = {
         Color( 255, 255, 255 ), JoinLeave.joinPrefix,
-        Color( c[1], c[2], c[3] ), name,
-        Color( 150, 150, 150 ), " <" .. steamId .. "> ",
+        Color( c[1], c[2], c[3] ), name, " ",
         Color( 255, 255, 255 ), JoinLeave.joinSuffix
-    )
+    }
+
+    if CustomChat.GetConVarInt( "show_steamid_on_join_leave", 0 ) > 0 then
+        table.insert( parts, 5, Color( 150, 150, 150 ) )
+        table.insert( parts, 5, " <" .. steamId .. ">" )
+    end
+
+    chat.AddText( unpack( parts ) )
 end, HOOK_LOW )
 
 hook.Add( "player_disconnect", "CustomChat.ShowDisconnectMessages", function( data )
@@ -72,13 +78,19 @@ hook.Add( "player_disconnect", "CustomChat.ShowDisconnectMessages", function( da
         }
     end
 
-    chat.AddText(
+    local parts = {
         Color( 255, 255, 255 ), JoinLeave.leavePrefix,
-        Color( c[1], c[2], c[3] ), name,
-        Color( 150, 150, 150 ), " <" .. steamId .. "> ",
+        Color( c[1], c[2], c[3] ), name, " ",
         Color( 255, 255, 255 ), JoinLeave.leaveSuffix,
         Color( 150, 150, 150 ), " (" .. data.reason .. ")"
-    )
+    }
+
+    if CustomChat.GetConVarInt( "show_steamid_on_join_leave", 0 ) > 0 then
+        table.insert( parts, 5, Color( 150, 150, 150 ) )
+        table.insert( parts, 5, " <" .. steamId .. ">" )
+    end
+
+    chat.AddText( unpack( parts ) )
 end, HOOK_LOW )
 
 local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
