@@ -74,6 +74,8 @@ CreateConVar( "custom_chat_enable_dms", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLI
     "Allow players to chat with eachother privately.", 0, 1 )
 
 if CLIENT then
+    CreateClientConVar( "custom_chat_enable", "1", true, false )
+
     CreateClientConVar( "custom_chat_show_steamid_on_join_leave", "0", true, false,
         "Should the SteamID be visible when showing join/leave messages?", 0, 1 )
 end

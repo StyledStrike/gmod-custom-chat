@@ -1,5 +1,3 @@
-CreateClientConVar( "custom_chat_enable", "1", true, false )
-
 -- Keep track of the original chat functions
 CustomChat.DefaultOpen = CustomChat.DefaultOpen or chat.Open
 CustomChat.DefaultClose = CustomChat.DefaultClose or chat.Close
