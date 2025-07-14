@@ -73,8 +73,10 @@ CreateConVar( "custom_chat_enable_friend_messages", "1", bit.bor( FCVAR_ARCHIVE,
 CreateConVar( "custom_chat_enable_dms", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
     "Allow players to chat with eachother privately.", 0, 1 )
 
-CreateConVar( "custom_chat_show_steamid_on_join_leave", "0", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
-    "Should the SteamID be visible when showing join/leave messages?", 0, 1 )
+if CLIENT then
+    CreateClientConVar( "custom_chat_show_steamid_on_join_leave", "0", true, false,
+        "Should the SteamID be visible when showing join/leave messages?", 0, 1 )
+end
 
 function CustomChat.Print( str, ... )
     MsgC( Color( 0, 123, 255 ), "[Custom Chat] ", Color( 255, 255, 255 ), string.format( str, ... ), "\n" )
