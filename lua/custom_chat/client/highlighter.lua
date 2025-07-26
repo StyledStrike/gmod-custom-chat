@@ -36,6 +36,8 @@ local keywords = {
     ["continue"] = "keyword",
     ["function"] = "keyword",
     ["return"] = "keyword",
+    ["and"] = "keyword",
+    ["or"] = "keyword",
 
     ["print"] = "func",
     ["Vector"] = "func",
