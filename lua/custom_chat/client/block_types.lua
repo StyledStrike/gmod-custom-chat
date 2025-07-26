@@ -12,7 +12,7 @@ local IsStringValid = CustomChat.IsStringValid
 -- Force plain HTTP for certain image links when Chromium is not in use
 local forceHTTP
 
-if BRANCH == "unknown" then
+if system.IsLinux() and BRANCH ~= "x86-64" then
     CustomChat.Print( "Not using Chromium, enforcing plain HTTP for some image links." )
 
     forceHTTP = {

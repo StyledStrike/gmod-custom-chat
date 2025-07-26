@@ -536,7 +536,7 @@ window.addEventListener("keydown", function(ev) {
     }
 });
 
-console.log("Ready.");
+console.log("Ready, using Chromium: " + (IS_AWESOMIUM ? "No" : "Yes"));
 </script>
 </html>]]
 end
