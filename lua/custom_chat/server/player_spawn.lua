@@ -19,6 +19,7 @@ hook.Add( "PlayerInitialSpawn", "CustomChat.BroadcastInitialSpawn", function( pl
         CustomChat:SetLastSeen( steamId, time )
 
         net.Start( "customchat.player_spawned", false )
+        net.WriteUInt( ply:UserID(), 8 )
         net.WriteString( steamId )
         net.WriteString( ply:Nick() )
         net.WriteColor( color, false )

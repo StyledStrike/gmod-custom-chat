@@ -122,8 +122,14 @@ local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
         )
     end
 
-    if absenceLength < 1 then return end
     if CustomChat.GetConVarInt( "enable_absence_messages", 0 ) == 0 then return end
+    if absenceLength < 1 then
+        chat.AddText(
+            color, name,
+            Color( 150, 150, 150 ), " " .. CustomChat.GetLanguageText( "first_seen" )
+        )
+        return
+    end
 
     local minTime = CustomChat.GetConVarInt( "absence_mintime", 0 )
     if minTime > 0 and absenceLength < minTime then return end
@@ -140,6 +146,7 @@ local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
 end
 
 net.Receive( "customchat.player_spawned", function()
+    local playerId = net.ReadUInt( 8 )
     local steamId = net.ReadString()
     local name = net.ReadString()
     local color = net.ReadColor( false )
@@ -150,7 +157,7 @@ net.Receive( "customchat.player_spawned", function()
 
     -- Try every 1/2 seconds, 20 times, for a total of 10 seconds
     timer.Create( timerId, 0.5, 20, function()
-        local ply = player.GetBySteamID( steamId )
+        local ply = Player( playerId )
 
         if IsValid( ply ) then
             timer.Remove( timerId )
