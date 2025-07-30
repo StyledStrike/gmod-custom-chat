@@ -51,7 +51,9 @@ _(A list of fonts can be found on the workshop page.)_
 
 By default, the chat box will only load pictures from trusted websites. You can open a pull request to add more, or send a request [here](https://steamcommunity.com/workshop/filedetails/discussion/2799307109/3272437487156558008/).
 
-### For developers
+## For developers
+
+### Hook: CanEmbedCustomChat
 
 You can prevent links from certain players from embedding, by using the `CanEmbedCustomChat` hook on the **client side**:
 
@@ -70,22 +72,53 @@ hook.Add( "CanEmbedCustomChat", "chat_embed_access_example", function( ply, url,
 end )
 ```
 
-You can add more or override chat tags via code, using this hook on the **client side**:
+### Hook: OverrideCustomChatTags
+
+You can add/override chat tags dynamically via code, using this hook on the **client side**:
 
 ```lua
 hook.Add( "OverrideCustomChatTags", "custom_tags_example", function( ply )
-    -- A sequential table with strings, colors or anything really
+    -- A sequential table with strings, colors or anything that can be passed to `tostring()`
     local parts = {
         color_black, "(", Color( 0, 0, 255 ), "The " .. team.GetName( ply:Team() ), color_black, ") "
     }
 
     -- Should we keep the original custom tags that
     -- were added on the "[Admin] Chat Tags" menu?
+    -- Set this to false to only use the parts you've added in here.
     local keepOriginalParts = true
 
     return parts, keepOriginalParts
 end )
 ```
+
+### Hook: OverrideCustomChatPlayerColor
+
+You can use this hook on the **client side** to override the colors that will be shown for player names.
+
+```lua
+hook.Add( "OverrideCustomChatPlayerColor", "custom_player_color_example", function( ply )
+    -- Make the name color for dead players red.
+    if not ply:Alive() then
+        return Color( 255, 0, 0 )
+    end
+
+    -- If you return two colors, the player name will have a gradient/glow effect.
+    if ply:IsSuperAdmin() then
+        return Color( 255, 0, 0 ), Color( 0, 100, 255 )
+    end
+
+    -- Return nothing to keep the default behaviour from Custom Chat.
+end )
+```
+
+### Hook: CustomChatBlockInput
+
+You can return `true` on this hook to block the "open chat" button(s). It runs on the **client side**.
+
+### Hook: CustomChatHideJoinMessage
+
+You can return `true` on this hook to dynamically prevent join/leave messages from showing up. It runs on the **client side**, and gives a `data` table as a argument, that contains the same keys given by the [player_connect_client](https://wiki.facepunch.com/gmod/gameevent/player_connect_client#members) hook.
 
 ## Contributing
 
