@@ -28,6 +28,9 @@ hook.Add( "player_connect_client", "CustomChat.ShowConnectMessages", function( d
 
     if isBot and not JoinLeave.botConnectDisconnect then return end
 
+    local hideMessage = hook.Run( "CustomChatHideJoinMessage", data )
+    if hideMessage == true then return end
+
     -- Only use a player block if Custom Chat is enabled
     if CustomChat.IsEnabled() then
         name = {
@@ -64,6 +67,9 @@ hook.Add( "player_disconnect", "CustomChat.ShowDisconnectMessages", function( da
     local isBot = data.bot == 1
 
     if isBot and not JoinLeave.botConnectDisconnect then return end
+
+    local hideMessage = hook.Run( "CustomChatHideLeaveMessage", data )
+    if hideMessage == true then return end
 
     -- Only use a player block if Custom Chat is enabled
     if CustomChat.IsEnabled() then
