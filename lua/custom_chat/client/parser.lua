@@ -112,7 +112,15 @@ function CustomChat.ParseString( str, outFunc )
         local value = Substring( str, r.s, r.e )
 
         if value ~= "" then
-            outFunc( r.type, value )
+            local formatType = r.type
+
+            if CustomChat.lastReceivedMessage then
+                local canFormat = hook.Run( "CanFormatCustomChat", CustomChat.lastReceivedMessage.speaker, r.type, value )
+                if canFormat == false then
+                    formatType = "string"
+                end
+            end
+            outFunc( formatType, value )
         end
     end
 
