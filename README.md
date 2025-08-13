@@ -72,6 +72,36 @@ hook.Add( "CanEmbedCustomChat", "chat_embed_access_example", function( ply, url,
 end )
 ```
 
+### Hook: CanFormatCustomChat
+
+You can block specific text formatting types per-player on the client using the `CanFormatCustomChat` hook. Return `false` to prevent that formatting from being applied; the text will be shown as plain text instead.
+
+```lua
+hook.Add( "CanFormatCustomChat", "format_access_example", function( ply, formatType, value )
+    -- Return false to block this formatting for this player/message
+
+    -- formatType is one of:
+    -- "url", "hyperlink", "gradient", "model", "font",
+    -- "italic", "bold", "bold_italic", "color", "rainbow",
+    -- "advert", "emoji", "spoiler", "code_line", "code"
+
+    -- Example: only allow admins to use gradients
+    if formatType == "gradient" and not ply:IsAdmin() then
+        return false
+    end
+
+    -- Example: block spoilers for everyone
+    if formatType == "spoiler" then
+        return false
+    end
+
+    -- Example: restrict links to super admins
+    if (formatType == "url" or formatType == "hyperlink") and not ply:IsSuperAdmin() then
+        return false
+    end
+end )
+```
+
 ### Hook: OverrideCustomChatTags
 
 You can add/override chat tags dynamically via code, using this hook on the **client side**:
