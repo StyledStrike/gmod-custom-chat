@@ -5,7 +5,23 @@ A simple and customizable chat box that can format text, display images and emoj
 [![GLuaLint](https://github.com/StyledStrike/gmod-custom-chat/actions/workflows/glualint.yml/badge.svg)](https://github.com/FPtje/GLuaFixer)
 [![Workshop Page](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-steam-workshop.jross.me%2F2799307109%2Fsubscriptions-text)](https://steamcommunity.com/sharedfiles/filedetails/?id=2799307109)
 
-### Features
+## Table of contents
+
+- [Features](#features)
+- [Text formatting](#text-formatting)
+- [Fonts](#fonts)
+- [Whitelisted sites](#whitelisted-sites)
+- [Developer reference](#developer-reference)
+    - [Hooks (quick links)](#hooks-quick-links)
+    - [CanEmbedCustomChat](#canembedcustomchat)
+    - [CanFormatCustomChat](#canformatcustomchat)
+    - [OverrideCustomChatTags](#overridecustomchattags)
+    - [OverrideCustomChatPlayerColor](#overridecustomchatplayercolor)
+    - [CustomChatBlockInput](#customchatblockinput)
+    - [CustomChatHideJoinMessage](#customchathidejoinmessage)
+    - [Contributing](#contributing)
+
+## Features
 
 * Customizable
 * Has built-in emojis
@@ -23,7 +39,7 @@ A simple and customizable chat box that can format text, display images and emoj
 
 ---
 
-### Text Formatting Options
+## Text formatting
 
 ```
 ||Spoilers here||
@@ -40,20 +56,29 @@ $$rainbow text here$$
 $255,0,0,0,100,255$(red-to-blue gradient text here)
 ```
 
-### Fonts
+## Fonts
 
 You can change the font by typing **;fontname;** before the text.
 _(A list of fonts can be found on the workshop page.)_
 
 ```;comic; This will be displayed as Comic Sans```
 
-### Whitelisted Sites
+## Whitelisted sites
 
 By default, the chat box will only load pictures from trusted websites. You can open a pull request to add more, or send a request [here](https://steamcommunity.com/workshop/filedetails/discussion/2799307109/3272437487156558008/).
 
-## For developers
+## Developer reference
 
-### Hook: CanEmbedCustomChat
+### Hooks (quick links)
+
+- [CanEmbedCustomChat](#canembedcustomchat)
+- [CanFormatCustomChat](#canformatcustomchat)
+- [OverrideCustomChatTags](#overridecustomchattags)
+- [OverrideCustomChatPlayerColor](#overridecustomchatplayercolor)
+- [CustomChatBlockInput](#customchatblockinput)
+- [CustomChatHideJoinMessage](#customchathidejoinmessage)
+
+### CanEmbedCustomChat
 
 You can prevent links from certain players from embedding, by using the `CanEmbedCustomChat` hook on the **client side**:
 
@@ -72,7 +97,7 @@ hook.Add( "CanEmbedCustomChat", "chat_embed_access_example", function( ply, url,
 end )
 ```
 
-### Hook: CanFormatCustomChat
+### CanFormatCustomChat
 
 You can block specific text formatting types per-player on the client using the `CanFormatCustomChat` hook. Return `false` to prevent that formatting from being applied; the text will be shown as plain text instead.
 
@@ -102,7 +127,7 @@ hook.Add( "CanFormatCustomChat", "format_access_example", function( ply, formatT
 end )
 ```
 
-### Hook: OverrideCustomChatTags
+### OverrideCustomChatTags
 
 You can add/override chat tags dynamically via code, using this hook on the **client side**:
 
@@ -122,7 +147,7 @@ hook.Add( "OverrideCustomChatTags", "custom_tags_example", function( ply )
 end )
 ```
 
-### Hook: OverrideCustomChatPlayerColor
+### OverrideCustomChatPlayerColor
 
 You can use this hook on the **client side** to override the colors that will be shown for player names.
 
@@ -142,11 +167,11 @@ hook.Add( "OverrideCustomChatPlayerColor", "custom_player_color_example", functi
 end )
 ```
 
-### Hook: CustomChatBlockInput
+### CustomChatBlockInput
 
 You can return `true` on this hook to block the "open chat" button(s). It runs on the **client side**.
 
-### Hook: CustomChatHideJoinMessage
+### CustomChatHideJoinMessage
 
 You can return `true` on this hook to dynamically prevent join/leave messages from showing up. It runs on the **client side**, and gives a `data` table as a argument, that contains the same keys given by the [player_connect_client](https://wiki.facepunch.com/gmod/gameevent/player_connect_client#members) hook.
 
