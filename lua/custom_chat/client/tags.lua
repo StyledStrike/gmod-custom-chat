@@ -32,12 +32,7 @@ end
 local function CustomChat_AddCustomTags( ply, text, isTeam, isDead )
     if not IsValid( ply ) or not ply:IsPlayer() then return end
 
-    local receivedMessage = {
-        speaker = ply,
-        text = text,
-        channel = "global"
-    }
-    CustomChat.lastReceivedMessage = receivedMessage
+    CustomChat.lastReceivedMessage = CustomChat.lastReceivedMessage or { speaker = ply, text = text, channel = "global" }
 
     local parts = Tags:GetParts( ply )
     local customParts, keepOriginal = hook.Run( "OverrideCustomChatTags", ply )
