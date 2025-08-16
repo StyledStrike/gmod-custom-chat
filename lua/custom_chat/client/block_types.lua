@@ -557,8 +557,7 @@ end
 
 blocks["url"] = function( value, ctx )
     local urlType = GetURLType( value )
-    local canEmbed = false
-
+    local canEmbed = CustomChat.GetConVarInt( "always_allow_embeds", 0 ) > 0
     local lastMessage = CustomChat.lastReceivedMessage
 
     if lastMessage and IsValid( lastMessage.speaker ) then
