@@ -32,6 +32,8 @@ end
 local function CustomChat_AddCustomTags( ply, text, isTeam, isDead )
     if not IsValid( ply ) or not ply:IsPlayer() then return end
 
+    CustomChat.lastReceivedMessage = CustomChat.lastReceivedMessage or { speaker = ply, text = text, channel = "global" }
+
     local parts = Tags:GetParts( ply )
     local customParts, keepOriginal = hook.Run( "OverrideCustomChatTags", ply )
 
@@ -44,7 +46,10 @@ local function CustomChat_AddCustomTags( ply, text, isTeam, isDead )
         end
     end
 
-    if not parts and not customParts then return end
+    if not parts and not customParts then
+        CustomChat.lastReceivedMessage = nil
+        return
+    end
 
     local message = {}
 
@@ -89,6 +94,7 @@ local function CustomChat_AddCustomTags( ply, text, isTeam, isDead )
     Insert( ": " .. text )
 
     chat.AddText( unpack( message ) )
+    CustomChat.lastReceivedMessage = nil
 
     return true
 end
