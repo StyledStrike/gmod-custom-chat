@@ -29,10 +29,8 @@ function Tags:GetNameColor( ply )
     return GAMEMODE:GetTeamColor( ply )
 end
 
-local function CustomChat_AddCustomTags( ply, text, isTeam, isDead )
+function Tags:AddMessageWithCustomTags( ply, text, isTeam, isDead )
     if not IsValid( ply ) or not ply:IsPlayer() then return end
-
-    CustomChat.lastReceivedMessage = CustomChat.lastReceivedMessage or { speaker = ply, text = text, channel = "global" }
 
     local parts = Tags:GetParts( ply )
     local customParts, keepOriginal = hook.Run( "OverrideCustomChatTags", ply )
@@ -47,7 +45,6 @@ local function CustomChat_AddCustomTags( ply, text, isTeam, isDead )
     end
 
     if not parts and not customParts then
-        CustomChat.lastReceivedMessage = nil
         return
     end
 
@@ -94,17 +91,9 @@ local function CustomChat_AddCustomTags( ply, text, isTeam, isDead )
     Insert( ": " .. text )
 
     chat.AddText( unpack( message ) )
-    CustomChat.lastReceivedMessage = nil
 
     return true
 end
-
-hook.Add( "InitPostEntity", "CustomChat.PreventChatTagsConflict", function()
-    if aTags then return end
-
-    CustomChat.USE_TAGS = true
-    hook.Add( "OnPlayerChat", "CustomChat.AddCustomTags", CustomChat_AddCustomTags, HOOK_LOW )
-end )
 
 function Tags:OpenEditor()
     local L = CustomChat.GetLanguageText
