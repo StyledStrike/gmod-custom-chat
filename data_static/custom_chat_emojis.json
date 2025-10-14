@@ -28,6 +28,8 @@
             "exclamation",
             "expressionless",
             "eyes",
+            "eye",
+            "brain",
             "fearful",
             "feet",
             "fire",
@@ -193,7 +195,8 @@
             "tv",
             "video_game",
             "wine_glass",
-            "wrench"
+            "wrench",
+            "fortune_cookie"
         ]
     },
     {
@@ -308,6 +311,7 @@
             "globe_with_meridians",
             "maple_leaf",
             "monkey_face",
+            "gorilla",
             "mouse",
             "mouse2",
             "ocean",
@@ -315,6 +319,7 @@
             "raccoon",
             "rooster",
             "rose",
+            "dead_rose",
             "snowflake",
             "wolf",
             "zap",
