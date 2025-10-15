@@ -108,16 +108,18 @@ function CustomChat.OpenEmojiEditor()
     frame:Center()
     frame:MakePopup()
 
-    local panelWarning = vgui.Create( "DPanel", frame )
-    panelWarning:Dock( BOTTOM )
-    panelWarning:DockPadding( 4, 4, 4, 4 )
-    panelWarning:SetBackgroundColor( Color( 82, 63, 23 ) )
+    if system.IsLinux() then
+        local panelWarning = vgui.Create( "DPanel", frame )
+        panelWarning:Dock( BOTTOM )
+        panelWarning:DockPadding( 4, 4, 4, 4 )
+        panelWarning:SetBackgroundColor( Color( 82, 63, 23 ) )
 
-    local labelWarning = vgui.Create( "DLabel", panelWarning )
-    labelWarning:Dock( FILL )
-    labelWarning:SetTextColor( Color( 255, 255, 160 ) )
-    labelWarning:SetContentAlignment( 5 )
-    labelWarning:SetText( L"emojis.branch_warning" )
+        local labelWarning = vgui.Create( "DLabel", panelWarning )
+        labelWarning:Dock( FILL )
+        labelWarning:SetTextColor( Color( 255, 255, 160 ) )
+        labelWarning:SetContentAlignment( 5 )
+        labelWarning:SetText( L"emojis.branch_warning" )
+    end
 
     local customEmojis = table.Copy( emojiCategories[1].items )
     local RefreshList
