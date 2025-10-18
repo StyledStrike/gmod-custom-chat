@@ -75,9 +75,6 @@ local whitelist = {
     simple [[i.redd.it]],
     simple [[preview.redd.it]],
 
-    -- Furry things
-    simple [[static1.e621.net]],
-
     -- ipfs
     simple [[ipfs.io]],
 
