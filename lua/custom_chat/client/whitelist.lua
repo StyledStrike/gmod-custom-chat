@@ -133,7 +133,10 @@ local whitelist = {
 
     -- Revolt
     simple [[static.revolt.chat]],
-    simple [[autumn.revolt.chat]]
+    simple [[autumn.revolt.chat]],
+
+    -- Catbox
+    simple [[files.catbox.moe]],
 }
 
 function CustomChat.IsWhitelisted( url )
