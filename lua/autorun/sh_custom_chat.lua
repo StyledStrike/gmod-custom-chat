@@ -92,6 +92,11 @@ function CustomChat.GetConVarInt( name, default )
     return cvar and cvar:GetInt() or default
 end
 
+function CustomChat.GetConVarBool( name )
+    local cvar = GetConVar( "custom_chat_" .. name )
+    return cvar and cvar:GetBool()
+end
+
 function CustomChat.ToJSON( tbl )
     return util.TableToJSON( tbl )
 end
