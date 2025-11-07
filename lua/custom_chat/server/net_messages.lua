@@ -49,7 +49,7 @@ net.Receive( "customchat.say", function( _, speaker )
     if util.SteamIDTo64( channel ) ~= "0" then
         dmTarget = player.GetBySteamID( channel )
         if not IsValid( dmTarget ) then return end
-        if CustomChat.GetConVarInt( "enable_dms", 1 ) == 0 then return end
+        if not CustomChat.GetConVarBool( "enable_dms" ) then return end
     end
 
     text = CustomChat.CleanupString( text )
