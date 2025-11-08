@@ -534,6 +534,20 @@ blocks["player"] = function( value, ctx )
     return table.concat( lines, "\n" )
 end
 
+blocks["avatar_image"] = function( value, ctx )
+    if not ctx.panel.displayAvatars then return "" end
+    if not IsStringValid( value ) then return "" end
+
+    local url = SafeString( value )
+    local lines = { Create.Image( url, nil, "avatar" ) }
+
+    if ctx.color then
+        Append( lines, "elImg.style['border-color'] = '%s';", ColorToRGB( ctx.color ) )
+    end
+
+    return table.concat( lines, "\n" )
+end
+
 blocks["emoji"] = function( value, ctx )
     local url = CustomChat.GetEmojiURL( value:sub( 2, -2 ) )
 
