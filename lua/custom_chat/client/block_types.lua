@@ -570,11 +570,17 @@ blocks["model"] = function( value, ctx )
 end
 
 blocks["url"] = function( value, ctx )
+    local dontEmbed = value:sub( 1, 1 ) == "<"
+
+    if dontEmbed then
+        value = ChopEnds( value, 2 )
+    end
+
     local urlType = GetURLType( value )
-    local canEmbed = CustomChat.GetConVarInt( "always_allow_embeds", 0 ) > 0
+    local canEmbed = not dontEmbed and CustomChat.GetConVarInt( "always_allow_embeds", 0 ) > 0
     local lastMessage = CustomChat.lastReceivedMessage
 
-    if lastMessage and IsValid( lastMessage.speaker ) then
+    if not dontEmbed and lastMessage and IsValid( lastMessage.speaker ) then
         canEmbed = hook.Run( "CanEmbedCustomChat", lastMessage.speaker, value, urlType ) ~= false
     end
 
