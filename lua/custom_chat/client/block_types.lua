@@ -225,6 +225,23 @@ function Create.Image( url, link, cssClass, altText, safeFilter )
     return table.concat( lines, "\n" )
 end
 
+--- Returns JS code to create a audio media element.
+function Create.Audio( url, ctx )
+    local lines = { Create.Text( url, ctx.font, url, Color( 50, 100, 255 ) ) }
+
+    url = SafeString( url )
+
+    Append( lines, Create.Element( "audio", "elAudio" ) )
+    Append( lines, "elAudio.className = 'media-player';" )
+    Append( lines, "elAudio.volume = 0.8;" )
+    Append( lines, "elAudio.setAttribute('preload', 'metadata');" )
+    Append( lines, "elAudio.setAttribute('controls', 'controls');" )
+    Append( lines, "elAudio.setAttribute('controlsList', 'nodownload noremoteplayback');" )
+    Append( lines, "elAudio.src = '%s';", url )
+
+    return table.concat( lines, "\n" )
+end
+
 -- Background color for code snippets
 local CODE_BG_COLOR = Color( 47, 49, 54, 255 )
 
@@ -444,15 +461,24 @@ local blocks = CustomChat.blocks or {}
 
 CustomChat.blocks = blocks
 
--- Used to test if a URL probably points to a image
-local imageExtensions = { "png", "jpg", "jpeg", "gif", "webp", "svg" }
+-- Used to test if a URL probably points to an image
+local IMAGE_EXTENSIONS = { "png", "jpg", "jpeg", "gif", "webp", "svg" }
+
+-- Used to test if a URL probably points to an audio file
+local AUDIO_EXTENSIONS = { "mp3", "wav", "ogg", "flac" }
 
 local function GetURLType( url )
     local withoutQueryStrings = url:gsub( "%?[^/]+", "" ):lower()
 
-    for _, ext in ipairs( imageExtensions ) do
+    for _, ext in ipairs( IMAGE_EXTENSIONS ) do
         if withoutQueryStrings:EndsWith( ext ) then
             return "image"
+        end
+    end
+
+    for _, ext in ipairs( AUDIO_EXTENSIONS ) do
+        if withoutQueryStrings:EndsWith( ext ) then
+            return "audio"
         end
     end
 
@@ -587,6 +613,9 @@ blocks["url"] = function( value, ctx )
     if canEmbed and CustomChat.IsWhitelisted( value ) then
         if urlType == "image" then
             return Create.Image( value, value, nil, value, CustomChat.GetConVarInt( "safe_mode", 1 ) > 0 )
+
+        elseif urlType == "audio" then
+            return Create.Audio( value, ctx )
         else
             return Create.Embed( value, ctx.panel )
         end

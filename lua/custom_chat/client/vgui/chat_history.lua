@@ -366,6 +366,11 @@ img {
     background-clip: text;
     background-size: 100% 100%;
 }
+
+.media-player {
+	display: block;
+	width: 80%;
+}
 </style>
 
 <script>
@@ -461,6 +466,18 @@ function ScrollAllChannelsToBottom() {
     for (var k in channels) { ScrollToBottom(channels[k]); }
 }
 
+function RemoveMediaElementsFrom(parent) {
+    const children = parent.children;
+
+	for (var i = 0; i < children.length; i++) {
+		var child = children[i];
+
+		if (child.className == "media-player") {
+			parent.removeChild(child);
+		}
+	}
+}
+
 function AddMessage(message, chid, showAnimation, showTemporary) {
     var e = channels[chid];
     if (!e) return;
@@ -481,6 +498,7 @@ function AddMessage(message, chid, showAnimation, showTemporary) {
     if (!showTemporary) return;
 
     var copy = message.cloneNode(true);
+    RemoveMediaElementsFrom(copy);
     elTemp.appendChild(copy);
 
     if (elTemp.childElementCount > 10) {
