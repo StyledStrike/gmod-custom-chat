@@ -176,6 +176,7 @@ img {
     display: inline-block;
     max-width: 95%;
     max-height: 120px;
+    vertical-align: text-top;
 }
 
 .b-text { font-weight: 800; }
