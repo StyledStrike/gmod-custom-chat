@@ -151,24 +151,27 @@ local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
     )
 end
 
+CustomChat.PlayerInitialSpawnWaiting = CustomChat.PlayerInitialSpawnWaiting or {}
+hook.Add( "NetworkEntityCreated", "CustomChat.HandlePlayerInitialSpawn", function( ent )
+    if not ent:IsPlayer() then return end
+
+    local steamId = ent:SteamID()
+    local data = CustomChat.PlayerInitialSpawnWaiting[steamId]
+    if not data then return end
+
+    CustomChat.PlayerInitialSpawnWaiting[steamId] = nil
+    OnPlayerActivated( ent, steamId, data.name, data.color, data.absenceLength )
+end )
+
 net.Receive( "customchat.player_spawned", function()
-    local playerId = net.ReadUInt( 8 )
     local steamId = net.ReadString()
     local name = net.ReadString()
     local color = net.ReadColor( false )
     local absenceLength = net.ReadFloat()
 
-    -- Wait until the player entity is valid, within a few tries
-    local timerId = "CustomChat.WaitValid" .. steamId
-
-    -- Try every 1/2 seconds, 20 times, for a total of 10 seconds
-    timer.Create( timerId, 0.5, 20, function()
-        local ply = Player( playerId )
-
-        if IsValid( ply ) then
-            timer.Remove( timerId )
-            OnPlayerActivated( ply, steamId, name, color, absenceLength )
-        end
-    end )
+    CustomChat.PlayerInitialSpawnWaiting[steamId] = {
+        name = name,
+        color = color,
+        absenceLength = absenceLength
+    }
 end )
-
