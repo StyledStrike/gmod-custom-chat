@@ -60,7 +60,7 @@ net.Receive( "customchat.say", function( _, speaker )
     hook.Run( "PostPlayerSay", speaker, text, teamOnly, channel, dmTarget )
 
     if CustomChat.GetConVarBool( "print_chats" ) then
-        CustomChat.Print( "%s[%s]{%s}: %s", speaker:Nick(), speaker:SteamID(), channel, text )
+        CustomChat.Print( "%s [%s] {%s}: %s", speaker:Nick(), speaker:SteamID(), channel, text )
     end
 
     if dmTarget then
