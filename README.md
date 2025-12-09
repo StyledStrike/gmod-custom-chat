@@ -77,6 +77,7 @@ By default, the chat box will only load pictures from trusted websites. You can 
 - [OverrideCustomChatPlayerColor](#overridecustomchatplayercolor)
 - [CustomChatBlockInput](#customchatblockinput)
 - [CustomChatHideJoinMessage](#customchathidejoinmessage)
+- [PostPlayerSay](#postplayersay)
 
 ### CanEmbedCustomChat
 
@@ -174,6 +175,10 @@ You can return `true` on this hook to block the "open chat" button(s). It runs o
 ### CustomChatHideJoinMessage
 
 You can return `true` on this hook to dynamically prevent join/leave messages from showing up. It runs on the **client side**, and gives a `data` table as a argument, that contains the same keys given by the [player_connect_client](https://wiki.facepunch.com/gmod/gameevent/player_connect_client#members) hook.
+
+### PostPlayerSay
+
+For getting the final contents of a chat message. Doesn't get ran if a message is blocked/edited away by PlayerSay
 
 ## Contributing
 

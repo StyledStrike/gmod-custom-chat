@@ -76,6 +76,9 @@ CreateConVar( "custom_chat_enable_dms", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLI
 CreateConVar( "custom_chat_always_allow_embeds", "0", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
     "Allows embeds to be displayed on the chat, even if the message did not come from a player.", 0, 1 )
 
+CreateConVar( "custom_chat_print_chats", "1", bit.bor( FCVAR_ARCHIVE, FCVAR_REPLICATED, FCVAR_NOTIFY ),
+    "Print chat messages to the server console.", 0, 1 )
+
 if CLIENT then
     CreateClientConVar( "custom_chat_enable", "1", true, false )
 
