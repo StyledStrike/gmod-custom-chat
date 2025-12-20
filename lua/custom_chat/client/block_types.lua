@@ -4,6 +4,7 @@ local Find = string.find
 local Format = string.format
 local Substring = string.sub
 local SafeString = string.JavascriptSafe
+local Match = string.match
 
 local Append = CustomChat.AppendString
 local ColorToRGB = CustomChat.ColorToRGB
@@ -19,6 +20,7 @@ if system.IsLinux() and BRANCH ~= "x86-64" then
         ["avatars.cloudflare.steamstatic.com"] = true,
         ["avatars.akamai.steamstatic.com"] = true,
         ["avatars.fastly.steamstatic.com"] = true,
+        ["shared.fastly.steamstatic.com"] = true,
         ["media.discordapp.net"] = true,
         ["cdn.discordapp.com"] = true -- seems like it still does not work
     }
@@ -342,14 +344,9 @@ local avatarCache = {}
 -- Avatar placeholder until we are done fetching the player's avatar
 local avatarPlaceholder = "asset://garrysmod/materials/icon16/user.png"
 
-local function ExtractAvatarFromXML( data )
-    local urlPattern = "<!%[CDATA%[(https://[%g%.]+/[%g]+%.jpg)%]%]>"
-    local _, _, url = Find( data, "<avatarMedium>" .. urlPattern .. "</avatarMedium>"  )
-
-    if not url then
-        _, _, url = Find( data, "<avatarIcon>" .. urlPattern .. "</avatarIcon>"  )
-    end
-
+local function ExtractAvatarFromHTML( data )
+    local url = Match( data, "<div class=\"playerAvatar.-<img srcset=\"(.-%..-)\"" )
+    
     return url
 end
 
@@ -411,7 +408,7 @@ function CustomChat.FetchUserAvatarURL( id, panel )
     end
 
     HTTP( {
-        url = string.format( "https://steamcommunity.com/profiles/%s?xml=true", id ),
+        url = string.format( "https://steamcommunity.com/profiles/%s", id ),
         method = "GET",
 
         success = function( code, body )
@@ -423,7 +420,7 @@ function CustomChat.FetchUserAvatarURL( id, panel )
             -- Is the panel still available?
             if not IsValid( panel ) then return end
 
-            url = ExtractAvatarFromXML( body )
+            url = ExtractAvatarFromHTML( body )
 
             if url then
                 if forceHTTP then
@@ -443,7 +440,7 @@ function CustomChat.FetchUserAvatarURL( id, panel )
                     end
                 end )
             else
-                OnFail( "Missing avatar URL from the XML data" )
+                OnFail( "Missing avatar URL from the HTML data" )
             end
         end,
 
