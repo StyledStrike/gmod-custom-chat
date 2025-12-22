@@ -346,7 +346,7 @@ local avatarPlaceholder = "asset://garrysmod/materials/icon16/user.png"
 
 local function ExtractAvatarFromHTML( data )
     local url = Match( data, "<div class=\"playerAvatar.-<img srcset=\"(.-%..-)\"" )
-    
+
     return url
 end
 
