@@ -169,6 +169,12 @@ net.Receive( "customchat.player_spawned", function()
     local color = net.ReadColor( false )
     local absenceLength = net.ReadFloat()
 
+    local ply = player.GetBySteamID( steamId )
+    if IsValid( ply ) then
+        OnPlayerActivated( ply, steamId, name, color, absenceLength )
+        return
+    end
+
     CustomChat.PlayerInitialSpawnWaiting[steamId] = {
         name = name,
         color = color,
