@@ -87,6 +87,10 @@ if CLIENT then
 end
 
 function CustomChat.Print( str, ... )
+    if SERVER then
+        ServerLog( "[Custom Chat] " .. string.format( str, ... ))
+        return
+    end
     MsgC( Color( 0, 123, 255 ), "[Custom Chat] ", Color( 255, 255, 255 ), string.format( str, ... ), "\n" )
 end
 
