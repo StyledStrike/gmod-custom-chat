@@ -128,7 +128,7 @@ local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
         )
     end
 
-    if CustomChat.GetConVarInt( "enable_absence_messages", 0 ) == 0 then return end
+    if not CustomChat.GetConVarBool( "enable_absence_messages", false ) then return end
     if absenceLength < 1 then
         chat.AddText(
             color, name,
@@ -168,12 +168,6 @@ net.Receive( "customchat.player_spawned", function()
     local name = net.ReadString()
     local color = net.ReadColor( false )
     local absenceLength = net.ReadFloat()
-
-    local ply = player.GetBySteamID( steamId )
-    if IsValid( ply ) then
-        OnPlayerActivated( ply, steamId, name, color, absenceLength )
-        return
-    end
 
     CustomChat.PlayerInitialSpawnWaiting[steamId] = {
         name = name,
