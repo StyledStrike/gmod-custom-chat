@@ -128,7 +128,10 @@ local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
         )
     end
 
-    if CustomChat.GetConVarInt( "enable_absence_messages", 0 ) == 0 then return end
+    if not CustomChat.GetConVarBool( "enable_absence_messages", false ) then return end
+    local hideAbsenceMessage = hook.Run( "CustomChatHideAbsenceMessage", ply, absenceLength )
+    if hideAbsenceMessage == true then return end
+
     if absenceLength < 1 then
         chat.AddText(
             color, name,
