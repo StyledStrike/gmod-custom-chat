@@ -99,7 +99,7 @@ hook.Add( "player_disconnect", "CustomChat.ShowDisconnectMessages", function( da
     chat.AddText( unpack( parts ) )
 end, HOOK_LOW )
 
-local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
+local function OnPlayerActivated( ply, steamId, name, color, absenceLength, timeToSpawn )
     if ply:IsBot() and not JoinLeave.botConnectDisconnect then return end
 
     -- Only use a player block if Custom Chat is enabled
@@ -115,6 +115,8 @@ local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
         }
     end
 
+    local niceTimeToSpawn = CustomChat.NiceTime( math.Round( timeToSpawn ) )
+
     -- Show a message if this player is a friend
     if
         CustomChat.GetConVarInt( "enable_friend_messages", 0 ) > 0 and
@@ -124,7 +126,8 @@ local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
         chat.AddText(
             Color( 255, 255, 255 ), ":small_blue_diamond: " .. CustomChat.GetLanguageText( "friend_spawned1" ) .. " ",
             color, name,
-            Color( 255, 255, 255 ), " " .. CustomChat.GetLanguageText( "friend_spawned2" )
+            Color( 255, 255, 255 ), " " .. CustomChat.GetLanguageText( "friend_spawned2" ),
+            Color( 150, 150, 150 ), " (" .. niceTimeToSpawn .. ")"
         )
     end
 
@@ -135,6 +138,8 @@ local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
     if absenceLength < 1 then
         chat.AddText(
             color, name,
+            Color( 150, 150, 150 ), " " .. CustomChat.GetLanguageText( "took" ),
+            Color( 200, 200, 200 ), " " .. niceTimeToSpawn,
             Color( 150, 150, 150 ), " " .. CustomChat.GetLanguageText( "first_seen" )
         )
         return
@@ -148,6 +153,8 @@ local function OnPlayerActivated( ply, steamId, name, color, absenceLength )
 
     chat.AddText(
         color, name,
+        Color( 150, 150, 150 ), " " .. CustomChat.GetLanguageText( "took" ),
+        Color( 200, 200, 200 ), " " .. niceTimeToSpawn,
         Color( 150, 150, 150 ), " " .. CustomChat.GetLanguageText( "last_seen1" ),
         Color( 200, 200, 200 ), " " .. lastSeenTime,
         Color( 150, 150, 150 ), " " .. CustomChat.GetLanguageText( "last_seen2" )
@@ -163,7 +170,7 @@ hook.Add( "NetworkEntityCreated", "CustomChat.HandlePlayerInitialSpawn", functio
     if not data then return end
 
     CustomChat.PlayerInitialSpawnWaiting[steamId] = nil
-    OnPlayerActivated( ent, steamId, data.name, data.color, data.absenceLength )
+    OnPlayerActivated( ent, steamId, data.name, data.color, data.absenceLength, data.timeToSpawn )
 end )
 
 net.Receive( "customchat.player_spawned", function()
@@ -171,16 +178,18 @@ net.Receive( "customchat.player_spawned", function()
     local name = net.ReadString()
     local color = net.ReadColor( false )
     local absenceLength = net.ReadFloat()
+    local timeToSpawn = net.ReadFloat()
 
     local ply = player.GetBySteamID( steamId )
     if IsValid( ply ) then
-        OnPlayerActivated( ply, steamId, name, color, absenceLength )
+        OnPlayerActivated( ply, steamId, name, color, absenceLength, timeToSpawn )
         return
     end
 
     CustomChat.PlayerInitialSpawnWaiting[steamId] = {
         name = name,
         color = color,
-        absenceLength = absenceLength
+        absenceLength = absenceLength,
+        timeToSpawn = timeToSpawn
     }
 end )
