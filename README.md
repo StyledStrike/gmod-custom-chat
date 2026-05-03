@@ -19,6 +19,7 @@ A simple and customizable chat box that can format text, display images and emoj
     - [OverrideCustomChatPlayerColor](#overridecustomchatplayercolor)
     - [CustomChatBlockInput](#customchatblockinput)
     - [CustomChatHideJoinMessage](#customchathidejoinmessage)
+    - [CustomChatPlayerInitialSpawn](#customchatplayerinitialspawn)
     - [Contributing](#contributing)
 
 ## Features
@@ -77,6 +78,7 @@ By default, the chat box will only load pictures from trusted websites. You can 
 - [OverrideCustomChatPlayerColor](#overridecustomchatplayercolor)
 - [CustomChatBlockInput](#customchatblockinput)
 - [CustomChatHideJoinMessage](#customchathidejoinmessage)
+- [CustomChatPlayerInitialSpawn](#customchatplayerinitialspawn)
 - [PostPlayerSay](#postplayersay)
 
 ### CanEmbedCustomChat
@@ -175,6 +177,30 @@ You can return `true` on this hook to block the "open chat" button(s). It runs o
 ### CustomChatHideJoinMessage
 
 You can return `true` on this hook to dynamically prevent join/leave messages from showing up. It runs on the **client side**, and gives a `data` table as a argument, that contains the same keys given by the [player_connect_client](https://wiki.facepunch.com/gmod/gameevent/player_connect_client#members) hook.
+
+### CustomChatPlayerInitialSpawn
+
+Runs on the **server side** after a player's initial spawn data has been gathered and broadcast to clients. Useful for reacting to join events with full absence/load-time context.
+
+Arguments:
+- `ply` — the player entity
+- `steamId` — the player's SteamID string
+- `color` — the team `Color` assigned to the player at spawn time
+- `absenceLength` — seconds since the player was last seen on this server (`0` for first-timers)
+- `timeToSpawn` — seconds the player took to load into the server
+
+```lua
+hook.Add( "CustomChatPlayerInitialSpawn", "example", function( ply, steamId, color, absenceLength, timeToSpawn )
+    -- Example: print load time and absence to server console
+    print( ply:Nick() .. " took " .. math.Round( timeToSpawn ) .. "s to load" )
+
+    if absenceLength > 0 then
+        print( ply:Nick() .. " was last seen " .. math.Round( absenceLength ) .. "s ago" )
+    else
+        print( ply:Nick() .. " joined for the first time" )
+    end
+end )
+```
 
 ### PostPlayerSay
 
