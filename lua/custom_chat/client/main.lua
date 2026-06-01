@@ -41,12 +41,12 @@ do
         local L = CustomChat.GetLanguageText
 
         local timeUnits = {
-            { value = Floor( time / year ), name = "time.years" },
-            { value = Floor( time / month ) % 12, name = "time.months" },
-            { value = Floor( time / day ) % 30, name = "time.days" },
-            { value = Floor( time / hour ) % 24, name = "time.hours" },
-            { value = Floor( time / minute ) % 60, name = "time.minutes" },
-            { value = time % 60, name = "time.seconds" }
+            { value = Floor( time / year ), name = "time.years", singular = "time.year" },
+            { value = Floor( time / month ) % 12, name = "time.months", singular = "time.month" },
+            { value = Floor( time / day ) % 30, name = "time.days", singular = "time.day" },
+            { value = Floor( time / hour ) % 24, name = "time.hours", singular = "time.hour" },
+            { value = Floor( time / minute ) % 60, name = "time.minutes", singular = "time.minute" },
+            { value = time % 60, name = "time.seconds", singular = "time.second" }
         }
 
         local nonZeroUnits = {}
@@ -75,7 +75,7 @@ do
         local parts = {}
 
         for _, unit in ipairs( selectedUnits ) do
-            table.insert( parts, unit.value .. " " .. L( unit.name ) )
+            table.insert( parts, unit.value .. " " .. L( unit.value == 1 and unit.singular or unit.name ) )
         end
 
         return table.concat( parts, ", " )
