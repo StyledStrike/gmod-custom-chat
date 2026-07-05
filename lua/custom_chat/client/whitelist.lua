@@ -98,6 +98,9 @@ local whitelist = {
     simple [[tenor.com]],
     pattern [[[%w-_]-%.tenor%.com/.+]],
 
+    -- Klipy
+    simple [[static.klipy.com]],
+
     -- Youtube
     simple [[youtu.be]],
     pattern [[([%w-_]+)%.youtube%.com/(.+)]],
