@@ -555,6 +555,28 @@ window.addEventListener("keydown", function(ev) {
     }
 });
 
+// handle pasting images and automatically uploading them to a image host
+window.addEventListener("paste", function(ev) {
+    const items = ev.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+
+        if (item.type.indexOf("image") === -1) continue;
+
+        const blob = item.getAsFile();
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+            const base64String = btoa(reader.result);
+            window.CChat.OnPasteImage(base64String);
+        };
+        reader.readAsBinaryString(blob);
+        break;
+    }
+});
+
 console.log("Ready, using Chromium: " + (IS_AWESOMIUM ? "No" : "Yes"));
 </script>
 </html>]]
@@ -585,6 +607,10 @@ function PANEL:Init()
 
     self:AddInternalCallback( "OnPressEnter", function()
         self.OnPressEnter()
+    end )
+
+    self:AddInternalCallback( "OnPasteImage", function( data )
+        self:OnPasteImage( data )
     end )
 
     self:AddInternalCallback( "OnSelectEmoji", function( id )
@@ -872,6 +898,45 @@ elTimestamp.textContent = '%s ';
     lines[#lines + 1] = ( "AddMessage(message, '%s', %s, %s);" ):format( channelId, showAnimation, showTemporary )
 
     self:QueueJavascript( table.concat( lines, "\n" ) )
+end
+
+-- Upload it to imgbb and send the link to the text entry
+local clientKey = "cbc7e18ce4cd2e5de079fc67e3a6647f" -- Client API key, gotten from https://api.imgbb.com/ (free image hosting service)
+local secondsToLive = 60 * 60 * 24 * 7 -- 7 days
+CustomChat.UploadedImageCache = CustomChat.UploadedImageCache or {}
+
+local function addToTextEntry( pnl, url )
+    local parent = pnl:GetParent()
+    if not IsValid( parent ) then return end
+    if not parent.entry then return end
+
+    parent.entry:SetText( parent.entry:GetText() .. " " .. url )
+end
+
+function PANEL:OnPasteImage( data )
+    local crc = util.CRC( data )
+    if CustomChat.UploadedImageCache[crc] then
+        addToTextEntry( self, CustomChat.UploadedImageCache[crc] )
+        return
+    end
+
+    local endpoint = "https://api.imgbb.com/1/upload?expiration=" .. secondsToLive .. "&key=" .. clientKey
+    http.Post( endpoint, {
+        image = data
+    },
+    function( responseBody )
+        local responseTable = util.JSONToTable( responseBody )
+        if responseTable and responseTable.success then
+            local directImageUrl = responseTable.data.url
+            CustomChat.UploadedImageCache[crc] = directImageUrl
+            addToTextEntry( self, directImageUrl )
+        else
+            print( "[CustomChat] ImgBB API Error: Request reached server but upload failed.", responseTable and responseTable.error and responseTable.error.message or "Unknown error" )
+        end
+    end,
+    function( errorReason )
+        print( "[CustomChat] OnPasteImage HTTP Request completely failed: " .. errorReason )
+    end )
 end
 
 function PANEL:OnClickLink( _url ) end
