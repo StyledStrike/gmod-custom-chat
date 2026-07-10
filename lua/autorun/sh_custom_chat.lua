@@ -217,6 +217,7 @@ if SERVER then
     -- Libraries
     require( "styled_netprefs" )
     AddCSLuaFile( "includes/modules/styled_netprefs.lua" )
+    AddCSLuaFile( "includes/modules/multipart.lua" )
 
     -- Shared files
     include( "custom_chat/override_istyping.lua" )
@@ -251,6 +252,7 @@ end
 if CLIENT then
     -- Libraries
     require( "styled_netprefs" )
+    require( "multipart" )
 
     -- Shared files
     include( "custom_chat/override_istyping.lua" )

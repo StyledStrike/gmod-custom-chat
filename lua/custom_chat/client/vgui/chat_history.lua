@@ -919,10 +919,10 @@ function PANEL:OnPasteImage( data )
     end
 
     local decoded = util.Base64Decode( data )
-    local form = FormData()
+    local form = CustomChat.FormData()
     form:Append( "reqtype", "fileupload" )
     form:Append( "time", "72h" )
-    form:Append( "fileToUpload", decoded, "image/png", "image.png" )
+    form:Append( "fileToUpload", decoded, "clipboard.png" )
 
     HTTP( {
         method = "POST",
