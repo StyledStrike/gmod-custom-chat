@@ -141,6 +141,7 @@ local whitelist = {
 
     -- Catbox
     simple [[files.catbox.moe]],
+    simple [[litter.catbox.moe]],
 }
 
 function CustomChat.IsWhitelisted( url )

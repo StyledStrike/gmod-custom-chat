@@ -555,6 +555,28 @@ window.addEventListener("keydown", function(ev) {
     }
 });
 
+// handle pasting images and automatically uploading them to a image host
+window.addEventListener("paste", function(ev) {
+    const items = ev.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+
+        if (item.type.indexOf("image") === -1) continue;
+
+        const blob = item.getAsFile();
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+            const base64String = btoa(reader.result);
+            window.CChat.OnPasteImage(base64String);
+        };
+        reader.readAsBinaryString(blob);
+        break;
+    }
+});
+
 console.log("Ready, using Chromium: " + (IS_AWESOMIUM ? "No" : "Yes"));
 </script>
 </html>]]
@@ -585,6 +607,10 @@ function PANEL:Init()
 
     self:AddInternalCallback( "OnPressEnter", function()
         self.OnPressEnter()
+    end )
+
+    self:AddInternalCallback( "OnPasteImage", function( data )
+        self:OnPasteImage( data )
     end )
 
     self:AddInternalCallback( "OnSelectEmoji", function( id )
@@ -872,6 +898,50 @@ elTimestamp.textContent = '%s ';
     lines[#lines + 1] = ( "AddMessage(message, '%s', %s, %s);" ):format( channelId, showAnimation, showTemporary )
 
     self:QueueJavascript( table.concat( lines, "\n" ) )
+end
+
+-- Upload it to litterbox.catbox.moe and add it to the text entry.
+CustomChat.UploadedImageCache = CustomChat.UploadedImageCache or {}
+
+local function addToTextEntry( pnl, url )
+    local parent = pnl:GetParent()
+    if not IsValid( parent ) then return end
+    if not parent.entry then return end
+
+    parent.entry:SetText( parent.entry:GetText() .. " " .. url )
+end
+
+function PANEL:OnPasteImage( data )
+    local crc = util.CRC( data )
+    if CustomChat.UploadedImageCache[crc] then
+        addToTextEntry( self, CustomChat.UploadedImageCache[crc] )
+        return
+    end
+
+    local decoded = util.Base64Decode( data )
+    local form = CustomChat.FormData()
+    form:Append( "reqtype", "fileupload" )
+    form:Append( "time", "72h" )
+    form:Append( "fileToUpload", decoded, "clipboard.png" )
+
+    HTTP( {
+        method = "POST",
+        url = "https://litterbox.catbox.moe/resources/internals/api.php",
+        headers = form:GetHeaders(),
+        body = form:Read(),
+        success = function( code, body )
+            if code == 200 then
+                CustomChat.UploadedImageCache[crc] = body
+                addToTextEntry( self, body )
+                return
+            end
+
+            print( "[Custom Chat] Failed to upload image, server returned code: " .. code .. " and body: " .. body )
+        end,
+        failed = function( err )
+            print( "[Custom Chat] Failed to upload image: " .. err )
+        end
+    } )
 end
 
 function PANEL:OnClickLink( _url ) end
