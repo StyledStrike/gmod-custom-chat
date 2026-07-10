@@ -241,6 +241,7 @@ if SERVER then
     AddCSLuaFile( "custom_chat/client/tags.lua" )
     AddCSLuaFile( "custom_chat/client/theme.lua" )
     AddCSLuaFile( "custom_chat/client/whitelist.lua" )
+    AddCSLuaFile( "custom_chat/client/multipart.lua" )
 
     AddCSLuaFile( "custom_chat/client/vgui/chat_frame.lua" )
     AddCSLuaFile( "custom_chat/client/vgui/chat_history.lua" )
@@ -252,7 +253,6 @@ end
 if CLIENT then
     -- Libraries
     require( "styled_netprefs" )
-    require( "multipart" )
 
     -- Shared files
     include( "custom_chat/override_istyping.lua" )
@@ -269,6 +269,7 @@ if CLIENT then
     include( "custom_chat/client/tags.lua" )
     include( "custom_chat/client/theme.lua" )
     include( "custom_chat/client/whitelist.lua" )
+    include( "custom_chat/client/multipart.lua" )
 
     include( "custom_chat/client/vgui/chat_frame.lua" )
     include( "custom_chat/client/vgui/chat_history.lua" )

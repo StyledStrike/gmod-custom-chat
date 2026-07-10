@@ -21,7 +21,6 @@ function CustomChat.FormData()
         Append = function( self, name, value, filename )
             local mime = getMime( value )
 
-            print( name, value, mime, filename )
             table.insert( self.entries, {
                 name = name,
                 value = value,
