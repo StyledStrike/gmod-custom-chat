@@ -900,9 +900,7 @@ elTimestamp.textContent = '%s ';
     self:QueueJavascript( table.concat( lines, "\n" ) )
 end
 
--- Upload it to imgbb and send the link to the text entry
-local clientKey = "cbc7e18ce4cd2e5de079fc67e3a6647f" -- Client API key, gotten from https://api.imgbb.com/ (free image hosting service)
-local secondsToLive = 60 * 60 * 24 * 7 -- 7 days
+-- Upload it to litterbox.catbox.moe and add it to the text entry.
 CustomChat.UploadedImageCache = CustomChat.UploadedImageCache or {}
 
 local function addToTextEntry( pnl, url )
@@ -920,23 +918,32 @@ function PANEL:OnPasteImage( data )
         return
     end
 
-    local endpoint = "https://api.imgbb.com/1/upload?expiration=" .. secondsToLive .. "&key=" .. clientKey
-    http.Post( endpoint, {
-        image = data
-    },
-    function( responseBody )
-        local responseTable = util.JSONToTable( responseBody )
-        if responseTable and responseTable.success then
-            local directImageUrl = responseTable.data.url
-            CustomChat.UploadedImageCache[crc] = directImageUrl
-            addToTextEntry( self, directImageUrl )
-        else
-            print( "[CustomChat] ImgBB API Error: Request reached server but upload failed.", responseTable and responseTable.error and responseTable.error.message or "Unknown error" )
+    local decoded = util.Base64Decode( data )
+    local form = FormData()
+    form:Append( "reqtype", "fileupload" )
+    form:Append( "time", "72h" )
+    form:Append( "fileToUpload", decoded, "image/png", "image.png" )
+
+    print( form:Read() )
+
+    HTTP( {
+        method = "POST",
+        url = "https://litterbox.catbox.moe/resources/internals/api.php",
+        headers = form:GetHeaders(),
+        body = form:Read(),
+        success = function( code, body )
+            if code == 200 then
+                CustomChat.UploadedImageCache[crc] = body
+                addToTextEntry( self, body )
+                return
+            end
+
+            print( "[Custom Chat] Failed to upload image, server returned code: " .. code .. " and body: " .. body )
+        end,
+        failed = function( err )
+            print( "[Custom Chat] Failed to upload image: " .. err )
         end
-    end,
-    function( errorReason )
-        print( "[CustomChat] OnPasteImage HTTP Request completely failed: " .. errorReason )
-    end )
+    } )
 end
 
 function PANEL:OnClickLink( _url ) end
