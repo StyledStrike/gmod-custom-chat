@@ -924,8 +924,6 @@ function PANEL:OnPasteImage( data )
     form:Append( "time", "72h" )
     form:Append( "fileToUpload", decoded, "image/png", "image.png" )
 
-    print( form:Read() )
-
     HTTP( {
         method = "POST",
         url = "https://litterbox.catbox.moe/resources/internals/api.php",
