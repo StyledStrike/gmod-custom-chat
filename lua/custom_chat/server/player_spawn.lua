@@ -13,6 +13,7 @@ hook.Add( "player_disconnect", "CustomChat.TrackDisconnectingPlayers", function(
     connectingSteamIDs[steamId] = nil
 end )
 
+local serverStartTime = SysTime()
 hook.Add( "PlayerInitialSpawn", "CustomChat.BroadcastInitialSpawn", function( ply )
     -- Give some time for other addons to assign the team
     timer.Simple( 3, function()
@@ -35,6 +36,8 @@ hook.Add( "PlayerInitialSpawn", "CustomChat.BroadcastInitialSpawn", function( pl
         if connectingSteamIDs[steamId] then
             local connectTime = connectingSteamIDs[steamId]
             timeToSpawn = SysTime() - connectTime
+        else -- needed for when a player joins from a map transition as they wont trigger the player_connect event.
+            timeToSpawn = SysTime() - serverStartTime
         end
 
         net.Start( "customchat.player_spawned", false )
