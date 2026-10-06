@@ -412,8 +412,13 @@ function CustomChat.FetchUserAvatarURL( id, panel )
         method = "GET",
 
         success = function( code, body )
-            if not body or code ~= 200 then
-                OnFail( "Non-OK code or empty profile data" )
+            if not body then
+                OnFail( "Empty profile data" )
+                return
+            end
+
+            if code ~= 200 then
+                OnFail( "Non-OK code " .. code )
                 return
             end
 
