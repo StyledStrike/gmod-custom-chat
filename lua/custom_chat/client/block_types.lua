@@ -221,7 +221,7 @@ function Create.Image( url, link, cssClass, altText, safeFilter )
     end
 
     if altText then
-        Append( lines, "elImg.alt = '%s';", altText )
+        Append( lines, "elImg.alt = '%s';", SafeString( altText ) )
     end
 
     return table.concat( lines, "\n" )
