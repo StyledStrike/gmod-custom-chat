@@ -38,6 +38,10 @@ net.Receive( "customchat.say", function( _, speaker )
     if not IsStringValid( channel ) then return end
     if channel:len() > CustomChat.MAX_CHANNEL_ID_LENGTH then return end
 
+    -- Channel IDs are interpolated into the client's chat JavaScript,
+    -- so only allow a safe charset (alphanumeric, "_", "-", ":" for SteamIDs).
+    if not channel:match( "^[%w_%-:]+$" ) then return end
+
     if text:len() > CustomChat.MAX_MESSAGE_LENGTH then
         text = text:Left( CustomChat.MAX_MESSAGE_LENGTH )
     end
