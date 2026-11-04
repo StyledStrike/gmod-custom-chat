@@ -778,6 +778,7 @@ end
 local ChopEnds = CustomChat.ChopEnds
 local chatFonts = CustomChat.chatFonts
 local blockTypes = CustomChat.blocks
+local SafeString = string.JavascriptSafe
 
 --- Generates JS code that creates a message element based on "contents".
 --- "contents" must be a sequential table, containing strings, colors, and/or player entities.
@@ -895,7 +896,7 @@ elTimestamp.textContent = '%s ';
     local showAnimation = ( t > self.animationCooldown and self.animateMessages ) and "true" or "false"
     self.animationCooldown = t + 0.5
 
-    lines[#lines + 1] = ( "AddMessage(message, '%s', %s, %s);" ):format( channelId, showAnimation, showTemporary )
+    lines[#lines + 1] = ( "AddMessage(message, '%s', %s, %s);" ):format( SafeString( channelId ), showAnimation, showTemporary )
 
     self:QueueJavascript( table.concat( lines, "\n" ) )
 end

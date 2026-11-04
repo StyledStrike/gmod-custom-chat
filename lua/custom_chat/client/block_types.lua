@@ -10,6 +10,13 @@ local Append = CustomChat.AppendString
 local ColorToRGB = CustomChat.ColorToRGB
 local IsStringValid = CustomChat.IsStringValid
 
+-- HTML-encode characters that could start or end tags.
+-- "&" is intentionally left intact so entities in legitimate
+-- metadata keep decoding the same way they did before.
+local function HtmlSafe( str )
+	return str:gsub( "<", "&lt;" ):gsub( ">", "&gt;" )
+end
+
 -- Force plain HTTP for certain image links when Chromium is not in use
 local forceHTTP
 
@@ -101,7 +108,7 @@ function CustomChat.OnHTTPResponse( embedId, body, url, panel )
 
     if props["site_name"] then
         Append( lines, Create.Element( "h1", "elName", "elEmbedBody" ) )
-        Append( lines, "elName.innerHTML = '%s';", SafeString( props["site_name"] ) )
+        Append( lines, "elName.innerHTML = '%s';", SafeString( HtmlSafe( props["site_name"] ) ) )
     end
 
     -- Embed title
@@ -112,7 +119,7 @@ function CustomChat.OnHTTPResponse( embedId, body, url, panel )
     end
 
     Append( lines, Create.Element( "h2", "elTitle", "elEmbedBody" ) )
-    Append( lines, "elTitle.innerHTML = '%s';", SafeString( title ) )
+    Append( lines, "elTitle.innerHTML = '%s';", SafeString( HtmlSafe( title ) ) )
 
     -- Embed description
     local desc = props["description"] or url
@@ -122,7 +129,7 @@ function CustomChat.OnHTTPResponse( embedId, body, url, panel )
     end
 
     Append( lines, Create.Element( "i", "elDesc", "elEmbedBody" ) )
-    Append( lines, "elDesc.innerHTML = '%s';", SafeString( desc ) )
+    Append( lines, "elDesc.innerHTML = '%s';", SafeString( HtmlSafe( desc ) ) )
     Append( lines, "}" )
 
     panel:QueueJavascript( table.concat( lines, "\n" ) )
