@@ -14,7 +14,7 @@ local IsStringValid = CustomChat.IsStringValid
 -- "&" is intentionally left intact so entities in legitimate
 -- metadata keep decoding the same way they did before.
 local function HtmlSafe( str )
-	return str:gsub( "<", "&lt;" ):gsub( ">", "&gt;" )
+    return str:gsub( "<", "&lt;" ):gsub( ">", "&gt;" )
 end
 
 -- Force plain HTTP for certain image links when Chromium is not in use
