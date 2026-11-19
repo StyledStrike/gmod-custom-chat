@@ -328,9 +328,11 @@ function CustomChat:OpenContextMenu( data )
 
     optionsMenu:AddSpacer()
 
-    optionsMenu:AddOption( L"channel.open_dm", function()
-        self.frame:OpenDirectMessage()
-    end ):SetIcon( "icon16/add.png" )
+    if CustomChat.GetConVarBool( "enable_dms" ) then
+        optionsMenu:AddOption( L"channel.open_dm", function()
+            self.frame:OpenDirectMessage()
+        end ):SetIcon( "icon16/add.png" )
+    end
 
     optionsMenu:AddOption( L( Config.hideSidebar and "side_bar.show" or "side_bar.hide" ), function()
         Config.hideSidebar = not Config.hideSidebar
